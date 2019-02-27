@@ -1,7 +1,7 @@
-import { ClientModel } from './clientModel';
+import { ThirdModel } from './thirdsModel';
 export class ReservationsModel {
     id: string;
-    cliente: ClientModel;
+    cliente: ThirdModel;
     fecha: Date;
     notas: string;
 }

@@ -1,13 +1,13 @@
-import { ClientModel } from './clientModel';
 import { BillInvoiceDetailModel } from './bill-invoice-detailModel';
 import { BillInvoicePayment } from './bill-invoice-paymentModel';
-import { SellersModel } from './sellersModel';
+import { ThirdModel } from './thirdsModel';
+import { InvoiceStateEnum } from '../emuns/invioce-stateEnum';
 
 export class BillInvoiceModel {
     id: string;
     numero: string;
     fecha: Date;
-    cliente: ClientModel;
+    cliente: ThirdModel;
     iva: number;
     retefuente: number;
     base: number;
@@ -19,6 +19,6 @@ export class BillInvoiceModel {
     almacen: string;
     caja: string;
     mesa: string;
-    vendedor: SellersModel;
-    estado: string;
+    vendedor: ThirdModel;
+    estado: InvoiceStateEnum;
 }

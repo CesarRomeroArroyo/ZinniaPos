@@ -1,5 +1,5 @@
-import { ShoppingSuppliersModel } from './shopping-suppliersModel';
-import { CompanyModel } from './companyModel';
+
+import { ThirdModel } from './thirdsModel';
 import { BillInvoiceModel } from './bill-invoiceModel';
 import { ProductModel } from './productModel';
 
@@ -8,8 +8,8 @@ export class InventoryMovesModel {
     fecha: Date;
     tipo: string;
     detalle: string;
-    origen: ShoppingSuppliersModel;
-    destino: CompanyModel;
+    origen: ThirdModel;
+    destino: ThirdModel;
     producto: ProductModel;
     invoice: BillInvoiceModel;
     cantidad: number;

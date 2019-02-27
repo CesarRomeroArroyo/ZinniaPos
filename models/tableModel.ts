@@ -1,5 +1,5 @@
-import { SellersModel } from './sellersModel';
 import { TableDetailsModel } from './table-detailsModel';
+import { ThirdModel } from './thirdsModel';
 export class TableModel {
     id: string;
     mesa: string;
@@ -8,5 +8,5 @@ export class TableModel {
     detalles: TableDetailsModel[];
     cocina: boolean;
     bar: boolean;
-    vendedor: SellersModel;
+    vendedor: ThirdModel;
 }

@@ -1,9 +1,9 @@
-import { ShoppingSuppliersModel } from "./shopping-suppliersModel";
 import { ShoppingBillDetails } from './shopping-bills-detailsModel';
+import { ThirdModel } from './thirdsModel';
 
 export class ShoppingBillModel {
     id: string;
-    proveedor: ShoppingSuppliersModel;
+    proveedor: ThirdModel;
     numero: string;
     fec_exp: Date;
     fec_venc: Date;

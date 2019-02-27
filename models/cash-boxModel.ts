@@ -1,9 +1,10 @@
-import { SellersModel } from './sellersModel';
+import { ThirdModel } from './thirdsModel';
+import { CashboxTypeEnum } from '../emuns/cashbox-typeEnum';
 export class CashboxMovesModel {
     id: string;
     numero: number;
-    vendedor: SellersModel;
-    tipo: string;
+    vendedor: ThirdModel;
+    tipo: CashboxTypeEnum;
     fecha: Date;
     valor: number;
     detalle: string;
