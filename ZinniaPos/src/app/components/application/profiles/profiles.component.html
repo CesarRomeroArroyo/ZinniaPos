@@ -1,0 +1,13 @@
+<div class="card">
+    <div class="card-body">
+      <h5 class="card-title">Perfiles</h5>
+      <app-data-table [columns]="columns" [data]="null" [options]="true" 
+          (editEvent)="null" (deleteEvent)="null">
+      </app-data-table>      
+    </div>
+    <div class="card-footer text-right">
+      <button type="button" class="btn btn-primary" [routerLink]="[ '/profile']"><i class="fa fa-plus" aria-hidden="true"></i> Nuevo Perfil</button>
+    </div>
+  </div>
+  
+  

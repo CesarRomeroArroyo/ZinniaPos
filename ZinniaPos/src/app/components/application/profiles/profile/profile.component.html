@@ -1,0 +1,205 @@
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">
+          <a [routerLink]="[ '/profiles' ]">
+            <i class="fa fa-arrow-circle-left" aria-hidden="true"></i>
+          </a>
+          Perfil</h5>
+      <form>
+        <div class="form-group">
+          <label for="nombre">Nombre</label>
+          <input type="text" class="form-control" name="nombre" id="nombre" 
+                [(ngModel)]="profile.nombre"  placeholder="Ingrese el nombre del perfil">
+        </div>
+        <br/>
+        <div class="row">
+          <div class="col-sm-4">
+            <h5>Aplicacion</h5>
+            <hr/>
+            <div class="form-check">
+              <label class="form-check-label">
+                <input type="checkbox" class="form-check-input" name="" id="" (click)="selectPemission('Aplicacion')">
+                Aplicacion
+              </label>
+            </div>
+            <div class="form-check">
+              <label class="form-check-label">
+                <input type="checkbox" class="form-check-input" name="" id="" (click)="selectPemission('Usuarios')">
+                Usuarios
+              </label>
+            </div>
+            <div class="form-check">
+              <label class="form-check-label">
+                <input type="checkbox" class="form-check-input" name="" id="" (click)="selectPemission('Perfiles')">
+                Perfiles
+              </label>
+            </div>
+          </div>
+          <div class="col-sm-4">
+              <h5>Ventas</h5>
+              <hr/>
+              <div class="form-check">
+                <label class="form-check-label">
+                  <input type="checkbox" class="form-check-input" name="" id="" (click)="selectPemission('Ventas')">
+                  Ventas
+                </label>
+              </div>
+              <div class="form-check">
+                <label class="form-check-label">
+                  <input type="checkbox" class="form-check-input" name="" id="" (click)="selectPemission('Nueva_Venta')">
+                  Nueva Venta
+                </label>
+              </div>
+              <div class="form-check">
+                <label class="form-check-label">
+                  <input type="checkbox" class="form-check-input" name="" id="" (click)="selectPemission('Resumen_Venta')">
+                  Resumen de Venta
+                </label>
+              </div>
+              <div class="form-check">
+                <label class="form-check-label">
+                  <input type="checkbox" class="form-check-input" name="" id="" (click)="selectPemission('Clientes')">
+                  Clientes
+                </label>
+              </div>
+              <div class="form-check">
+                <label class="form-check-label">
+                  <input type="checkbox" class="form-check-input" name="" id="" (click)="selectPemission('Reservas')">
+                  Reservas
+                </label>
+              </div>
+          </div>
+          <div class="col-sm-4">
+              <h5>Caja</h5>
+              <hr/>
+              <div class="form-check">
+                <label class="form-check-label">
+                  <input type="checkbox" class="form-check-input" name="" id="" (click)="selectPemission('Caja')">
+                  Caja
+                </label>
+              </div>
+              <div class="form-check">
+                <label class="form-check-label">
+                  <input type="checkbox" class="form-check-input" name="" id="" (click)="selectPemission('Abrir_Caja')">
+                  Abrir Caja
+                </label>
+              </div>
+              <div class="form-check">
+                <label class="form-check-label">
+                  <input type="checkbox" class="form-check-input" name="" id="" (click)="selectPemission('Cerrar_caja')">
+                  Cerrar Caja
+                </label>
+              </div>
+              <div class="form-check">
+                <label class="form-check-label">
+                  <input type="checkbox" class="form-check-input" name="" id="" (click)="selectPemission('Salidas')">
+                  Salidas
+                </label>
+              </div>
+              <div class="form-check">
+                <label class="form-check-label">
+                  <input type="checkbox" class="form-check-input" name="" id="" (click)="selectPemission('Cuentas_Pagar')">
+                  Cuentas por pagar
+                </label>
+              </div>
+          </div>
+        </div>
+        <br/>
+        <div class="row">
+            <div class="col-sm-4">
+              <h5>Inventario</h5>
+              <hr/>
+              <div class="form-check">
+                <label class="form-check-label">
+                  <input type="checkbox" class="form-check-input" name="" id="" (click)="selectPemission('Inventario')">
+                  Inventario
+                </label>
+              </div>
+              <div class="form-check">
+                <label class="form-check-label">
+                  <input type="checkbox" class="form-check-input" name="" id="" (click)="selectPemission('Categorias')">
+                  Categorias
+                </label>
+              </div>
+              <div class="form-check">
+                <label class="form-check-label">
+                  <input type="checkbox" class="form-check-input" name="" id="" (click)="selectPemission('Stock')">
+                  Stock de productos
+                </label>
+              </div>
+              <div class="form-check">
+                <label class="form-check-label">
+                  <input type="checkbox" class="form-check-input" name="" id="" (click)="selectPemission('Movimientos')">
+                  Movimientos
+                </label>
+              </div>
+              <div class="form-check">
+                <label class="form-check-label">
+                  <input type="checkbox" class="form-check-input" name="" id="" (click)="selectPemission('Recibir_Producto')">
+                  Recibir productos
+                </label>
+              </div>
+            </div>
+            <div class="col-sm-4">
+                <h5>Parametros</h5>
+                <hr/>
+                <div class="form-check">
+                  <label class="form-check-label">
+                    <input type="checkbox" class="form-check-input" name="" id="" (click)="selectPemission('Parametros')">
+                    Parametros
+                  </label>
+                </div>
+                <div class="form-check">
+                  <label class="form-check-label">
+                    <input type="checkbox" class="form-check-input" name="" id="" (click)="selectPemission('Empresa')">
+                    Mi empresa
+                  </label>
+                </div>
+                <div class="form-check">
+                  <label class="form-check-label">
+                    <input type="checkbox" class="form-check-input" name="" id="" (click)="selectPemission('Productos')">
+                    Productos
+                  </label>
+                </div>
+                <div class="form-check">
+                  <label class="form-check-label">
+                    <input type="checkbox" class="form-check-input" name="" id="" (click)="selectPemission('Menus')">
+                    Menus
+                  </label>
+                </div>
+                <div class="form-check">
+                  <label class="form-check-label">
+                    <input type="checkbox" class="form-check-input" name="" id="" (click)="selectPemission('Resoluciones')">
+                    Resolucion de Facturacion
+                  </label>
+                </div>
+                <div class="form-check">
+                  <label class="form-check-label">
+                    <input type="checkbox" class="form-check-input" name="" id="" (click)="selectPemission('Proveedores')">
+                    Proveedores
+                  </label>
+                </div>
+                <div class="form-check">
+                  <label class="form-check-label">
+                    <input type="checkbox" class="form-check-input" name="" id="" (click)="selectPemission('Impuestos')">
+                    Impuestos
+                  </label>
+                </div>
+              </div>
+              <div class="col-sm-4">
+                  <h5>Reportes</h5>
+                  <hr/>
+                  <div class="form-check">
+                    <label class="form-check-label">
+                      <input type="checkbox" class="form-check-input" name="" id="" (click)="selectPemission('Reportes')">
+                      Reportes
+                    </label>
+                  </div>
+              </div>
+        </div>
+      </form>
+    </div>
+    <div class="card-footer text-right">
+      <button type="button" class="btn btn-primary"><i class="fa fa-save" aria-hidden="true"></i> Guardar</button>
+    </div>
+  </div>

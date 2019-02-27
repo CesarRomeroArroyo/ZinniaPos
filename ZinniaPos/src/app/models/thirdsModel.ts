@@ -1,0 +1,38 @@
+import { BankModel } from './bankModel';
+import { ThirdTypeEnum } from '../emuns/thirdTypeEnum';
+import { SellTypeEnum } from '../emuns/sell.typeEnum';
+export class ThirdModel {
+    id: string;
+    razon_social: string;
+    tip_con: string;
+    tip_ide: string;
+    num_ide: string;
+    rut: string;
+    nom_rep_leg: string;
+    ape_rep_leg: string;
+    tip_ide_rep_leg: string;
+    num_ide_rep_leg: string;
+    dir_logo: string;
+    direccion: string;
+    barrio: string;
+    ciudad: string;
+    telefono: string;
+    celular: string;
+    reg_cam: string;
+    fecha_con: Date;
+    uvt: string;
+    auto_retenedor: boolean;
+    email: string;
+    banco: BankModel[];
+    forma_pago: string;
+    term_pago: string;
+    fact_a_nom: string;
+    precio: string;
+    costeo: string;
+    impuesto: string;
+    factura: string;
+    tipo: ThirdTypeEnum;
+    tipo_venta: SellTypeEnum;
+    copia_web: boolean;
+    estado: boolean;
+}
