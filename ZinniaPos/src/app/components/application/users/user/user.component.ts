@@ -1,8 +1,11 @@
 import { Component, OnInit, Input, OnChanges, SimpleChanges, EventEmitter, Output } from '@angular/core';
 import { userModel } from '../../../../models/userModel';
-import { LocalDataBaseService } from '../../../../services/local-data-base.service';
 import { ProfileModel } from '../../../../models/profileModel';
-import { DatabaseTablesEnum } from '../../../../emuns/data-bases-tablesEnum';
+
+import { Store } from '@ngrx/store';
+import { AppStore } from 'src/app/store/app.reducers';
+import * as fromUserAction from 'src/app/store/actions/users.action';
+
 import Swal from 'sweetalert2';
 @Component({
   selector: 'app-user',
@@ -14,14 +17,16 @@ export class UserComponent implements OnInit, OnChanges {
   @Output() saveUser = new EventEmitter()
   perfilSel: string;
   perfiles: ProfileModel[];
-  constructor(private service: LocalDataBaseService) { 
+  constructor(
+    private store: Store<AppStore>
+  ) { 
     this.user = new userModel();
   }
 
   ngOnInit() {
-    /*this.service.getAll(DatabaseTablesEnum.Profiles).susbcribe((data: ProfileModel[]) => {
-      this.perfiles = data;
-    });*/
+    this.store.select('profiles').subscribe((data)=> {
+      console.log(data);
+    });
   }
   
   ngOnChanges(changes: SimpleChanges): void {
@@ -48,39 +53,9 @@ export class UserComponent implements OnInit, OnChanges {
       if (result.value) {
         if(!this.user.id){
           this.saveUser.emit();
-          this.service.add(DatabaseTablesEnum.Users, this.user)
-          .then(() => {
-            
-            Swal.fire(
-              '',
-              'Se Agregaron los datos correctamente',
-              'success'
-            )
-          })
-          .catch((err) => {
-            Swal.fire(
-              '',
-              'Ocurrio un error al crear el usuario: ' + err,
-              'error'
-            )
-          });
+          this.store.dispatch(new fromUserAction.AddUser(this.user));
         } else {
-          this.service.uptade(DatabaseTablesEnum.Users, this.user)
-          .then(() => {
-            this.saveUser.emit();
-            Swal.fire(
-              '',
-              'Se actualizaron los datos correctamente',
-              'success'
-            )
-          })
-          .catch((err) => {
-            Swal.fire(
-              '',
-              'Ocurrio un error al crear el usuario: ' + err,
-              'error'
-            )
-          });
+          this.store.dispatch(new fromUserAction.UpdateUser(this.user));
         }
       } else if (result.dismiss === Swal.DismissReason.cancel) {
         

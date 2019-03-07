@@ -1,7 +1,12 @@
 <div class="card">
   <div class="card-body">
     <h5 class="card-title">Usuarios</h5>
-    <app-data-table [columns]="columns" [data]="users" [options]="true" 
+    <div class="col-sm-12 text-center" *ngIf="!users">
+      <i class="fa fa-spinner fa-spin fa-3x" aria-hidden="true"></i>
+    </div>
+      
+    
+    <app-data-table *ngIf="users" [columns]="columns" [data]="users" [options]="true" 
         (editEvent)="editarUsuario($event);showModal()" (deleteEvent)="null">
     </app-data-table>      
   </div>
@@ -20,7 +25,7 @@
           </button>
         </div>
         <div class="modal-body">
-          <app-user [user]="user" (saveUser)="hideModal(); buscarUsuarios();"></app-user>  
+          <app-user [user]="user" (saveUser)="hideModal();"></app-user>  
         </div>
         
       </div>
