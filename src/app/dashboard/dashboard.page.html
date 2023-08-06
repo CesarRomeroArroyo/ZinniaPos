@@ -1,0 +1,108 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button autoHide="true"></ion-menu-button>
+    </ion-buttons>
+    <ion-title color="primary">
+      <img style="height:25px; margin-left: 15px;" src="../../assets/images/Zinnia_Bg_Black.png" alt="">  
+    </ion-title>
+    <ion-button mode="ios" class="ion-margin-right icon-user" slot="end" fill="clear" >
+        
+        <ion-icon name="person-circle-outline" color="primary"></ion-icon>
+    </ion-button>
+  </ion-toolbar>
+</ion-header>
+<ion-content>
+  <ion-split-pane contentId="containerId" when="sm">
+    <ion-menu contentId="containerId" menuId="menu-content" side="start" type="overlay">
+      <ion-content>
+        <ion-list lines="none">
+          <ion-menu-toggle autoHide="false">
+              <ion-item no-lines (click)="gotTo(['inicio'])">
+                <ion-icon name="home" color="primary"></ion-icon>
+                <ion-label color="primary">{{translationService.translate('_HOME')}}</ion-label>
+              </ion-item>
+              <ion-item no-lines (click)="gotTo(['dashboard','pos'])">
+                <ion-icon name="cart-outline" color="primary"></ion-icon>
+                <ion-label color="primary">{{translationService.translate('_POS')}}</ion-label>
+              </ion-item>
+              <ion-accordion-group  [value]="['tiquetes']">
+                <ion-accordion value="tiquetes">
+                  <ion-item slot="header" >
+                    <ion-icon name="restaurant-outline" color="primary"></ion-icon>                    
+                    <ion-label color="primary">{{translationService.translate('_ITEMS')}}</ion-label>
+                  </ion-item>
+                  <ion-list slot="content">
+                    <ion-item (click)="gotTo(['dashboard','items'])">
+                      <ion-label>{{translationService.translate('_ITEMS')}}</ion-label>
+                    </ion-item>
+                    <ion-item (click)="gotTo(['dashboard','categories'])">
+                      <ion-label>{{translationService.translate('_CATEGORIES')}}</ion-label>
+                    </ion-item>                                       
+                    <ion-item (click)="gotTo(['dashboard','categories'])">
+                      <ion-label>{{translationService.translate('_INVENTORY')}}</ion-label>
+                    </ion-item>                                       
+                  </ion-list>
+                </ion-accordion>
+              </ion-accordion-group>
+
+              <ion-accordion-group  [value]="['tiquetes']">
+                <ion-accordion value="tiquetes">
+                  <ion-item slot="header">                    
+                    <ion-icon name="people-outline" color="primary"></ion-icon>                    
+                    <ion-label color="primary">{{translationService.translate('_PEOPLE')}}</ion-label>
+                  </ion-item>
+                  <ion-list slot="content">
+                    <ion-item (click)="gotTo(['dashboard','customers'])">
+                      <ion-label>{{translationService.translate('_CUSTOMERS')}}</ion-label>
+                    </ion-item>
+                    <ion-item (click)="gotTo(['dashboard','waiters'])">
+                      <ion-label>{{translationService.translate('_WAITERS')}}</ion-label>
+                    </ion-item>                                       
+                    <ion-item (click)="gotTo(['dashboard','admins'])">
+                      <ion-label>{{translationService.translate('_ADMINS')}}</ion-label>
+                    </ion-item>                                       
+                  </ion-list>
+                </ion-accordion>
+              </ion-accordion-group>
+
+              <ion-accordion-group  [value]="['tiquetes']">
+                <ion-accordion value="tiquetes">
+                  <ion-item slot="header">                 
+                    <ion-icon name="cash-outline" color="primary"></ion-icon>                    
+                    <ion-label color="primary">{{translationService.translate('_SALES_EXPRENSES')}}</ion-label>
+                  </ion-item>
+                  <ion-list slot="content">
+                    <ion-item (click)="gotTo(['dashboard','sales'])">
+                      <ion-label>{{translationService.translate('_SALES')}}</ion-label>
+                    </ion-item>
+                    <ion-item (click)="gotTo(['dashboard','expenses'])">
+                      <ion-label>{{translationService.translate('_EXPENSES')}}</ion-label>
+                    </ion-item>                                        
+                  </ion-list>
+                </ion-accordion>
+              </ion-accordion-group>
+
+              <ion-item no-lines  (click)="gotTo(['dashboard','settings'])">                
+                <ion-icon name="cog-outline" color="primary"></ion-icon>
+                <ion-label color="primary">{{translationService.translate('_SETTINGS')}}</ion-label>
+              </ion-item>
+
+              <ion-item no-lines >                             
+                <ion-icon name="hourglass-outline" color="primary"></ion-icon>
+                <ion-label color="primary">{{translationService.translate('_ORDER_STATUS')}}</ion-label>
+              </ion-item>
+
+              <ion-item (click)="logout()" no-lines >
+                <ion-icon name="exit" color="primary"></ion-icon>
+                <ion-label color="primary">{{translationService.translate('_EXIT')}}</ion-label>
+              </ion-item>
+          </ion-menu-toggle>
+
+          
+        </ion-list>
+      </ion-content>
+    </ion-menu>
+    <ion-router-outlet id="containerId"></ion-router-outlet>
+  </ion-split-pane>
+</ion-content>

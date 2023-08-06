@@ -1,0 +1,101 @@
+.table{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    background: #212529;
+    
+    &__search{
+        width: 100%;
+        height: 30px;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        input{
+            width: 20%;
+            background: #212529;
+        }
+        select{
+            width: 15%;
+            background: #212529;
+            margin-right: 10px;
+        }
+    }
+    &__header{
+        display: flex;
+        border-bottom: 1px solid black;
+        margin-bottom: 10px;        
+        &__col {
+            flex: 1;
+            height: 50px;
+            display: flex;
+            margin-left: 10px;
+            align-items: center;            
+        }
+        &__colop{
+            height: 50px;
+            width: 70px;
+            margin-left: 10px;
+            display: flex;
+            align-items: center;
+        }
+    }
+    &__body{
+        display: flex;
+        flex-direction: column;
+        &__row{
+            width: 100%;   
+            display: flex;
+            flex-direction: row;  
+            &:nth-child(even){
+                background: #ddd
+            }       
+            &__col {
+                margin-left: 10px;
+                flex: 1;
+                display: flex;
+                align-items: center;
+            }
+            &__colop{
+                height: 50px;
+                width: 70px;
+                margin-left: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: space-around;
+                font-size: 20px;
+            }
+        }
+            
+    }
+}
+
+.paginatorContainer{
+    padding: 16px;
+    background: #212529;
+    display: inline-block;
+    width: 100%;
+    text-align: center;
+}
+.pageLeft{
+    margin-right: 10px;;
+}
+.pageRight{
+    margin-left: 10px;;
+}
+
+input:not([type="button"]):not([type="submit"]):not([type="checkbox"]) {
+	height: 30px;
+	
+	border: 0px;
+	border-radius: 50px;
+	border: 1px solid #a3a3a3;
+	padding-left: 10px;
+	padding-right: 10px;
+	color: black;
+}
+
+input[type="checkbox"] {
+	width: 50px;
+	height: 30px;
+}

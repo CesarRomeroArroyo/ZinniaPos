@@ -1,0 +1,24 @@
+.container{
+    padding: 25px;
+    color: var(--ion-color-light);
+}
+
+.card{
+    color: var(--ion-color-light);
+    display: flex;
+    flex-direction: column;
+    background-color:#26272C !important;
+    margin: 15px 15px 15px 0px;
+    padding: 35px;        
+    &__title{
+        font-size: 1.5rem;
+    }
+    &__form{
+        ion-item{
+            margin-top: 15px;
+        }
+        small{
+            color: var(--ion-color-primary);
+        }
+    }
+}

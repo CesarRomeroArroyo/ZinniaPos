@@ -1,0 +1,7 @@
+{
+  "name": "ZinniaCounter",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}

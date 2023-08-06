@@ -1,0 +1,62 @@
+<link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"
+	integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+<div class="table" *ngIf="!isMobile">
+	<div class="table__search">
+		{{translationService.translate('_SEARCH')}}:&nbsp;
+		<select name="busqueda" id="busqueda" [(ngModel)]="buscarTipo">
+			<option value="">{{translationService.translate('_SELECT_OPTION')}}</option>
+			<option *ngFor="let col of columns" (value)="col.name">{{col.name}}</option>
+		</select>
+		<input type="text" name="buscarTxt" [(ngModel)]="buscarTxt" (keyup)="buscar()" placeholder="{{translationService.translate('_SEARCH')}}...">
+	</div>
+	<div class="table__header">
+		<div class="table__header__col" *ngFor="let column of columns" (click)="onSort(column.name)">
+			{{column.title}}
+			<i *ngIf="column.name === nameSelected && this.orderOrientation === true" class="fa fa-angle-down"></i>
+			<i *ngIf="column.name === nameSelected && this.orderOrientation === false" class="fa fa-angle-up"></i>
+		</div>
+		<div class="table__header__colop" *ngIf="options">
+			{{translationService.translate('_OPTIONS')}}
+		</div>
+	</div>
+	<div class="table__body">
+		<div class="table__body__row" *ngFor="let row of dataGrid ; let i = index">
+			<div class="table__body__row__col" *ngFor="let col of columns ">
+				
+             <div *ngIf="col.name =='estado'" >
+				{{((col.name== 'estado')?row:row[col.name]).estado == '1'? translationService.translate('_ACTIVE'):translationService.translate('_INACTIVE') }}
+			 </div>
+			 <div *ngIf="col.name !=='estado'">
+                {{(col.name== '#')?row:row[col.name] }}
+			 </div>
+			</div>
+			<div class="table__body__row__colop">
+				<a *ngIf="optionsEdit" data-toggle="tooltip" (click)="onEditData(row)" data-original-title="translationService.translate('_EDIT')"> <i
+						style="cursor: pointer;" class="fa fa-pencil"></i> </a>
+				<a *ngIf="optionsDelete" data-toggle="tooltip" (click)="onDeleteData(row)"
+					data-original-title="translationService.translate('_DELETE')"> <i style="cursor: pointer;" class="fa fa-trash"></i> </a>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="paginatorContainer" *ngIf="!isMobile">
+	<i style="font-size: 20px; cursor: pointer;" class="fa fa-angle-left pageLeft" (click)="onPreviusPage()"></i>
+	{{actualPage}} / {{pagesNumber}}
+	<i style="font-size: 20px; cursor: pointer;" class="fa fa-angle-right pageRight" (click)="onNextPage()"></i>
+</div>
+
+<ion-list  *ngIf="isMobile">
+	<ion-item-sliding *ngFor="let row of dataGrid; let i = index">
+	  <ion-item>
+		<ion-label><div class="table__body__row__col" *ngFor="let col of columns ">
+			{{(col.name== '#')?row:row[col.name]}}
+		</div></ion-label>
+	  </ion-item>
+	  <ion-item-options side="end">
+		<ion-item-option *ngIf="optionsEdit" color="success" (click)="onEditData(row)">{{translationService.translate('_EDIT')}}</ion-item-option>
+		<ion-item-option *ngIf="optionsDelete" color="danger" (click)="onDeleteData(row)">{{translationService.translate('_DELETE')}}</ion-item-option>
+	  </ion-item-options>
+	</ion-item-sliding>
+  
+  </ion-list>

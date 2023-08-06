@@ -1,0 +1,135 @@
+<ion-content>
+  <div class="container">
+    <ion-grid>
+      <ion-row>
+        <ion-col size="12" size-xs="12" size-sm="12"  size-md="2" size-lg="2">
+          <div class="container__btns">
+            <div class="container__btns__back" (click)="goBack()">
+              <div class="container__btns__back__ico">
+                <ion-icon name="arrow-back-outline"></ion-icon>
+              </div>
+              <div class="container__btns__back__text">{{translationService.translate('_BACK')}}</div>
+            </div>
+            <div class="container__btns__img">
+              <div class="container__btns__img__ico">
+                <ion-icon name="image-outline"></ion-icon>
+              </div>
+              <div class="container__btns__img__text">
+                {{translationService.translate('_UPLOADIMG')}}
+              </div>
+            </div>
+          </div>
+        </ion-col>
+        <ion-col size="12" size-xs="12" size-sm="12"  size-md="5" size-lg="5">
+          <div class="container__data"  [formGroup]="itemsForm">
+            <div class="container__data__title">
+              {{translationService.translate('_ITEMINFO')}}
+            </div>
+            <ion-row>
+              <ion-col size="12" size-xs="12" size-sm="12" size-md="12" size-lg="12">
+                <ion-item>
+                  <ion-label color="light" position="stacked">
+                    {{translationService.translate('_ITEMNAME')}}
+                  </ion-label>
+                  <ion-input formControlName="name"></ion-input>
+                </ion-item>
+                <ion-item>
+                  <ion-label color="light" position="stacked">
+                    {{translationService.translate('_ITEMCATEGORY')}}
+                  </ion-label>
+                  <ion-select  formControlName="category">
+                    <ion-select-option value="{{cat.uniqueid}}" *ngFor="let cat of categories">{{cat.name}}</ion-select-option>
+                  </ion-select>
+                </ion-item>
+                <ion-item>
+                  <ion-label color="light" position="stacked">
+                    {{translationService.translate('_ITEMDESCRIPTION')}}
+                  </ion-label>
+                  <ion-textarea formControlName="description"></ion-textarea>
+                </ion-item>
+                <ion-item>
+                  <ion-label color="light" position="stacked">
+                    {{translationService.translate('_ITEMTYPE')}}
+                  </ion-label>
+                  <ion-select  formControlName="type">
+                    <ion-select-option value="{{param.value}}" *ngFor="let param of params">{{translationService.translate(param.name)}}</ion-select-option>
+                  </ion-select>
+                </ion-item>                
+              </ion-col>
+              <ion-col size="6" size-xs="6" size-sm="6" size-md="6" size-lg="6">
+                <ion-item>
+                  <ion-label color="light" position="stacked">
+                    {{translationService.translate('_ITEMCOOKTIME')}}
+                  </ion-label>
+                  <ion-input type="number" formControlName="cooktime"></ion-input>
+                </ion-item>
+              </ion-col>
+              <ion-col size="6" size-xs="6" size-sm="6" size-md="6" size-lg="6">
+                <ion-item>
+                  <ion-label color="light" position="stacked">
+                    {{translationService.translate('_ITEMCALORIES')}}
+                  </ion-label>
+                  <ion-input type="number" formControlName="calories"></ion-input>
+                </ion-item>
+              </ion-col>
+              <ion-col size="12" size-xs="12" size-sm="12" size-md="12" size-lg="12">
+                <ion-item>
+                  <ion-label color="light" position="stacked">
+                    {{translationService.translate('_ITEMSTOCK')}}
+                  </ion-label>
+                  <ion-select  formControlName="type">
+                    <ion-select-option value="{{param.value}}" *ngFor="let param of yesnos">{{translationService.translate(param.name)}}</ion-select-option>
+                  </ion-select>
+                  
+                </ion-item>
+              </ion-col>
+            </ion-row>
+          </div>
+        </ion-col>
+        <ion-col size="12" size-xs="12" size-sm="12"  size-md="5" size-lg="5" *ngIf="getTypeItem() == 1">
+          <div class="container__additional">
+            <div class="container__additional__title">
+              {{translationService.translate('_ITEMINGREDIENTS')}}
+            </div>
+            <ion-row>
+              <ion-col size="12" size-xs="12" size-sm="12"  size-md="7" size-lg="7">
+                <ion-item>
+                  <ion-label color="light" position="stacked">
+                    {{translationService.translate('_ITEMNAME')}}
+                  </ion-label>
+                  <ion-input ></ion-input>
+                </ion-item>
+              </ion-col>
+              <ion-col size="12" size-xs="12" size-sm="12"  size-md="2" size-lg="2">
+                <ion-item>
+                  <ion-label color="light" position="stacked">
+                    {{translationService.translate('_ITEMQUANTITYADITIONALS')}}
+                  </ion-label>
+                  <ion-input ></ion-input>
+                </ion-item>
+              </ion-col>
+              <ion-col size="12" size-xs="12" size-sm="12"  size-md="3" size-lg="3">
+                <ion-item>
+                  <ion-label color="light" position="stacked">
+                    {{translationService.translate('_ITEMPRICEADITIONALS')}}
+                  </ion-label>
+                  <ion-input ></ion-input>
+                </ion-item>
+              </ion-col>
+              <ion-col size="12" size-xs="12" size-sm="12"  size-md="12" size-lg="12">
+                <ion-button expand="block" fill="outline" shape="round" >
+                  + {{translationService.translate('_ADD_MORE')}} 
+                </ion-button>
+              </ion-col>
+              <ion-col size="12" size-xs="12" size-sm="12"  size-md="12" size-lg="12">
+                <app-data-table [columns]="columns" [data]="data" [options]="true">
+                </app-data-table>
+              </ion-col>
+            </ion-row>
+            
+          </div>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>
+</ion-content>

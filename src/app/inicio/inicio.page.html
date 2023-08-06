@@ -1,0 +1,248 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title><img style="height:25px; margin-left: 15px;" src="../../assets/images/Zinnia_Bg_Black.png" alt="">  </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-grid>
+    <ion-row>
+      <ion-col size="2" size-xs="12" size-sm="12"  size-md="3" size-lg="2">
+        <div class="menu">
+          <div class="menu__title">
+            {{translationService.translate('_REAL_TIME_ORDERS')}}
+          </div>
+          <div class="menu__num_orders">
+            8
+          </div>
+          <div class="menu__order_items">
+            (39 {{translationService.translate('_ITEMS')}})
+          </div>
+          <div class="menu__btn_status">
+            <ion-button shape="round" fill="solid" size="large" expand="full" color="success" (click)="goToAdmin()">{{translationService.translate('_GO_TO_ADMIN')}}</ion-button>
+          </div>
+          <div class="menu__btn_go_pos">
+            <ion-button shape="round" fill="solid" size="large" expand="full" color="tertiary" (click)="goToPOS()">{{translationService.translate('_GO_TO_POS')}}</ion-button>
+          </div>
+          <div class="menu__occupancy_per">
+            60%
+          </div>
+          <div class="menu__occupancy_title">
+            {{translationService.translate('_TABLES_OCCUPPIED')}}
+          </div>
+          <div class="menu__sales">
+            $683,4
+          </div>
+          <div class="menu__sales_today">
+            {{translationService.translate('_SALES_TODAY')}}
+          </div>
+        </div>
+      </ion-col>
+      <ion-col size="10" size-xs="12" size-sm="12"  size-md="9" size-lg="10">
+        <div class="data">
+          <ion-grid>
+            <ion-row>
+              <ion-col size="12" size-xs="12" size-sm="12"  size-md="12" size-lg="12">
+                <div class="data__chartbar">
+                  
+                  <canvas 
+                          
+                          baseChart
+                          [data]="barChartData"
+                          [options]="barChartOptions"
+                          [plugins]="barChartPlugins"
+                          [legend]="barChartLegend"
+                          [type]="'bar'">
+                  </canvas>
+                </div>
+                
+              </ion-col>
+              <ion-col size="6" size-xs="12" size-sm="12"  size-md="6" size-lg="6">
+                <ion-grid>
+                  <ion-row>
+                    <ion-col size="6">
+                      <div class="data__total_orders">
+                        <div class="data__total_orders__img">
+                          <img src="./../../../assets/images/ic_Serving.png" alt="">
+                        </div>
+                        <div class="data__total_orders__data">
+                          <div class="data__total_orders__data__tilte">{{translationService.translate('_TOTAL_ORDERS')}}</div>
+                          <div class="data__total_orders__data__num">128</div>
+                        </div>
+                      </div>
+                    </ion-col>
+                    <ion-col size="6">
+                      <div class="data__total_orders">
+                        <div class="data__total_orders__img">
+                          <img src="./../../../assets/images/ic_energy.png" alt="">
+                        </div>
+                        <div class="data__total_orders__data">
+                          <div class="data__total_orders__data__tilte">{{translationService.translate('_REVENUE')}}</div>
+                          <div class="data__total_orders__data__num">25</div>
+                        </div>
+                      </div>
+                    </ion-col>
+                  </ion-row>
+                </ion-grid>
+                <ion-grid>
+                  <ion-row>
+                    <ion-col size="6">
+                      <div class="data__total_orders">
+                        <div class="data__total_orders__img">
+                          <img src="./../../../assets/images/ic_cutlery.png" alt="">
+                        </div>
+                        <div class="data__total_orders__data">
+                          <div class="data__total_orders__data__tilte">{{translationService.translate('_ITEMS_SOLD')}}</div>
+                          <div class="data__total_orders__data__num">180</div>
+                        </div>
+                      </div>
+                    </ion-col>
+                    <ion-col size="6">
+                      <div class="data__total_orders">
+                        <div class="data__total_orders__img">
+                          <img src="./../../../assets/images/ic_Serving.png" alt="">
+                        </div>
+                        <div class="data__total_orders__data">
+                          <div class="data__total_orders__data__tilte">{{translationService.translate('_TOTAL_ORDERS')}}</div>
+                          <div class="data__total_orders__data__num">17</div>
+                        </div>
+                      </div>
+                    </ion-col>
+                  </ion-row>
+                </ion-grid>
+              </ion-col>
+              <ion-col size="6" size-xs="12" size-sm="12"  size-md="6" size-lg="6">
+                <div class="data__chartbar" style="max-height:250px">
+                  <canvas baseChart max-height="150"
+                    [type]="'pie'"
+                    [datasets]="pieChartDatasets"
+                    [labels]="pieChartLabels"
+                    [options]="pieChartOptions"
+                    [plugins]="pieChartPlugins"
+                    [legend]="pieChartLegend">
+                  </canvas>
+                </div>
+              </ion-col>
+              <ion-col size="6" size-xs="12" size-sm="12"  size-md="6" size-lg="6">
+                <div class="data__top_sell">
+                  <div class="data__top_sell__title">
+                    {{translationService.translate('_TOP_SELLING_ITEMS')}}
+                  </div>
+                  <div class="data__top_sell__item">
+                    <div class="data__top_sell__item__img">
+                      <img src="../../../assets/images/1.png" alt="">
+                    </div>
+                    <div class="data__top_sell__item__data">
+                      <h5>Cream Pancake</h5>
+                      <p>124 {{translationService.translate('_TIMES')}}</p>
+                      
+                    </div>
+                  </div>
+
+                  <div class="data__top_sell__item">
+                    <div class="data__top_sell__item__img">
+                      <img src="../../../assets/images/1.png" alt="">
+                    </div>
+                    <div class="data__top_sell__item__data">
+                      <h5>Cream Pancake</h5>
+                      <p>124 {{translationService.translate('_TIMES')}}</p>
+                      
+                    </div>
+                  </div>
+
+                  <div class="data__top_sell__item">
+                    <div class="data__top_sell__item__img">
+                      <img src="../../../assets/images/1.png" alt="">
+                    </div>
+                    <div class="data__top_sell__item__data">
+                      <h5>Cream Pancake</h5>
+                      <p>124 {{translationService.translate('_TIMES')}}</p>
+                      
+                    </div>
+                  </div>
+
+                </div>
+              </ion-col>
+              <ion-col size="6" size-xs="12" size-sm="12"  size-md="6" size-lg="6">
+                <ion-grid>
+                  <ion-row>
+                    <ion-col size="12">
+                      <div class="data__percent">
+                        <div class="data__percent__title">
+                          {{translationService.translate('_ORDER_FORM')}}
+                        </div>
+                        <div class="data__percent__item">
+                          <div class="data__percent__item__title">{{translationService.translate('_TABLES')}}</div>
+                          <div class="data__percent__item__bar">
+                            <div class="data__percent__item__bar__container">
+                              <div class="data__percent__item__bar__container__progress"></div>
+                            </div>
+                          </div>
+                          <div class="data__percent__item__num">
+                            <div class="data__percent__item__num__data">650</div>
+                            <div class="data__percent__item__num__per">(95%)</div>
+                          </div>
+                        </div>
+
+                        <div class="data__percent__item">
+                          <div class="data__percent__item__title">{{translationService.translate('_DELIVERY')}}</div>
+                          <div class="data__percent__item__bar">
+                            <div class="data__percent__item__bar__container">
+                              <div class="data__percent__item__bar__container__progress"></div>
+                            </div>
+                          </div>
+                          <div class="data__percent__item__num">
+                            <div class="data__percent__item__num__data">20</div>
+                            <div class="data__percent__item__num__per">(15%)</div>
+                          </div>
+                        </div>
+
+                      </div>
+                      
+                    </ion-col>
+                    <ion-col size="12">
+                      <div class="data__percent">
+                        <div class="data__percent">
+                          <div class="data__percent__title">
+                            {{translationService.translate('_PAYMENT_MODES')}}
+                          </div>
+                          <div class="data__percent__item">
+                            <div class="data__percent__item__title">{{translationService.translate('_CASH')}}</div>
+                            <div class="data__percent__item__bar">
+                              <div class="data__percent__item__bar__container">
+                                <div class="data__percent__item__bar__container__progress"></div>
+                              </div>
+                            </div>
+                            <div class="data__percent__item__num">
+                              <div class="data__percent__item__num__data">650</div>
+                              <div class="data__percent__item__num__per">(95%)</div>
+                            </div>
+                          </div>
+  
+                          <div class="data__percent__item">
+                            <div class="data__percent__item__title">{{translationService.translate('_CREDIT_CARD')}}</div>
+                            <div class="data__percent__item__bar">
+                              <div class="data__percent__item__bar__container">
+                                <div class="data__percent__item__bar__container__progress"></div>
+                              </div>
+                            </div>
+                            <div class="data__percent__item__num">
+                              <div class="data__percent__item__num__data">20</div>
+                              <div class="data__percent__item__num__per">(15%)</div>
+                            </div>
+                          </div>
+  
+                        </div>
+                        
+                      </div>
+                    </ion-col>
+                  </ion-row>
+                </ion-grid>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+        </div>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>

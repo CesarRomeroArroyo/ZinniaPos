@@ -1,0 +1,17 @@
+.container{
+    padding: 25px;
+    color: var(--ion-color-light);
+    &__header{
+        display: flex;
+        margin-bottom: 20px;
+        &__title{
+            font-size: 2rem;
+            font-weight: 600;
+            flex: 1;
+        }
+        &__btn{
+            flex: 1;
+        }
+
+    }
+}
