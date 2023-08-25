@@ -9,7 +9,7 @@
                 {{translationService.translate('_CATEGORIES')}}
               </div>
               <div class="container__header__btn">
-                <ion-button shape="round">
+                <ion-button shape="round" (click)="goTo(['dashboard','admin-categories'])">
                   {{translationService.translate('_ADDNEW')}}
                 </ion-button>
               </div>

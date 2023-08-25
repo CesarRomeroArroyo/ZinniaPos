@@ -85,5 +85,11 @@
     "_ITEM_TYPE_INGREDIENT": "Ingrediente",
     "_ITEM_TYPE_ADITIONALS":"Adiciones",
     "_ITEM_IN_STOCK_YES":"Si",
-    "_ITEM_IN_STOCK_NO":"No"
+    "_ITEM_IN_STOCK_NO":"No",
+    "_CATEGORIES_NAME": "Nombre",
+    "_CATEGORIES_TAX": "Impuesto aplicable",
+    "_CATEGORIES_INFO": "Informacion de la Categoria",
+    "_TAXES_NA":"No Aplica",
+    "_TAXES_IVA_19":"IVA",
+    "_TAXES_IPOCONSUMO":"IMPOCONSUMO"
 }

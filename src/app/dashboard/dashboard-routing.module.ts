@@ -48,6 +48,14 @@ const routes: Routes = [
       {
         path: 'admin-item/:id',
         loadChildren: () => import('./pages/items/admin-item/admin-item.module').then( m => m.AdminItemPageModule)
+      }, 
+      {
+        path: 'admin-categories',
+        loadChildren: () => import('./pages/categories/admin-categories/admin-categories.module').then( m => m.AdminCategoriesPageModule)
+      },
+      {
+        path: 'admin-categories/:id',
+        loadChildren: () => import('./pages/categories/admin-categories/admin-categories.module').then( m => m.AdminCategoriesPageModule)
       }
     ],
     canActivate: [AuthGuard]

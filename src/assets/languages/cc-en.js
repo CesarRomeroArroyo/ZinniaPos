@@ -85,7 +85,12 @@
     "_ITEM_TYPE_INGREDIENT": "Ingredient",
     "_ITEM_TYPE_ADITIONALS":"Aditionals",
     "_ITEM_IN_STOCK_YES":"Yes",
-    "_ITEM_IN_STOCK_NO":"No"
-
+    "_ITEM_IN_STOCK_NO":"No",
+    "_CATEGORIES_NAME": "Name",
+    "_CATEGORIES_TAX": "Applicable tax",
+    "_CATEGORIES_INFO": "Category Info",
+    "_TAXES_NA":"Not Applicable",
+    "_TAXES_IVA_19":"VAT",
+    "_TAXES_IPOCONSUMO":"Consumer Goods Tax"
     
 }

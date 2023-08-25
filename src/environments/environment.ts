@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  api_url: 'https://zinniaapis.amazing-wright.137-184-198-32.plesk.page/public/',
+  api_url: 'http://172.178.104.234/zinniaapis/public/',
   sockets_url: 'wss://king-prawn-app-5qx6e.ondigitalocean.app/'
 };
 
