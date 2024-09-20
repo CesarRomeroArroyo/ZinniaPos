@@ -74,11 +74,17 @@ ion-label{
   --ion-background-color:#131217;
 }
 
-ion-input{
-  --placeholder-color: var(--ion-color-light) !important;
-    color: var(--ion-color-light) !important; 
-    width: 100%;
-}
+ion-input {
+	--placeholder-color: var(--ion-color-light) !important;
+	color: var(--ion-color-light) !important; 
+	width: 100%;
+	text-transform: uppercase;  /* Transforma el texto ingresado a mayúsculas */
+  }
+
+ion-textarea {
+	text-transform: uppercase;  /* Transforma el texto ingresado a mayúsculas */
+  }
+  
 
 ion-item{
   //--ion-background-color:white;
@@ -135,3 +141,6 @@ select{
 	color: var(--ion-color-light-contrast)!important;	
   }
 
+input{
+	text-transform: uppercase;
+}

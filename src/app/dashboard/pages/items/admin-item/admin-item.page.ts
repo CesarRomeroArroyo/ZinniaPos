@@ -58,7 +58,8 @@ export class AdminItemPage implements OnInit {
   }
 
   async getEnabledCategories(){
-    this.categories = <GeneralCategory[]> await this.proxyService.getMethod("list/category/");
+    this.categories = <GeneralCategory[]> await this.proxyService.getMethod("list/general_category/");
+    console.log(this.categories);
   }
 
   goBack(){
