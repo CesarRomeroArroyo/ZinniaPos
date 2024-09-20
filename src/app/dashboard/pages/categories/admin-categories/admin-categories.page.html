@@ -26,14 +26,9 @@
                   </ion-label>
                   <ion-input formControlName="name"></ion-input>
                 </ion-item>
-                <ion-item>
-                  <ion-label color="light" position="stacked">
-                    {{translationService.translate('_CATEGORIES_TAX')}}
-                  </ion-label>
-                  <ion-select  formControlName="tax">
-                    <ion-select-option value="{{cat.uniqueid}}" *ngFor="let cat of taxes">{{translationService.translate(cat.name)}}</ion-select-option>
-                  </ion-select>
-                </ion-item>           
+                
+                  <ion-button expand="full" (click)="confirmSave()">Agregar</ion-button>
+                
               </ion-col>
             </ion-row>
           </form>

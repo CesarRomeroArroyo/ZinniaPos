@@ -10,7 +10,7 @@ import { TranslationService } from '../core/services/translation.service';
   styleUrls: ['./login.page.scss'],
 })
 export class LoginPage implements OnInit {
-  public usuario:any =  {user: '', pass:'', codigo:''};
+  public usuario:any =  {user: '', pass:''};
   constructor(
     public translationService: TranslationService,
     private proxy:ProxyService,

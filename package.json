@@ -24,7 +24,7 @@
     "@capacitor/haptics": "4.1.0",
     "@capacitor/keyboard": "4.1.0",
     "@capacitor/status-bar": "4.1.0",
-    "@ckeditor/ckeditor5-angular": "^4.0.0",
+    "@ckeditor/ckeditor5-angular": "^4.25.0",
     "@ionic/angular": "^6.1.9",
     "chart.js": "^3.6.0",
     "ckeditor4-angular": "^3.2.0",

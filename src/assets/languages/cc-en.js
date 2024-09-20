@@ -91,6 +91,7 @@
     "_CATEGORIES_INFO": "Category Info",
     "_TAXES_NA":"Not Applicable",
     "_TAXES_IVA_19":"VAT",
-    "_TAXES_IPOCONSUMO":"Consumer Goods Tax"
-    
+    "_TAXES_IPOCONSUMO":"Consumer Goods Tax",
+    "_GENERAL_ERROR":"Something worng, try again",
+    "_GENERAL_SAVE_CONFIRM":"Success Data Saving"
 }

@@ -91,5 +91,7 @@
     "_CATEGORIES_INFO": "Informacion de la Categoria",
     "_TAXES_NA":"No Aplica",
     "_TAXES_IVA_19":"IVA",
-    "_TAXES_IPOCONSUMO":"IMPOCONSUMO"
+    "_TAXES_IPOCONSUMO":"IMPOCONSUMO", 
+    "_GENERAL_ERROR":"Ocurrio un error, intentelo nuevamente",
+    "_GENERAL_SAVE_CONFIRM":"Datos guardados correctamente",
 }
