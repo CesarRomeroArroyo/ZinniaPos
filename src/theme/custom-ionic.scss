@@ -1,0 +1,42 @@
+/* CUSTOM CSS FOR BUTTONS */
+ion-button {
+    text-transform: none !important;
+    font-weight: 600;
+    size: 10px;
+    line-height: 16px;
+    height: 36px;
+    --border-radius: 8px;
+    --padding-top: 10px;
+    --padding-bottom: 10px;
+}
+
+ion-button.link{
+    --padding-bottom: 0px;
+    --padding-top: 0px;
+    height: 35px;
+}
+
+ion-button.button-disabled {
+    --background: var(--ion-dark-gray);
+    --box-shadow: none;
+    opacity: 1;
+    --color: var(--ion-color-primary-contrast);
+}
+
+ion-button[fill="outline"] {
+    --background: transparent;
+    --box-shadow: none;
+    --color: var(--ion-color-tertiary);
+    --border-color: 1px solid #9E9E9E;
+
+}
+
+ion-footer{
+    background-color: white;
+}
+
+ion-checkbox { 
+    --checkbox-background-checked: var(--ion-color-tertiary);
+    --border-color: 1px solid var(--ion-color-tertiary);
+    --border-color-checked: 1px solid var(--ion-color-tertiary);
+}

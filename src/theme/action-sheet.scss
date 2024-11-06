@@ -1,0 +1,16 @@
+ion-action-sheet.assistance-sheet .action-sheet-group {
+    .action-sheet-title {
+        margin-left: 0.5rem;
+    }
+
+    .action-sheet-icon {
+        margin-left: 0.5rem;
+        margin-right: 1rem;
+    }
+
+    .cancel-button {
+        color: var(--ion-color-danger);
+        --color: var(--ion-color-danger);
+        margin-bottom: 2rem;
+    }
+}
