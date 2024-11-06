@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { LocalStorageService } from '../core/services/local-storage.service';
-import { ProxyService } from '../core/services/proxy.service';
+import { LocalStorageService } from '../../core/services/local-storage.service';
+import { ProxyService } from '../../core/services/proxy.service';
 import { ToastController } from '@ionic/angular';
 import { Router } from '@angular/router';
-import { TranslationService } from '../core/services/translation.service';
+import { TranslationService } from '../../core/services/translation.service';
 @Component({
   selector: 'app-login',
   templateUrl: './login.page.html',

@@ -5,7 +5,7 @@ import { AuthGuard } from './core/guards/logit-guard.service';
 const routes: Routes = [
   {
     path: 'login',
-    loadChildren: () => import('./login/login.module').then( m => m.LoginPageModule)
+    loadChildren: () => import('./auth/login/login.module').then( m => m.LoginPageModule)
   },
   {
     path: '',
@@ -19,7 +19,7 @@ const routes: Routes = [
   },
   {
     path: 'inicio',
-    loadChildren: () => import('./inicio/inicio.module').then( m => m.InicioPageModule),
+    loadChildren: () => import('./pages/inicio/inicio.module').then( m => m.InicioPageModule),
     canActivate: [AuthGuard]
   },
   
