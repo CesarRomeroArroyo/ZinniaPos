@@ -1,0 +1,12 @@
+<ion-header class="ion-no-border" mode="md">
+  <ion-toolbar >
+   <ion-buttons slot="start">
+    <ion-button (click)=" settingHeader.modalBack ? onBackModal() : onBack()">
+      @if (settingHeader.viewBtnBack) {
+        <ion-icon  slot="icon-only" name="arrow-back" aria-label="Back" ></ion-icon>
+      }
+    </ion-button>
+    <ion-title> {{ settingHeader.title }} </ion-title>
+   </ion-buttons>
+  </ion-toolbar>
+</ion-header>
