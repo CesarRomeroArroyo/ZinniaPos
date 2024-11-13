@@ -1,0 +1,25 @@
+<ion-toolbar class="header">
+  <div class="container">
+    <div class="icon-container" [ngClass]="{ 'success': isSuccess, 'error': !isSuccess }">
+      <ion-icon class="first-icon" [name]="firstIcon" color="light"> </ion-icon>
+      <ion-icon class="second-icon" [name]="secondIcon" color="light" *ngIf="secondIcon"> </ion-icon>
+    </div>
+  </div>
+</ion-toolbar>
+<ion-content class="container">
+  <div class="content ion-text-center">
+    <h4 class="content__title">
+      {{ title }}
+    </h4>
+
+    <ion-text color="secondary" >
+      <p class="content__message">
+        {{ message }}
+      </p>
+    </ion-text>
+
+    <ion-button expand="block" fill="solid" (click)="closeModal()">
+      {{ buttonText }}
+    </ion-button>
+  </div>
+</ion-content>

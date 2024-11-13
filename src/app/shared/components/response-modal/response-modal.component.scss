@@ -1,0 +1,21 @@
+.container {
+    display: flex;
+    justify-content: center;
+    --background: transparent;
+    
+
+    .content {
+        border-radius: 20px;
+        background-color: white;
+        height: auto;
+        padding: 35px 24px 24px 24px;
+
+        &__title {
+            font-weight: 600;
+        }
+
+        &__message {
+            font-size: 14px;
+        }
+    }
+}

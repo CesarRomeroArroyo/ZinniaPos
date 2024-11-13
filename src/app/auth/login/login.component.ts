@@ -1,21 +1,39 @@
-import { Component, OnInit } from '@angular/core';
-import { LocalStorageService } from '../../core/services/local-storage.service';
-import { ProxyService } from '../../core/services/proxy.service';
-import { IonButton, IonCheckbox, IonContent, IonFooter, IonInput, IonToolbar, ModalController, ToastController } from '@ionic/angular';
-import { Router, RouterModule } from '@angular/router';
-import { TranslationService } from '../../core/services/translation.service';
-import { LoginImages } from './login.consts';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import { addIcons } from 'ionicons';
+import { LoginImages } from './login.consts';
+import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+import { Router, RouterModule } from '@angular/router';
+import { environment } from 'src/environments/environment';
+import { ProxyService } from '../../core/services/proxy.service';
+import { TranslationService } from '../../core/services/translation.service';
+import { LocalStorageService } from '../../core/services/local-storage.service';
 import { mailOutline, lockClosedOutline, eyeOutline, eyeOffOutline } from 'ionicons/icons';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { IonButton, IonCheckbox, IonContent, IonFooter, IonInput, IonToolbar, ModalController, ToastController } from '@ionic/angular';
 
 @Component({
   selector: 'app-login',
-  templateUrl: './login.page.html',
-  styleUrls: ['./login.page.scss'],
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.scss'],
+  standalone: true,
+  providers: [
+    ModalController
+  ],
+  imports: [
+    CommonModule,
+    IonInput,
+    IonCheckbox,
+    IonButton,
+    IonFooter,
+    IonToolbar,
+    IonContent,
+    ReactiveFormsModule,
+    //DirectivesModule,
+    RouterModule,
+    FormsModule
+  ]
 })
-export class LoginPage {
+export class LoginComponent {
   public usuario:any =  {user: '', pass:''};
   public loginImages = LoginImages
   public loginForm!: FormGroup;
@@ -33,6 +51,10 @@ export class LoginPage {
 
   ionViewWillEnter() {
     this.createForm();
+  }
+
+  get isDevelopment() {
+    return !environment.production;
   }
 
   private createForm(): void {

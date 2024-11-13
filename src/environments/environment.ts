@@ -4,8 +4,13 @@
 
 export const environment = {
   production: false,
-  api_url: 'https://codigofuentecorp.eastus.cloudapp.azure.com/ZinniaApis/public/',
-  sockets_url: 'ws://172.178.104.234:3000/'
+  //api_url: 'https://codigofuentecorp.eastus.cloudapp.azure.com/ZinniaApis/public/',
+  //sockets_url: 'ws://172.178.104.234:3000/'
+  API: 'https://codigofuentecorp.eastus.cloudapp.azure.com/zinnia-apis-php/public/',
+  //FILES: '',
+  //POLICIES_URL: '',
+  STORAGE_KEY: 'Jo$2c7@w-Se6rl?Iz?gu',
+  //ONESIGNAL_APPID: ""
 };
 
 /*
