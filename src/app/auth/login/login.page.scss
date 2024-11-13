@@ -1,71 +1,41 @@
-.content{
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    background: url(./../../../assets/images/sign_in_bg.png);
-    background-size: cover;
-        background-repeat: no-repeat;
-        background-position: center;
+.container {
+  --padding-start: 2rem;
+  --padding-end: 2rem;
 
-    &__modal{
-        background-color: rgba($color: #212529, $alpha: 0.8);
-        
-        
-        padding:55px;
-        
-        display: flex;
-        justify-content:center;
-        align-items: center;
-        width: 450px;
-        max-width: 450px;
-        &__form{   
-          width: 100%;   
-          ion-input{
-            --ion-background-color:rgba($color: #212529, $alpha: 0.8);
-          }          
-          ion-item{
-            --ion-background-color:rgba($color: #212529, $alpha: 0.8);
-            
-          }
-          &__img{
-              width: 100%;
-              display: flex;
-              justify-content: center;   
-              align-items: center;     
-              margin-bottom: 20px;      
-              img{
-                width: 250px;
-              }
-          }  
-        
-          &__title{
-              width: 100%;
-              display: flex;
-              
-              align-items: center;           
-              color: var(--ion-color-light);
-          }  
-        }
+  .header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+
+    .image {
+      width: 86px;
+      height: 16px;
+      margin-bottom: 1rem;
     }
-    &__btn{
-      cursor: pointer;
-      color: var(--ion-color-light);
-      text-transform: uppercase;
-      font-weight: bold;
-      display: flex;
-      justify-content:center;
-      align-items: center;
-      height:70px;
-      background-color: var(--ion-color-primary);
-      width: 450px;
-      max-width: 450px;
-      font-size: 20px;
-      margin-inline: 2px;
-      ion-button{
-        margin-top:0px !important;
-      }
+  }
+
+  .texts {
+    margin-bottom: 2rem;
+
+    .title {
+      margin-bottom: 1rem;
     }
+
+    .subtitle {
+      display: block;
+      line-height: 1.4;
+    }
+  }
+
+  .remember-forgot {
+    display: flex;
+    align-items: center;
+    gap: 8px; 
+  }
+
+  .remember-forgot ion-label {
+    
+  }
 }
