@@ -59,3 +59,24 @@
 .bold {
     font-weight: 600 !important;
 }
+
+.title {
+    font-family: "Segoe-UI-Bold", sans-serif;
+    font-size: 0.875rem;
+    color: var(--ion-color-tertiary);
+}
+
+.subtitle {
+    font-family: "Segoe-UI", sans-serif;
+    font-size: 0.75rem;
+    color: var(--ion-color-secondary);
+}
+
+.text {
+    font-family: "Segoe-UI", sans-serif;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--ion-color-tertiary);
+    line-height: 1rem;
+}
+
