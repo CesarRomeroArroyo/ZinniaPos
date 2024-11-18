@@ -1,8 +1,8 @@
 import { enableProdMode, LOCALE_ID } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { RouteReuseStrategy, provideRouter } from '@angular/router';
-import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalone';
-
+import { IonicRouteStrategy } from '@ionic/angular';
+import { provideIonicAngular } from '@ionic/angular/standalone';
 import { routes } from './app/app.routes';
 import { AppComponent } from './app/app.component';
 import { environment } from './environments/environment';
@@ -14,6 +14,7 @@ import { ToastController } from '@ionic/angular';
 import { LocationAccuracy } from '@awesome-cordova-plugins/location-accuracy/ngx';
 import { registerLocaleData } from '@angular/common';
 import localeEsCO from '@angular/common/locales/es-CO';
+import { importProvidersFrom } from '@angular/core'
 //import { BackgroundGeolocation } from '@ionic-native/background-geolocation/ngx';
 
 if (environment.production) {

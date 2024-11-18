@@ -21,7 +21,7 @@ export class UnauthenticatedGuard implements CanActivate {
     state: RouterStateSnapshot): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
       const userSesion = this.coreService.hasUserLogged();
       const isPresentated = this.localStorageService.getItem(StorageKeys.PRESENTATED);
-      if (!userSesion && isPresentated) {
+      if (!userSesion && !isPresentated) {
         return true;
       } 
 

@@ -1,41 +1,65 @@
 .container {
-  --padding-start: 2rem;
-  --padding-end: 2rem;
+  padding: 0rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: center;  /* Centra verticalmente */ 
+}
 
-  .header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 2rem;
-    margin-bottom: 2rem;
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 
-    .image {
-      width: 86px;
-      height: 16px;
-      margin-bottom: 1rem;
-    }
+  .image {
+    width: 86px;
+    height: 16px;
+    margin-bottom: 1rem;
+  }
+}
+
+.form {
+  gap: 16px; 
+  padding-bottom: 16px;
+}
+
+.texts {
+  margin-bottom: 2rem;
+
+  .title {
+    margin-bottom: 1rem;
   }
 
-  .texts {
-    margin-bottom: 2rem;
-
-    .title {
-      margin-bottom: 1rem;
-    }
-
-    .subtitle {
-      display: block;
-      line-height: 1.4;
-    }
+  .subtitle {
+    display: block;
+    line-height: 1.4;
   }
+}
 
-  .remember-forgot {
-    display: flex;
-    align-items: center;
-    gap: 8px; 
-  }
+.remember-forgot {
+  display: flex;
+  align-items: center;
+  gap: 8px; 
+}
 
-  .remember-forgot ion-label {
-    
-  }
+ion-content {
+  --padding-bottom: 0px;
+}
+
+ion-input {
+  height: 36px;
+  min-height: 36px;
+  margin-bottom: 16px;
+}
+
+ion-header{
+  height: 16px;
+}
+
+ion-footer {
+  padding: 0rem 1.5rem 2rem 1.5rem;
+}
+
+ion-button {
+  margin-bottom: 16px;
 }

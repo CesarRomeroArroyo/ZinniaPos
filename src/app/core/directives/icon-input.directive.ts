@@ -6,6 +6,7 @@ import { Directive, ElementRef, Input, OnInit, Renderer2 } from '@angular/core';
 export class IconInputDirective implements OnInit {
 
   @Input() iconName!: string;
+  @Input() iconPosition: 'start' | 'end' = 'end';
   private ionInput!: HTMLInputElement;
 
   constructor(
@@ -17,7 +18,7 @@ export class IconInputDirective implements OnInit {
 
   ngOnInit(): void {
     const ionIcon = this.renderer.createElement('ion-icon');
-    this.renderer.setAttribute(ionIcon, 'slot', 'start');
+    this.renderer.setAttribute(ionIcon, 'slot', this.iconPosition);
     this.renderer.setAttribute(ionIcon, 'name', this.iconName);
     this.renderer.setAttribute(ionIcon, 'color', 'secondary');
     this.renderer.appendChild(this.ionInput, ionIcon);

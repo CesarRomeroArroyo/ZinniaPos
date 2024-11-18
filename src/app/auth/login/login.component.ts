@@ -7,9 +7,12 @@ import { environment } from 'src/environments/environment';
 import { ProxyService } from '../../core/services/proxy.service';
 import { TranslationService } from '../../core/services/translation.service';
 import { LocalStorageService } from '../../core/services/local-storage.service';
-import { mailOutline, lockClosedOutline, eyeOutline, eyeOffOutline } from 'ionicons/icons';
+import { eyeOutline, eyeOffOutline, mailOutline, lockClosedOutline } from 'ionicons/icons';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { IonButton, IonCheckbox, IonContent, IonFooter, IonInput, IonToolbar, ModalController, ToastController } from '@ionic/angular';
+import { IonicModule, ToastController } from '@ionic/angular';
+import { ModalController } from '@ionic/angular';
+import { DirectivesModule } from 'src/app/core/directives/directives.module';
+import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core'
 
 @Component({
   selector: 'app-login',
@@ -21,17 +24,13 @@ import { IonButton, IonCheckbox, IonContent, IonFooter, IonInput, IonToolbar, Mo
   ],
   imports: [
     CommonModule,
-    IonInput,
-    IonCheckbox,
-    IonButton,
-    IonFooter,
-    IonToolbar,
-    IonContent,
+    IonicModule,
     ReactiveFormsModule,
-    //DirectivesModule,
+    DirectivesModule,
     RouterModule,
-    FormsModule
-  ]
+    FormsModule,
+  ],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class LoginComponent {
   public usuario:any =  {user: '', pass:''};

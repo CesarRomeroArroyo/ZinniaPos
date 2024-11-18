@@ -31,6 +31,10 @@ ion-button[fill="outline"] {
     --border-color: 1px solid #9E9E9E;
 }
 
+ion-header {
+    background-color: white !important;
+}
+
 ion-footer{
     background-color: white;
 }
@@ -40,6 +44,5 @@ ion-checkbox {
 }
 
 ion-checkbox::part(container) {
-    border-radius: 6px;
     border: 1px solid var(--ion-color-tertiary);
 }
