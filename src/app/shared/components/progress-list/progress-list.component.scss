@@ -1,0 +1,52 @@
+.task-progress {
+    text-align: start;
+
+    .mb-16 {
+        margin-bottom: 16px;
+    }
+
+    .text {
+        color: var(--ion-color-secondary);
+    }
+
+    .border {
+        border: 1px solid var(--border-light-gray);
+
+        &.inline-block {
+            display: inline-block !important;
+        }
+
+        &.border-radius-md {
+            border-radius: 99px;
+        }
+
+        &.border-radius-sm {
+            border-radius: 6px;
+        }
+
+        &.padding {
+            padding: 2px 8px;
+        }
+
+    }
+    
+    ion-list {
+        background-color: transparent;
+    }
+
+    ion-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0px;  
+      ion-img { margin: 0px 8px;}
+    }
+  
+    ion-checkbox {
+      cursor: pointer;
+    }
+
+    ion-checkbox::part(container) {
+        border-radius: 50%;
+        border: 2.5px dotted #4FAFCB !important;
+    }
+}

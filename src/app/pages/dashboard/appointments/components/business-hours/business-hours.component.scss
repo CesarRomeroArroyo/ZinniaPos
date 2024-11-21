@@ -1,0 +1,29 @@
+.container {
+    gap: 8px;
+    display: flex;
+    flex-direction: column;
+    padding: 16px 24px;
+    height: auto;
+    margin-top: 8px;
+    background-color: var(--ion-color-primary-contrast);
+}
+
+ion-footer {
+    padding: 24px;
+}
+
+ion-card {
+    margin-bottom: 16px;
+  
+    ion-chip {
+      margin-right: 8px;
+      ion-icon {
+        margin-left: 8px;
+        cursor: pointer;
+      }
+    }
+  
+    ion-button {
+      margin-top: 8px;
+    }
+}

@@ -1,0 +1,28 @@
+<app-header [settingHeader]="settingHeader" [customActionCompleted]="actionCompleted.bind(this)"></app-header>
+<ion-content>
+  <div class="container">
+
+      <ion-label class="title bold">Tipo de consulta</ion-label>
+      <app-custom-input
+      [(value)]="typeConsultationSelected"
+      [label]="'Tipo de consulta'"
+      [labelPlacement]="'stacked'"
+      [placeholder]="'Selecciona un tipo de consulta'"
+      (onInputClick)="openModal()"
+      >
+    </app-custom-input>
+
+  </div> 
+
+  <div class="container">
+    <ion-label class="title bold">Días de la semana y horario de atención</ion-label>
+    <ion-button mode="md" expand="block" fill="outline" (click)="openModal()">
+      <ion-label>Agregar intervalo de tiempo</ion-label>
+    </ion-button>
+  </div>  
+  <ion-footer class="ion-no-border footer">
+    <ion-button mode="md" expand="block" fill="solid">
+      Guardar
+    </ion-button>
+  </ion-footer>
+</ion-content>

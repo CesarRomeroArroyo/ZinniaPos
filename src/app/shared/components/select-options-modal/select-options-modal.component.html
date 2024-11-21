@@ -1,0 +1,31 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar class="ion-text-center">
+    <ion-buttons slot="start">
+      <ion-button (click)="dismiss()">
+        <ion-icon name="chevron-down-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-label class="title bold">{{ title }}</ion-label>
+    <ion-buttons slot="end">
+      <ion-button (click)="saveSelection()" [disabled]="!isFormValid">
+        <ion-icon name="checkmark-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="container">
+    <ion-list>
+      <ion-radio-group [(ngModel)]="selectedOption" (ionChange)="onRadioChange($event)">
+        <ion-item *ngFor="let option of options;" lines="none">
+          <ion-radio mode="md" [value]="option">{{ option.label }}</ion-radio>
+        </ion-item>
+      </ion-radio-group>
+    </ion-list>
+  </div>
+  <ion-button *ngIf="actionButton" slot="fixed" (click)="onButtonClick()">
+    <ion-icon slot="icon-only" name="add-outline"></ion-icon>
+  </ion-button>
+</ion-content>
+

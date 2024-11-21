@@ -25,10 +25,14 @@ ion-button.button-disabled {
 }
 
 ion-button[fill="outline"] {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 400 !important;
     --background: transparent;
     --box-shadow: none;
     --color: var(--ion-color-tertiary);
-    --border-color: 1px solid #9E9E9E;
+    --border-color: #9E9E9E;
+    --border-width: 1px;
 }
 
 ion-header {
@@ -45,4 +49,17 @@ ion-checkbox {
 
 ion-checkbox::part(container) {
     border: 1px solid var(--ion-color-tertiary);
+}
+
+ion-header ion-toolbar {
+    padding-top: 0px !important;
+}
+
+ion-content::part(background) {
+    background: var(--ion-background);
+}
+
+ion-item.bordered-item::part(native) {
+    border-width: 1px;
+    border-radius: 8px;
 }

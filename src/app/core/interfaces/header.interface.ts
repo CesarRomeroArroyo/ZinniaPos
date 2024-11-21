@@ -1,5 +1,10 @@
+export type InferfaceHeader = 'modal' | 'nav';
+
 export interface Iheader {
     title: string,
-    modalBack?: boolean,
-    viewBtnBack?: boolean
-}
+    interface: InferfaceHeader
+};
+
+export type ActionHeaderMap = {
+    [key in InferfaceHeader]: () => void;
+};

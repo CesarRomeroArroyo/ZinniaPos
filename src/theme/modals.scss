@@ -8,6 +8,19 @@ ion-modal.response-modal {
     }
 }
 
+ion-modal.option-select-modal {
+    --height: 95%;
+    --border-radius: 10px 10px 0 0;
+}
+
+.modal-wrapper {
+    position: fixed; /* Fija la posición del modal */
+    bottom: 0;       /* Posiciónalo en la parte inferior */
+    top: auto;       /* Asegúrate de que no se desplace hacia arriba */
+    max-height: 90vh; /* Asegura que no ocupe más del 90% del alto */
+    border-radius: 16px 16px 0 0; /* Esquinas redondeadas */
+}
+
 ion-modal.modal-default.show-modal ~ ion-modal.modal-default {
     --backdrop-opacity: var(--ion-backdrop-opacity, 0.32) !important;
 }

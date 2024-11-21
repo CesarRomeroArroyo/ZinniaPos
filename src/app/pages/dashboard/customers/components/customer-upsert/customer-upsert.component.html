@@ -1,0 +1,33 @@
+<app-header
+  [settingHeader]="settingHeader"
+></app-header>
+<ion-content>
+  <div class="container">
+    <form class="form" [formGroup]="customerUpsertForm" *ngIf="customerUpsertForm">
+      <div class="row">
+        <div class="group">
+          <ion-input placeholder="Nombre" fill="outline" mode="md" formControlName="name"></ion-input>
+        </div>
+      </div>
+      <div class="row">
+        <div class="group">
+          <ion-input placeholder="Correo Electronico" type="email" fill="outline" mode="md" formControlName="email"></ion-input>
+        </div>
+      </div>
+      <div class="row">
+        <div class="group">
+          <ion-input placeholder="Teléfono / Celular" type="number" fill="outline" mode="md" formControlName="phone"></ion-input>
+        </div>
+      </div>
+      <div class="group">
+        <ion-input placeholder="Dirección" fill="outline" mode="md" formControlName="address"></ion-input>
+      </div>
+    </form>
+  </div>
+</ion-content>
+
+<ion-footer class="ion-no-border footer">
+  <ion-button mode="md" expand="block" fill="solid">
+    Guardar
+  </ion-button>
+</ion-footer>

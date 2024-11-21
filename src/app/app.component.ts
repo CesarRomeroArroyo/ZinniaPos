@@ -5,6 +5,9 @@ import { StatusBar } from '@awesome-cordova-plugins/status-bar/ngx';
 import { Platform } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { LaunchNavigator } from '@awesome-cordova-plugins/launch-navigator/ngx';
+import { MenuComponent } from './shared/components/menu/menu.component';
+import { addIcons } from 'ionicons';
+import { arrowBack } from 'ionicons/icons';
 
 @Component({
   selector: 'app-root',
@@ -14,7 +17,8 @@ import { LaunchNavigator } from '@awesome-cordova-plugins/launch-navigator/ngx';
   imports: [
     IonApp, 
     IonRouterOutlet,
-    CommonModule
+    CommonModule,
+    MenuComponent
   ],
   providers: [
     StatusBar,
@@ -22,9 +26,23 @@ import { LaunchNavigator } from '@awesome-cordova-plugins/launch-navigator/ngx';
   ]
 })
 export class AppComponent {
+
+  isMenuOpen: boolean = false;
+  showTab: boolean = false;
+
   constructor(
     private translationService: TranslationService,
   ) {
+    addIcons({ arrowBack });
     //this.translationService.init();
   }
+
+  menuWillOpen() {
+    this.isMenuOpen = true;
+  }
+
+  menuDidClose() {
+    this.isMenuOpen = false;
+  }
+
 }
