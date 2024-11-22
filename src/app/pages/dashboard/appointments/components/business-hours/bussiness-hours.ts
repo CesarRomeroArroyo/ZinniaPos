@@ -1,10 +1,5 @@
-import { ISelectOption } from "src/app/core/consts/types/select-options.type";
 import { Iheader } from "src/app/core/interfaces/header.interface";
-
-export const settingHeader: Iheader = {
-    title: 'Horarios de atención',
-    interface: 'modal'
-}
+import { ISelectModalConfig, ISelectOption } from "src/app/core/interfaces/select-options-modal.interface";
 
 export const typesOfConsultation: ISelectOption[] = [
     {
@@ -19,20 +14,32 @@ export const typesOfConsultation: ISelectOption[] = [
     }
 ];
 
-export const options: ISelectOption[] = [
+export const dayServiceOptions: ISelectOption[] = [
     {
         id: 1,
-        label: 'Solo este día',
-        value: 'Solo este día'
+        label: 'Seleccionar días del mes',
+        value: 'Seleccionar días del mes'
     },
     {
         id: 2,
-        label: 'Todos los días',
-        value: 'Todos los días'
-    },
-    {
-        id: 3,
         label: 'Seleccionar días de la semana',
         value: 'Seleccionar dias del mes'
     }
 ];
+
+export const settingHeader: Iheader = {
+    title: 'Horarios de atención',
+    interface: 'modal'
+}
+
+export const consultationTypeConfig: ISelectModalConfig = {
+    headerTitle: 'Tipo de consulta',
+    optionsList: typesOfConsultation,
+    actionButton: true
+}
+
+export const serviceDaysConfig: ISelectModalConfig = {
+    headerTitle: 'Aplicar a',
+    optionsList: dayServiceOptions,
+    actionButton: false
+}

@@ -5,10 +5,11 @@ import { addIcons } from 'ionicons';
 import { chevronForwardOutline, trash } from 'ionicons/icons';
 import { DirectivesModule } from 'src/app/core/directives/directives.module';
 import { HeaderComponent } from 'src/app/shared/components/header/header.component';
-import { settingHeader, typesOfConsultation } from './bussiness-hours';
-import { SelectOptionsModalComponent } from 'src/app/shared/components/select-options-modal/select-options-modal.component';
+import { consultationTypeConfig, serviceDaysConfig, settingHeader } from './bussiness-hours';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CustomInputComponent } from 'src/app/shared/components/custom-input/custom-input.component';
+import { UpsertAppointmentTypeComponent } from '../upsert-appointment-type/upsert-appointment-type.component';
+import { OpenSelectOptionsService } from 'src/app/core/services/utils/open-select-options.service';
 
 @Component({
   selector: 'app-business-hours',
@@ -27,66 +28,64 @@ import { CustomInputComponent } from 'src/app/shared/components/custom-input/cus
 export class BusinessHoursComponent implements OnInit {
 
   public settingHeader = settingHeader;
-  public selectedOption!: string;
-
-  public typeConsultationForm!: FormGroup;
-
-  /* Campos-valores del formulario */
-  public typeConsultationSelected!: string;
-
+  public typeAppointmentsForm!: FormGroup;
+  public daysOfServiceForm!: FormGroup;
 
   constructor(
     private _modalCtrl: ModalController,
     private _formBuilder: FormBuilder,
+    private _openSelectOptionsService: OpenSelectOptionsService,
   ) {
     addIcons({ trash, chevronForwardOutline });
     this.buildConsultationForm();
+    this.buildDaysOfServiceForm();
    }
 
   ngOnInit() {}
 
-  onValueChanged(newValue: string | null): void {
-    console.log('Nuevo valor:', newValue);
-    this.typeConsultationForm.get('consultationType')?.setValue(newValue);
-  }
-
-  async openModal() {
-    const modal = await this._modalCtrl.create({
-      component: SelectOptionsModalComponent,
-      componentProps: {
-        title: 'Tipo de consulta',
-        options: typesOfConsultation,
-        actionButton: true,
-        buttonClick: this.openUpsertTypeConsultation.bind(this), 
-      },
-      cssClass: 'option-select-modal',
-      breakpoints: [0, 1],
-      initialBreakpoint: 1, 
+  async selectAppointmentType() {
+    const data = await this._openSelectOptionsService.open({
+      ...consultationTypeConfig,
+      buttonClick: this.goToUpsertAppointmentType.bind(this),
     });
-    await modal.present();
-    const { data } = await modal.onDidDismiss();
 
     if (data) {
-      console.log(data);
-      this.typeConsultationSelected = data;
+      this.typeAppointmentsForm.get('consultationType')?.setValue(data.value);
     }
   }
 
-  async openUpsertTypeConsultation() {
-    console.log("Upsert new type consultation")
+  async selectServiceDays() {
+    const data = await this._openSelectOptionsService.open({
+      ...serviceDaysConfig
+    });
+
+    if (data) {
+      this.daysOfServiceForm.get('daysOfService')?.setValue(data.value);
+    }
   }
 
-
+  async goToUpsertAppointmentType() {
+    const modal = await this._modalCtrl.create({
+      component: UpsertAppointmentTypeComponent
+    });
+    await modal.present();
+    const { data } = await modal.onDidDismiss();
+  }
 
   public actionCompleted() {
-    console.log("cerrando modal");
     const data = { completed: true };
     this._modalCtrl.dismiss(data);
   }
 
   private buildConsultationForm(): void {
-    this.typeConsultationForm = this._formBuilder.group({
-      consultationType: ['', Validators.required]
+    this.typeAppointmentsForm = this._formBuilder.group({
+      appointmentType: ['', Validators.required]
+    });
+  }
+
+  private buildDaysOfServiceForm(): void {
+    this.daysOfServiceForm = this._formBuilder.group({
+      daysOfService: ['', Validators.required]
     });
   }
 

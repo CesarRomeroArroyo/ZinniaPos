@@ -63,3 +63,12 @@ ion-item.bordered-item::part(native) {
     border-width: 1px;
     border-radius: 8px;
 }
+
+
+.label-stacked {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    color: var(--ion-text-color, #000);
+}

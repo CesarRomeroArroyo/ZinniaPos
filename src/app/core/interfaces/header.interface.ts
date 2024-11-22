@@ -1,8 +1,8 @@
 export type InferfaceHeader = 'modal' | 'nav';
 
 export interface Iheader {
-    title: string,
-    interface: InferfaceHeader
+    title: string;
+    interface: InferfaceHeader;
 };
 
 export type ActionHeaderMap = {
