@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule, ModalController } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import { addOutline, checkmarkOutline, chevronDownOutline } from 'ionicons/icons';
-import { ISelectOption } from 'src/app/core/consts/types/select-options.type';
+import { ISelectOption } from 'src/app/core/interfaces/select-options-modal.interface';
 
 @Component({
   selector: 'app-select-options-modal',
@@ -20,8 +20,8 @@ import { ISelectOption } from 'src/app/core/consts/types/select-options.type';
 })
 export class SelectOptionsModalComponent implements OnInit {
 
-  @Input() title: string = '';
-  @Input() options: ISelectOption[] = [];
+  @Input() headerTitle: string = '';
+  @Input() optionsList: ISelectOption[] = [];
   @Input() actionButton: boolean = true;
   @Input() buttonClick?: () => void;
   

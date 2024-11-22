@@ -1,28 +1,41 @@
 <app-header [settingHeader]="settingHeader" [customActionCompleted]="actionCompleted.bind(this)"></app-header>
 <ion-content>
   <div class="container">
-
-      <ion-label class="title bold">Tipo de consulta</ion-label>
-      <app-custom-input
-      [(value)]="typeConsultationSelected"
-      [label]="'Tipo de consulta'"
-      [labelPlacement]="'stacked'"
-      [placeholder]="'Selecciona un tipo de consulta'"
-      (onInputClick)="openModal()"
-      >
-    </app-custom-input>
-
+    <form class="form" [formGroup]="typeAppointmentsForm" *ngIf="typeAppointmentsForm">
+      <ion-label for="appointmentType" class="title bold">Tipo de consulta</ion-label>
+      <ion-item lines="none" class="bordered-item" (click)="selectAppointmentType()">
+        <ion-input mode="md" label="Tipo de consulta" labelPlacement="stacked" placeholder="Tipo de consulta" readonly formControlName="appointmentType"></ion-input>
+        <ion-icon name="chevron-forward-outline" slot="end"></ion-icon>
+      </ion-item>
+    </form>
   </div> 
 
   <div class="container">
-    <ion-label class="title bold">Días de la semana y horario de atención</ion-label>
-    <ion-button mode="md" expand="block" fill="outline" (click)="openModal()">
+    <form class="form" [formGroup]="daysOfServiceForm" *ngIf="daysOfServiceForm">
+      <ion-label for="daysOfService" class="title bold">Días de atención</ion-label>
+      <ion-item lines="none" class="bordered-item" (click)="selectServiceDays()">
+        <ion-input mode="md" label="Aplicar a" labelPlacement="stacked" placeholder="Seleccionar días de la semana" readonly formControlName="daysOfService"></ion-input>
+        <ion-icon name="chevron-forward-outline" slot="end"></ion-icon>
+      </ion-item>
+    </form>
+  </div>
+
+  <div class="container">
+    <ion-label class="title bold">Horario de atención</ion-label>
+    <ion-button mode="md" expand="block" fill="outline">
       <ion-label>Agregar intervalo de tiempo</ion-label>
     </ion-button>
   </div>  
+
   <ion-footer class="ion-no-border footer">
     <ion-button mode="md" expand="block" fill="solid">
       Guardar
     </ion-button>
   </ion-footer>
 </ion-content>
+
+
+
+
+
+
