@@ -16,7 +16,6 @@ import {FormControl, ReactiveFormsModule} from "@angular/forms";
     ]
 })
 export class BusinessTypeComponent {
-  // TODO: Cambiar radio button por ION checkbox
 
   selectedCategory = new FormControl('');
 
