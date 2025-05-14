@@ -1,0 +1,29 @@
+<ng-container>
+    <div class="information">
+        <h3>Comencemos. ¿Cuál es tu tipo de negocio?</h3>
+        <p>
+            Selecciona una o más categorías que mejor describan tu empresa para adaptar la experiencia a tus necesidades. Podrás cambiar esta configuración más adelante desde tu perfil.
+        </p>
+    </div>
+
+    <ion-radio-group [formControl]="selectedCategory">
+        <div
+                *ngFor="let category of categories"
+                class="radio-card"
+                [class.selected]="selectedCategory.value === category.id"
+                (click)="selectedCategory.setValue(category.id)"
+        >
+
+            <div class="radio-text">
+                <h3>{{ category.title }}</h3>
+                <p *ngIf="category.description">{{ category.description }}</p>
+            </div>
+            <ion-radio
+                    slot="start"
+                    [value]="category.id"
+                    aria-label="Custom radio"
+                    class="custom-radio"
+            ></ion-radio>
+        </div>
+    </ion-radio-group>
+</ng-container>
