@@ -1,0 +1,8 @@
+<div class="numeric-keyboard">
+    <ng-container *ngFor="let digit of digits">
+        <button (click)="onDigitClick(digit); $event.stopPropagation()" class="button">
+            <span *ngIf="digit !== 'c'">{{ digit }}</span>
+            <ion-icon name="arrow-back-outline" *ngIf="digit === 'c'"></ion-icon>
+        </button>
+    </ng-container>
+</div>

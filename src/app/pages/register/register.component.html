@@ -1,0 +1,31 @@
+<ion-header class="custom-header">
+    <ion-toolbar>
+        <ion-buttons slot="start">
+            <ion-button class="custom-back-button" (click)="prevStep()">
+                <ion-icon name="arrow-back-sharp"></ion-icon>
+            </ion-button>
+        </ion-buttons>
+    </ion-toolbar>
+    <div class="step-bar">
+        <div class="step" [class.active]="currentStepIndex >= 0"></div>
+        <div class="step" [class.active]="currentStepIndex >= 1"></div>
+        <div class="step" [class.active]="currentStepIndex >= 2"></div>
+    </div>
+</ion-header>
+<ion-content class="ion-padding">
+    <div class="form-wrapper-container">
+        <div class="form-wrapper">
+            <div class="form-steps">
+                <ng-container [ngSwitch]="currentStepIndex">
+                    <app-business-type *ngSwitchCase="0"></app-business-type>
+                    <app-business-account-info *ngSwitchCase="1"></app-business-account-info>
+                    <app-user-account-info *ngSwitchCase="2"></app-user-account-info>
+                </ng-container>
+            </div>
+
+            <ion-button expand="block" (click)="nextStep()">
+                Siguiente
+            </ion-button>
+        </div>
+    </div>
+</ion-content>
