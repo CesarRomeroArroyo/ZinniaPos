@@ -1,0 +1,33 @@
+ion-datetime {
+  height: 264px !important;
+  min-width: 312px;
+  min-height: 264px !important;
+  --color: #161616;
+  --background: #fff;
+  --wheel-highlight-background: rgb(31, 181, 173);
+  --wheel-fade-background-rgb: 255, 255, 255;
+}
+
+ion-datetime::part(wheel-item) {
+  color: #161616;
+  font-size: 12px;
+}
+
+ion-datetime::part(calendar-day) {
+  color: #131218;
+  font-size: 10px;
+}
+
+ion-datetime::part(active) {
+  width: 32px;
+  height: 32px;
+  box-shadow: none;
+  background-color: #1FB5AD;
+  border-radius: 5px; 
+}
+
+ion-datetime::part(calendar-day):focus {
+  border-radius: 5px; 
+  background-color: rgba(31, 181, 173);
+  box-shadow: transparent;
+}

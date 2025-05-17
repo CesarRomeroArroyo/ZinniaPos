@@ -1,5 +1,5 @@
 export enum StorageKeys {
-    USER_DATA = 'USER_DATA',
+    USER_DATA = 'USER_ZINNIA',
     TOKEN = 'TOKEN',
     PRESENTATED = 'PRESENTATED',
     IS_ACCESS_GPS = 'IS_ACCESS_GPS ',

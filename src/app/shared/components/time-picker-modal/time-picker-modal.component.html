@@ -1,0 +1,26 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar class="ion-text-center">
+    <ion-buttons slot="start">
+      <ion-button (click)="cancel()">
+        <ion-icon name="chevron-down-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-label class="title bold">Hora</ion-label>
+    <ion-buttons slot="end">
+      <ion-button (click)="confirm()" [disabled]="!selectedTime">
+        <ion-icon name="checkmark-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="container">
+    <ion-datetime
+      presentation="time"
+      [value]="selectedTime"
+      (ionChange)="onTimeChange($event.detail.value)"
+      hour-cycle="h12">
+    </ion-datetime>
+  </div>
+</ion-content>

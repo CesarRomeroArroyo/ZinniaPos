@@ -1,13 +1,14 @@
 import { Component } from '@angular/core';
 import { TranslationService } from './core/services/translation.service';
-import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
+import { IonApp, IonContent, IonLabel, IonRouterOutlet } from '@ionic/angular/standalone';
 import { StatusBar } from '@awesome-cordova-plugins/status-bar/ngx';
-import { Platform } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { LaunchNavigator } from '@awesome-cordova-plugins/launch-navigator/ngx';
 import { MenuComponent } from './shared/components/menu/menu.component';
 import { addIcons } from 'ionicons';
 import { arrowBack } from 'ionicons/icons';
+import { MenuFooterComponent } from './shared/components/menu-footer/menu-footer.component';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 
 @Component({
   selector: 'app-root',
@@ -16,9 +17,12 @@ import { arrowBack } from 'ionicons/icons';
   standalone: true,
   imports: [
     IonApp, 
+    IonLabel,
     IonRouterOutlet,
     CommonModule,
-    MenuComponent
+    MenuComponent,
+    IonContent,
+    MenuFooterComponent,
   ],
   providers: [
     StatusBar,
@@ -31,9 +35,12 @@ export class AppComponent {
   showTab: boolean = false;
 
   constructor(
+    private _router: Router,
+    private _activatedRoute: ActivatedRoute,
     private translationService: TranslationService,
   ) {
     addIcons({ arrowBack });
+    this.updateShowTabFromRoute();
     //this.translationService.init();
   }
 
@@ -43,6 +50,18 @@ export class AppComponent {
 
   menuDidClose() {
     this.isMenuOpen = false;
+  }
+
+  private updateShowTabFromRoute(): void { 
+    this._router.events.subscribe((event) => {
+      if (event instanceof NavigationEnd) {
+        let route = this._activatedRoute;
+        while (route.firstChild) {
+          route = route.firstChild;
+        }
+        this.showTab = route.snapshot.data['showTab'] ?? false;
+      }
+    });
   }
 
 }

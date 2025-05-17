@@ -19,7 +19,8 @@ export const appointmentsRoutes: Routes = [
             },
             {  
                 path: 'initial-seting',
-                component: InitialSettingComponent
+                component: InitialSettingComponent,
+                data: { showTab: true }
             },
             {   
                 path: 'customer-upsert',
