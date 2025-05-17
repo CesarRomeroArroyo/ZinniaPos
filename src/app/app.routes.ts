@@ -15,6 +15,19 @@ export const routes: Routes = [
     data: { showTab: false }
   },
   {
+    path: 'register',
+    loadComponent: () => import('./pages/register/register.component').then((m) => m.RegisterComponent),
+    //canActivate: [UnauthenticatedGuard],
+  },
+  {
+    path:'validate-code',
+    loadComponent: ()=> import('./pages/validation-code/validation-code.component').then((m)=>m.ValidationCodeComponent),
+  },
+  {
+    path:'onboarding',
+    loadComponent:()=>import('./pages/onboarding/onbording.component').then((m)=>m.OnbordingComponent),
+  },
+  {
     path: 'appointments',
     loadComponent: () => import('./pages/dashboard/appointments/appointments.component').then((m) => m.AppointmentsComponent),
     children: appointmentsRoutes,
