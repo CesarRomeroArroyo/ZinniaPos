@@ -2,15 +2,16 @@ import { Component, OnInit } from '@angular/core';
 import {
     IonContent,
     IonHeader,
-    IonTitle,
     IonToolbar,
     IonButtons,
     IonButton,
     IonIcon
 } from '@ionic/angular/standalone';
-import { NavController } from '@ionic/angular';
+import { IonicModule, NavController } from '@ionic/angular';
 import {NumpadComponent} from "./components/numpad/numpad.component";
-import {NgForOf, NgIf} from "@angular/common";
+import {CommonModule, NgForOf, NgIf} from "@angular/common";
+import { Router } from '@angular/router';
+import { AuthService } from 'src/app/core/services/bussiness/auth.service';
 
 @Component({
     selector: 'app-validation-code',
@@ -18,46 +19,91 @@ import {NgForOf, NgIf} from "@angular/common";
     styleUrls: ['./validation-code.component.scss'],
     standalone: true,
     imports: [
-        IonHeader,
-        IonContent,
-        IonToolbar,
-        IonButtons,
-        IonButton,
-        IonIcon,
+        IonicModule,
+        CommonModule,
         NumpadComponent,
-        NgForOf,
-        NgIf
     ]
 })
 export class ValidationCodeComponent implements OnInit {
 
-    constructor(private navCtrl: NavController) {}
+    public code: string[] = [];
+    public email!: string;
+    public userId!: string;
+    public feedback: string = "Enviando código al correo...";
+    public timer: number = 30;
+    public timerIntervalId!: any;
 
-    ngOnInit() {}
+    constructor(
+        private _router: Router,
+        private _navCtrl: NavController,
+        private _authService: AuthService,
+    ) {}
 
-    goBack() {
-        this.navCtrl.back();
+    ngOnInit() {
+        this.getData();
     }
 
-    code: string[] = [];
+    ngOnDestroy(): void {
+        clearInterval(this.timerIntervalId);
+    }
 
-    onDigitReceived(digit: number) {
+    public goBack() {
+        this._navCtrl.back();
+    }
+
+    public onDigitReceived(digit: number) {
         if (this.code.length < 4) {
             this.code.push(digit.toString());
 
-            // Si ya hay 4 dígitos, puedes validar o redirigir
             if (this.code.length === 4) {
                 console.log('Código completo:', this.code.join(''));
             }
         }
     }
 
-    onDigitRemoved() {
+    public onDigitRemoved() {
         this.code.pop();
     }
 
     goToOnboarding() {
-        this.navCtrl.navigateForward('/onboarding');
+        this._navCtrl.navigateForward('/onboarding');
     }
+
+    public resendActivationCode() {
+        if(this.timer !== 0) return;
+        this.sendActivationCode();
+    }
+
+    private getData() {
+        const nav = this._router.getCurrentNavigation();
+        const state = nav?.extras.state;
+        if (state) {
+            this.email = state['email'];
+            this.userId = state['id'];
+            this.sendActivationCode();
+        }
+    }
+
+    private async sendActivationCode() {
+        this._authService.sendActivationCode(this.userId).subscribe({
+            next: (response) => {
+                if(response) {
+                    this.feedback = "Renviar código en: ";
+                    this.startTimer();
+                }
+            }
+        });
+    }
+
+    private startTimer(): void {
+        this.timer = 30;
+        this.timerIntervalId = setInterval(() => {
+        this.timer--;
+        if (this.timer <= 0) {
+            this.feedback = "Reenviar código";
+            clearInterval(this.timerIntervalId);
+        }
+    }, 1000);
+}
 
 }

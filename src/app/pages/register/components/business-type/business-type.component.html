@@ -1,4 +1,4 @@
-<ng-container>
+<div class="container">
     <div class="information">
         <h3>Comencemos. ¿Cuál es tu tipo de negocio?</h3>
         <p>
@@ -6,24 +6,25 @@
         </p>
     </div>
 
-    <ion-radio-group [formControl]="selectedCategory">
-        <div
-                *ngFor="let category of categories"
+    <form class="form" *ngIf="businessTypeForm" [formGroup]="businessTypeForm">
+        <ion-radio-group [formControl]="businessType">
+            <div
+                *ngFor="let category of businessCategories"
                 class="radio-card"
-                [class.selected]="selectedCategory.value === category.id"
-                (click)="selectedCategory.setValue(category.id)"
-        >
+                [class.selected]="businessType.value === category.id"
+                (click)="businessType.setValue(category.id)">
 
-            <div class="radio-text">
-                <h3>{{ category.title }}</h3>
-                <p *ngIf="category.description">{{ category.description }}</p>
-            </div>
-            <ion-radio
+                <div class="radio-text">
+                    <h3>{{ category.title }}</h3>
+                    <p *ngIf="category.description">{{ category.description }}</p>
+                </div>
+                <ion-radio
                     slot="start"
                     [value]="category.id"
                     aria-label="Custom radio"
-                    class="custom-radio"
-            ></ion-radio>
-        </div>
-    </ion-radio-group>
-</ng-container>
+                    class="custom-radio">
+                </ion-radio>
+            </div>
+        </ion-radio-group>
+    </form>
+</div>

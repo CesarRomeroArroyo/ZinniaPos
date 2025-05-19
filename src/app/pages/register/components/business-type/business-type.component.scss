@@ -1,7 +1,11 @@
+.container {
+  background-color: var(--ion-color-primary-contrast);
+}
+
 .information{
   h3{
-       font-size: 16px;
-   }
+    font-size: 16px;
+  }
 
   p{
     font-size: 13px;

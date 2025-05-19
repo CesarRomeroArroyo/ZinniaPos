@@ -1,11 +1,17 @@
-import {Component, OnInit} from '@angular/core';
+import {ChangeDetectorRef, Component, OnInit, ViewChild} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {IonicModule} from '@ionic/angular';
-import {WizardStep} from "./interfaces/wizard-register-model";
-import {UserRegisterInfo, BusinessRegisterInfo} from "./interfaces/register-model";
 import {BusinessAccountInfoComponent} from "./components/business-account-info/business-account-info.component";
 import {BusinessTypeComponent} from "./components/business-type/business-type.component";
 import {UserAccountInfoComponent} from "./components/user-account-info/user-account-info.component";
+import { StepperComponent } from 'src/app/shared/components/stepper/stepper.component';
+import { StepData } from 'src/app/core/consts/types/steps.type';
+import { Router } from '@angular/router';
+import { LoadingService } from 'src/app/core/services/utils/loading.service';
+import { AuthService } from 'src/app/core/services/bussiness/auth.service';
+import { LocalStorageService } from 'src/app/core/services/utils/local-storage.service';
+import { StorageKeys } from 'src/app/core/consts/enums/storage-keys.enum';
+import { AlertService } from 'src/app/core/services/utils/alert.service';
 
 @Component({
     selector: 'app-register',
@@ -18,71 +24,128 @@ import {UserAccountInfoComponent} from "./components/user-account-info/user-acco
         BusinessAccountInfoComponent,
         BusinessTypeComponent,
         UserAccountInfoComponent,
+        StepperComponent,
     ]
 })
 export class RegisterComponent implements OnInit {
 
-    steps: WizardStep[] = [
-        {id: 'businessType', label: 'Busineess Type', isValid: false},
-        {id: 'businessAccountInfo', label: 'Business Account Information', isValid: false},
-        {id: 'userAccountInfo', label: 'User Account Information', isValid: false},
-    ];
+    @ViewChild(BusinessTypeComponent) businessTypeComponent!: BusinessTypeComponent;
+    @ViewChild(BusinessAccountInfoComponent) businessAccountInfoComponent!: BusinessAccountInfoComponent;
+    @ViewChild(UserAccountInfoComponent) userAccountInfoComponent!: UserAccountInfoComponent;
 
-    currentStepIndex = 0;
+    public totalSteps: number = 3;
+    public currentStep: number = 1;
+    public isCurrentFormValid = false;
+    public registeredData!: StepData[];
 
-    userProfile: UserRegisterInfo = {
-        name: '',
-        password: '',
-        email: ''
+    constructor(
+        private _router: Router,
+        private _cdr: ChangeDetectorRef,
+        private authService: AuthService,
+        private _alertService: AlertService,
+        private _loadingService: LoadingService,
+        private _localStorageService: LocalStorageService
+    ) { }
+
+    ngOnInit() { }
+    
+    public prevStep() {
+        this.currentStep -= 1;
     }
 
-    businessInfo: BusinessRegisterInfo = {
-        name: '',
-        email: '',
-        address: '',
-        phone: '',
-        type: '',
-        ruc: ''
-    }
-
-    get isLastStep(): boolean {
-        return this.currentStepIndex === this.steps.length - 1;
-    }
-
-    get isFirstStep(): boolean {
-        return this.currentStepIndex === 0;
-    }
-
-    nextStep() {
-        // if (this.steps[this.currentStepIndex].isValid) {
-        //     this.currentStepIndex++;
-        // }
-        if (this.currentStepIndex < this.steps.length -1){
-            this.currentStepIndex++;
-        }
-        else {
-            window.location.href = '/validate-code'
-        }
-
-    }
-
-    prevStep() {
-        if (this.currentStepIndex >= 0) {
-            this.currentStepIndex--;
-        }
-        if (this.currentStepIndex < 0){
-            window.location.href = '/'
+    public nextStep() {
+        switch (this.currentStep) {
+            case 1:
+                this.businessTypeComponent.emitData();
+                break;
+            case 2:
+                this.businessAccountInfoComponent.emitData();
+                break;
+            case 3:
+                this.userAccountInfoComponent.emitData();;
+                break;
+            default:
+                throw new Error(`Paso no definido: currentStep`);
         }
     }
 
-    onStepIsValidityChange(isValid: boolean) {
-        this.steps[this.currentStepIndex].isValid = isValid;
+    public handleValidityChange(isValid: boolean): void {
+        this.isCurrentFormValid = isValid;
+        this._cdr.detectChanges();
     }
 
-    constructor() {
-
+    public async handleStepData(data: StepData) {
+        await this.saveForm(data);
+        this.currentStep === this.totalSteps ? this.verifyEmail() :  this.currentStep += 1;
     }
 
-    ngOnInit() {
+    private goToAccountActivation(email: string) {
+        this._router.navigate(['/validate-code'], {
+            state: { email }
+        });
     }
+
+    private async saveForm(stepData: StepData) {
+        const registeredData: StepData[] = await this._localStorageService.getItem(StorageKeys.REGISTRATION_FORM) || [];
+        const stepIndex = registeredData.findIndex(entry => entry.step === this.currentStep);
+
+        if (stepIndex !== -1) {
+            registeredData[stepIndex] = stepData;
+        } else {
+            registeredData.push(stepData);
+        }   
+
+        this._localStorageService.create(StorageKeys.REGISTRATION_FORM, registeredData);
+    }
+
+    private async verifyEmail() {
+        await this._loadingService.showLoading("Verificando...");
+        this.registeredData = await this._localStorageService.getItem(StorageKeys.REGISTRATION_FORM);
+        const { email } = this.registeredData[2].data;
+
+        this.authService.verifyEmail(email).subscribe({
+            next: async (response) => {
+                await this._loadingService.hideLoading();
+                if(response.length) {
+                    if(response[0].estado === "0") {
+                        this.showCodeResendAlert();
+                    }
+                }else {
+                    this.registerUserInfo();
+                }
+            },
+            error: async(error) => {
+                await this._loadingService.hideLoading();
+                console.error(error);
+            }
+        });
+    }
+
+    private async showCodeResendAlert() {
+        await this._alertService.presentConfirm(
+            '¿Reenviar codigo de verificacion?',
+            'Este correo ya se encuentra registrado, confirma si deseas recibir un nuevo codigo de verificacion.',
+            () => this.goToAccountActivation(this.registeredData[2].data.email),
+            () => console.log('Cancelar')
+        );
+    }
+ 
+    private async registerUserInfo() {
+        await this._loadingService.showLoading("Registrando datos...");
+        const payload = { fullname: "Antonio", email: "antony@gmail.com" };
+        this.authService.registerUser(payload).subscribe({
+            next: async(response) => {
+                if(response) {
+                    await this._loadingService.hideLoading();
+                    const { email } = this.registeredData[2].data;
+                    this.goToAccountActivation(email);
+                }
+            },
+            error: async (error) => {
+                await this._loadingService.hideLoading();
+                console.error(error);
+            }
+        });
+    }
+
 }

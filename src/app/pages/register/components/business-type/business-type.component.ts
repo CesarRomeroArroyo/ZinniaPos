@@ -1,55 +1,71 @@
 import {CustomInputComponent} from "../../../../shared/components/custom-input/custom-input.component";
-import {Component} from '@angular/core';
+import {Component, EventEmitter, Output} from '@angular/core';
 import {IonItem, IonLabel, IonList} from '@ionic/angular/standalone';
-import {NgClass, NgForOf, NgIf} from "@angular/common";
+import {CommonModule, NgClass, NgForOf, NgIf} from "@angular/common";
 import {IonicModule} from "@ionic/angular";
-import {FormControl, ReactiveFormsModule} from "@angular/forms";
+import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
+import { LocalStorageService } from "src/app/core/services/utils/local-storage.service";
+import { StorageKeys } from "src/app/core/consts/enums/storage-keys.enum";
+import { StepData } from "src/app/core/consts/types/steps.type";
+import { BusinessType } from "src/app/core/interfaces/bussiness/business-type.interface";
+import { businessCategories } from "./business-type.consts";
 
 @Component({
-    selector: 'app-business-type',
-    templateUrl: './business-type.component.html',
-    styleUrls: ['./business-type.component.scss'],
-    standalone: true,
-
-    imports: [
-        CustomInputComponent, IonItem, IonLabel, IonList, NgForOf, NgClass, IonicModule, NgIf, ReactiveFormsModule
-    ]
+  selector: 'app-business-type',
+  templateUrl: './business-type.component.html',
+  styleUrls: ['./business-type.component.scss'],
+  standalone: true,
+  imports: [
+    CustomInputComponent,
+    IonicModule,
+    CommonModule,
+    ReactiveFormsModule
+  ]
 })
 export class BusinessTypeComponent {
 
-  selectedCategory = new FormControl('');
+  @Output() handleStepData: EventEmitter<StepData> = new EventEmitter();
+  @Output() formValidity: EventEmitter<boolean> = new EventEmitter();
 
-  categories = [
-    {
-      id: 'salud',
-      title: 'Salud',
-      description: 'Clínicas, consultorios, veterinarias…'
-    },
-    {
-      id: 'retail',
-      title: 'Retail / Tiendas',
-      description: 'Ropa, zapatos, tecnología, alimentos…'
-    },
-    {
-      id: 'servicios',
-      title: 'Servicios',
-      description: 'Peluquería, limpieza, reparación…'
-    },
-    {
-      id: 'tecnologia',
-      title: 'Tecnología',
-      description: 'Desarrollo de software, marketing digital…'
-    },
-    {
-      id: 'otro',
-      title: 'Otro',
-      description: ''
-    }
-  ];
-    constructor() {
+  public businessTypeForm!: FormGroup;
+  public businessCategories: BusinessType[] = businessCategories;
+
+  constructor(
+    private _formBuilder: FormBuilder,
+    private _localStorageService: LocalStorageService,
+  ) { }
+
+  ngOnInit() {
+    this.buildForm();
+  }
+
+  get businessType(): FormControl {
+    return this.businessTypeForm.get('businessType') as FormControl;
+  }
+
+  public emitData() {
+    const data: StepData = { step: 1, data: this.businessTypeForm.value };
+    this.handleStepData.emit(data);
+  }
+
+  private async buildForm() {
+    this.businessTypeForm = this._formBuilder.group({
+      businessType: ['', Validators.required],
+    });
+
+    this.formValidity.emit(this.businessTypeForm.valid);
+
+    this.businessTypeForm.statusChanges.subscribe(() => {
+      this.formValidity.emit(this.businessTypeForm.valid);
+    });
+
+    const savedSteps = await this._localStorageService.getItem(StorageKeys.REGISTRATION_FORM);
+    const currentStepData = savedSteps?.find((s: StepData) => s.step === 1);
+    if (currentStepData) {
+      this.businessTypeForm.patchValue(currentStepData.data);
     }
 
-    ngOnInit() {
-    }
+  }
+
 
 }

@@ -9,52 +9,27 @@
     --border-width: 0;
   }
 
+  .custom-back-button {
+    padding: 6px;
+    font-size: 24px;
+  }
 }
 
-.custom-back-button {
-  padding: 6px;
-  font-size: 24px;
+.content {
+  --padding-top: 32px;
+  --padding-bottom: 32px;
+  --padding-start: 24px;
+  --padding-end: 24px;
+
+  .form-steps {
+    background-color: var(--ion-color-primary-contrast);
+  }
 }
 
-.form-wrapper-container {
-  padding: 12px;
-  display: flex;
-  justify-content: center; /* horizontal */
-  align-items: center;     /* vertical */
-  height: 100%;
-  width: 100%;
+ion-content::part(background) {
+  background: var(--ion-color-primary-contrast);
 }
 
-.form-wrapper {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 16px;
+ion-footer {
+  padding: 0px 24px 32px 24px;
 }
-
-
-
-.step-bar {
-  display: flex;
-  width: 100%;
-  height: 6px;
-  margin-top: 8px;
-}
-
-.step {
-  flex: 1;
-  background-color: #F0F0F0; // color inactivo
-  transition: background-color 0.3s ease;
-}
-
-.step:last-child {
-  margin-right: 0;
-}
-
-.step.active {
-  background-color: #1FB5AD; // color activo (azul Ionic)
-}
-
-

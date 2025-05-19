@@ -11,7 +11,7 @@
     <div class="form-wrapper-container">
         <div class="info-container">
             <h2>¡Casi terminamos!</h2>
-            <p>Solo falta un último paso. Hemos enviado un código de 4 dígitos a admin_tiendacentral.com</p>
+            <p>Solo falta un último paso. Hemos enviado un código de 4 dígitos a {{email || '( email no disponible )' }}</p>
             <p>Ingresa ese código para verificar tu cuenta y comenzar a usar Zinnia.</p>
         </div>
         <div class="form-wrapper">
@@ -20,11 +20,16 @@
                     <div class="dot" *ngIf="code[i]"></div>
                 </div>
             </div>
-            <h4 class="resend-code">Renviar codigo en 30s</h4>
+            <h4 class="resend-code">
+                <p class="message" (click)="resendActivationCode()">
+                    {{ feedback }}
+                    <ion-text *ngIf="timerIntervalId && timer > 0" color="primary">{{ timer + ' segundos' }}</ion-text>
+                </p>
+            </h4>
             <ng-container>
                 <app-numpad
-                        (digitClicked)="onDigitReceived($event)"
-                        (onRemove)="onDigitRemoved()"
+                    (digitClicked)="onDigitReceived($event)"
+                    (onRemove)="onDigitRemoved()"
                 ></app-numpad>
             </ng-container>
             <ion-button expand="block" (click)="goToOnboarding()">

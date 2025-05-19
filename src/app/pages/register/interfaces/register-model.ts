@@ -1,5 +1,3 @@
-// TODO: Añade los campos necesarios para el registro de un usuario y una empresa.
-
 export interface BusinessRegisterInfo {
     name: string;
     address: string;
