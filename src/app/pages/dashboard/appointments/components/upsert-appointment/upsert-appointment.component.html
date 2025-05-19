@@ -1,0 +1,68 @@
+<app-header [settingHeader]="settingHeader" [customActionCompleted]="actionCompleted.bind(this)"></app-header>
+<ion-content>
+  <div class="container">
+    <ion-label for="appointmentType" class="title bold">Informacion de cliente</ion-label>
+  </div>
+  
+  <div class="container">
+    <form class="form" [formGroup]="typeAppointmentsForm" *ngIf="typeAppointmentsForm">
+      <ion-label for="appointmentType" class="title bold">Tipo de consulta</ion-label>
+      <ion-item *ngIf="!loading" lines="none" class="bordered-item" (click)="selectAppointmentType()">
+        <ion-input
+          mode="md"
+          label="Tipo de consulta"
+          labelPlacement="stacked"
+          placeholder="Tipo de consulta"
+          readonly
+          [value]="getAppointmentTypeLabel()"
+          formControlName="appointmentType">
+        </ion-input>
+        <ion-icon name="chevron-forward-outline" slot="end"></ion-icon>
+      </ion-item>
+
+      <ion-item *ngIf="loading" lines="none" class="bordered-item skeleton">
+        <ion-label>
+          <ion-skeleton-text style="width: 87.53px;" [animated]="true"></ion-skeleton-text>
+          <ion-skeleton-text style="width: 115.53px; height: 18px;" [animated]="true"></ion-skeleton-text>
+        </ion-label>
+        <ion-thumbnail style="width: 25.6px; height: 25.6px;" slot="end">
+          <ion-skeleton-text [animated]="true"></ion-skeleton-text>
+        </ion-thumbnail>
+      </ion-item>
+    </form>
+  </div> 
+
+  <div class="container">
+    <form class="form" [formGroup]="dateForm" *ngIf="dateForm">
+      <ion-label for="" class="title bold">Fecha y Hora</ion-label>
+      <ion-item lines="none" class="bordered-item" (click)="selectDate()">
+        <ion-input
+          mode="md"
+          label="Fecha"
+          labelPlacement="stacked"
+          placeholder="Selecciona una fecha"
+          readonly
+          formControlName="date">
+        </ion-input>
+        <ion-icon name="chevron-forward-outline" slot="end"></ion-icon>
+      </ion-item>
+      <ion-item lines="none" class="bordered-item" (click)="selectTime()">
+        <ion-input
+          mode="md"
+          label="Hora"
+          labelPlacement="stacked"
+          placeholder="Selecciona una hora"
+          readonly
+          formControlName="time">
+        </ion-input>
+        <ion-icon name="chevron-forward-outline" slot="end"></ion-icon>
+      </ion-item>
+    </form>
+  </div> 
+</ion-content>
+
+<ion-footer class="ion-no-border footer">
+  <ion-button mode="md" expand="block" fill="solid">
+    Confirmar cita
+  </ion-button>
+</ion-footer>

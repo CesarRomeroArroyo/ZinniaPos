@@ -24,6 +24,8 @@ export class SelectOptionsModalComponent implements OnInit {
   @Input() optionsList: ISelectOption[] = [];
   @Input() actionButton: boolean = true;
   @Input() buttonClick?: () => void;
+  @Input() componentToOpen!: any;
+
   
   public selectedOption!: ISelectOption;
   public isFormValid: boolean = false;
@@ -36,8 +38,17 @@ export class SelectOptionsModalComponent implements OnInit {
 
   ngOnInit() {}
 
-  onButtonClick() {
+  public async onButtonClick() {
+    if (this.componentToOpen) {
+      const modal = await this._modalCtrl.create({
+      component: this.componentToOpen
+    });
+    await modal.present();
+    const { data } = await modal.onDidDismiss();
+  } else {
     this.buttonClick ? this.buttonClick() : null;
+  }
+
   }
 
   onRadioChange(event: any) {

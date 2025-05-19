@@ -12,6 +12,7 @@ export const routes: Routes = [
     path: 'login',
     loadComponent: () => import('./auth/login/login.component').then((m) => m.LoginComponent),
     //canActivate: [UnauthenticatedGuard],
+    data: { showTab: false }
   },
   {
     path: 'register',

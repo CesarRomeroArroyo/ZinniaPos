@@ -19,7 +19,7 @@
     <ion-list>
       <ion-radio-group [(ngModel)]="selectedOption" (ionChange)="onRadioChange($event)">
         <ion-item *ngFor="let option of optionsList;" lines="none">
-          <ion-radio mode="md" [value]="option">{{ option.label }}</ion-radio>
+          <ion-radio mode="md" [value]="option">{{ option.title }}</ion-radio>
         </ion-item>
       </ion-radio-group>
     </ion-list>

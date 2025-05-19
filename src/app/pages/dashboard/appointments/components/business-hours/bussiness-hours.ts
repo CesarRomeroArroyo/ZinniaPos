@@ -1,29 +1,19 @@
 import { Iheader } from "src/app/core/interfaces/header.interface";
 import { ISelectModalConfig, ISelectOption } from "src/app/core/interfaces/select-options-modal.interface";
 
-export const typesOfConsultation: ISelectOption[] = [
-    {
-        id: 1,
-        label: 'Consulta General',
-        value: 'Consulta General'
-    },
-    {
-        id: 2,
-        label: 'Consulta Especializada',
-        value: 'Consulta Especializada'
-    }
-];
+export enum ValueServiceDaysOptions {
+    DAYS_OF_MONTH = 1,
+    WEEK_DAYS = 2,
+}
 
 export const dayServiceOptions: ISelectOption[] = [
     {
-        id: 1,
-        label: 'Seleccionar días del mes',
-        value: 'Seleccionar días del mes'
+        title: 'Seleccionar días del mes',
+        value: ValueServiceDaysOptions.DAYS_OF_MONTH
     },
     {
-        id: 2,
-        label: 'Seleccionar días de la semana',
-        value: 'Seleccionar dias del mes'
+        title: 'Seleccionar días de la semana',
+        value: ValueServiceDaysOptions.WEEK_DAYS
     }
 ];
 
@@ -32,14 +22,21 @@ export const settingHeader: Iheader = {
     interface: 'modal'
 }
 
-export const consultationTypeConfig: ISelectModalConfig = {
-    headerTitle: 'Tipo de consulta',
-    optionsList: typesOfConsultation,
-    actionButton: true
-}
-
 export const serviceDaysConfig: ISelectModalConfig = {
     headerTitle: 'Aplicar a',
     optionsList: dayServiceOptions,
     actionButton: false
 }
+
+export const WEEK_DAYS = [
+    { label: 'Lunes', key: 'monday' },
+    { label: 'Viernes', key: 'friday' },
+
+    { label: 'Martes', key: 'tuesday' },
+    { label: 'Sábado', key: 'saturday' },
+
+    { label: 'Miércoles', key: 'wednesday' },
+    { label: 'Domingo', key: 'sunday' },
+
+    { label: 'Jueves', key: 'thursday' },
+];

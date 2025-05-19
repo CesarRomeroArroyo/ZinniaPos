@@ -1,0 +1,19 @@
+.container {
+  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 24px;
+  height: auto;
+  margin-top: 8px;
+  background-color: var(--ion-color-primary-contrast);
+
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+ion-footer {
+  padding: 24px;
+}

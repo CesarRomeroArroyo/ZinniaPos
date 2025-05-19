@@ -32,12 +32,13 @@ export class UpsertAppointmentTypeComponent {
     private _modalCtrl: ModalController,
   ) { }
 
-  ionViewWillEnter() {
+  ngOnInit() {
     this.createForm();
   }
 
   public insertAppointmentType() {
-    console.log("Appointment type created...")
+    const payload = this.typeAppointmentForm.value;
+    console.log("Appointment type created...", payload);
     this._modalCtrl.dismiss({ completed: true });
   }
 

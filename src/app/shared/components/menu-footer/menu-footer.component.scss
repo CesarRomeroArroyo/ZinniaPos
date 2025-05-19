@@ -1,0 +1,28 @@
+.tab-container {
+    overflow-y: hidden;
+    padding: 5px 0px 0px 0px;
+    background: var(--white-color);
+}
+
+.bar {
+    border: none;
+    box-shadow: 4px 4px 40px 0px #0000000F;
+    padding: 0px 10px;
+}
+
+ion-tab-button {
+    width: 56px;
+    height: 48px;
+    border-radius: 8px;
+}
+
+.selected {
+    background-color: #EAFFFF;
+    padding: 0 auto;
+    display: flex;
+    color: #131218;
+    font-weight: 600;
+    .icon {
+        color: #1FB5AD;
+    }
+}

@@ -67,6 +67,13 @@
 
 	// custom
 	--border-light-gray: #D7D7D7;
+
+	--ion-color-olivegreen: #1FB5AD;
+	--ion-color-olivegreen-rgb: 31, 181, 173;
+	--ion-color-olivegreen-contrast: #161616;
+	--ion-color-olivegreen-contrast-rgb: 31, 181, 173;
+	--ion-color-olivegreen-shade: #1FB5AD;
+	--ion-color-olivegreen-tint: #1FB5AD;
 }
 
 html {
@@ -75,4 +82,13 @@ html {
    * https://ionicframework.com/docs/layout/dynamic-font-scaling
    */
   --ion-dynamic-font: var(--ion-default-dynamic-font);
+}
+
+.ion-color-olivegreen {
+	--ion-color-base: var(--ion-color-olivegreen);
+	--ion-color-base-rgb: var(--ion-color-olivegreen-rgb);
+	--ion-color-contrast: var(--ion-color-olivegreen-contrast);
+	--ion-color-contrast-rgb: var(--ion-color-olivegreen-contrast-rgb);
+	--ion-color-shade: var(--ion-color-olivegreen-shade);
+	--ion-color-tint: var(--ion-color-olivegreen-tint);
 }

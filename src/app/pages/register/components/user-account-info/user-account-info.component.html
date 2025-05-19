@@ -5,12 +5,38 @@
             Ingresa tu información personal para poder gestionar tu cuenta y acceder a todas las funcionalidades de Zinnia.
         </p>
     </div>
-    <form class="custom-form">
-        <ion-input placeholder="Nombre completo" fill="outline" [clearInput]="true" mode="md"></ion-input>
-        <ion-input placeholder="Correo electrónico" fill="outline" [clearInput]="true" mode="md"></ion-input>
-        <ion-input placeholder="Contraseña" type="password" fill="outline"  mode="md">
+    <form class="custom-form" *ngIf="userAccountForm" [formGroup]="userAccountForm">
+        <ion-input
+            mode="md"
+            fill="outline"
+            [clearInput]="true"
+            placeholder="Nombre completo"
+            formControlName="fullname">
         </ion-input>
-        <ion-input placeholder="Confrimar contraseña" type="password" fill="outline" mode="md"></ion-input>
+        <ion-input
+            mode="md"
+            fill="outline"
+            [clearInput]="true"
+            placeholder="Correo electrónico"
+            formControlName="email">
+        </ion-input>
+        <div class="error-message" *ngIf="userAccountForm.get('email')?.hasError('emailTaken') && userAccountForm.get('email')?.touched">
+          Este usuario no está disponible
+        </div>
+        <ion-input
+            mode="md"
+            fill="outline"
+            type="password"
+            placeholder="Contraseña"
+            formControlName="password">
+        </ion-input>
+        <ion-input
+            mode="md"
+            fill="outline"
+            type="password"
+            placeholder="Confirmar contraseña"
+            formControlName="confirmPassword">
+        </ion-input>
     </form>
 </ng-container>
 
