@@ -12,10 +12,10 @@ export class CustomersService {
     private customersMock: ICustomer[]  = [
         {
             id: 1,
-            fullname: 'Jorge Luis Mendez',
-            email: 'jorge.mendezj@cecar.edu.co',
-            mobile: '3046791101',
-            address: '3046791101'
+            fullname: 'Adalberto Fabra Rodriguez',
+            email: 'adalberto.fabra@cecar.edu.co',
+            mobile: '3116791102',
+            address: 'Calle 12 #7-235'
         }
     ];
 

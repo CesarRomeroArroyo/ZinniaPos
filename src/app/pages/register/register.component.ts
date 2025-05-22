@@ -79,9 +79,9 @@ export class RegisterComponent implements OnInit {
         this.currentStep === this.totalSteps ? this.verifyEmail() :  this.currentStep += 1;
     }
 
-    private goToAccountActivation(email: string) {
+    private goToAccountActivation(id: string, email: string, password: string) {
         this._router.navigate(['/validate-code'], {
-            state: { email }
+            state: { id, email, password }
         });
     }
 
@@ -122,10 +122,11 @@ export class RegisterComponent implements OnInit {
     }
 
     private async showCodeResendAlert() {
+        const { id, email, password } = this.registeredData[2].data;
         await this._alertService.presentConfirm(
             '¿Reenviar codigo de verificacion?',
             'Este correo ya se encuentra registrado, confirma si deseas recibir un nuevo codigo de verificacion.',
-            () => this.goToAccountActivation(this.registeredData[2].data.email),
+            () => this.goToAccountActivation(id, email, password),
             () => console.log('Cancelar')
         );
     }
@@ -137,8 +138,8 @@ export class RegisterComponent implements OnInit {
             next: async(response) => {
                 if(response) {
                     await this._loadingService.hideLoading();
-                    const { email } = this.registeredData[2].data;
-                    this.goToAccountActivation(email);
+                    const { id, email, password } = this.registeredData[2].data;
+                    this.goToAccountActivation(id, email, password);
                 }
             },
             error: async (error) => {

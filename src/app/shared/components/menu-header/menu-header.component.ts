@@ -1,8 +1,9 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 import { MenuComponent } from '../menu/menu.component';
 import { addIcons } from 'ionicons';
 import { arrowBack } from 'ionicons/icons';
+import { AuthSessionService } from 'src/app/core/services/utils/auth-session.service';
 
 @Component({
   selector: 'app-menu-header',
@@ -11,23 +12,45 @@ import { arrowBack } from 'ionicons/icons';
   standalone: true,
   imports: [IonicModule, MenuComponent],
 })
-export class MenuHeaderComponent implements OnInit {
+export class MenuHeaderComponent implements OnInit, OnChanges {
 
-  @Input() settingHeader = { title: 'Tienda Central'};
+  @Input() title!: string;
+
   isMenuOpen: boolean = false;
 
-  constructor() {
+  constructor(
+    private _authSession: AuthSessionService,
+  ) {
     addIcons({ arrowBack });
   }
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.getCompanyName();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    this.getCompanyName();
+  }
+
+  ionViewDidEnter() {
+    this.getCompanyName();
+  }
 
   menuWillOpen() {
+    console.log('abriendo menu');
     this.isMenuOpen = true;
   }
 
   menuDidClose() {
+    console.log('cerrando menu');
     this.isMenuOpen = false;
+  }
+
+  private getCompanyName() {
+    const companyData = this._authSession.getUserCompany();
+    if(companyData && !this.title) {
+      this.title = companyData.name;
+    }
   }
 
 }

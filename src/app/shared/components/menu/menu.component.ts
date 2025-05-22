@@ -7,6 +7,7 @@ import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/cor
 import { LocalStorageService } from 'src/app/core/services/utils/local-storage.service';
 import { CommonModule } from '@angular/common';
 import { cashOutline, lockClosedOutline, personOutline, shieldCheckmarkOutline, shieldOutline, trashOutline, logOutOutline, chevronForward } from 'ionicons/icons';
+import { AuthSessionService } from 'src/app/core/services/utils/auth-session.service';
 
 @Component({
   selector: 'app-menu',
@@ -17,11 +18,12 @@ import { cashOutline, lockClosedOutline, personOutline, shieldCheckmarkOutline, 
 })
 export class MenuComponent implements OnInit, OnChanges {
 
-  @Input() contentId!: string;
   @Input() isOpen!: boolean;
-  public menuItemsItems = menuItems;
+  @Input() contentId!: string;
+  
   public user: any;
   public appVersion!: string;
+  public menuItemsItems = menuItems;
 
   constructor(
     private router: Router,
@@ -29,15 +31,24 @@ export class MenuComponent implements OnInit, OnChanges {
     private alertController: AlertController,
     private toastController: ToastController,
     private localStore: LocalStorageService,
+    private _authSession: AuthSessionService,
   ) { 
     addIcons({ chevronForward, personOutline, cashOutline, lockClosedOutline, shieldCheckmarkOutline, shieldOutline, trashOutline, logOutOutline });
   }
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.getUserData();
+  }
 
-  ngOnChanges(changes: SimpleChanges): void { }
+  ngOnChanges(changes: SimpleChanges): void {
+    this.getUserData();
+  }
 
-  async gotTo(item: any){    
+  ionViewDidEnter() {
+    this.getUserData();
+  }
+
+  public async gotTo(item: any){    
     if(item?.route) {
       this.router.navigate([item.route]); 
     }
@@ -45,7 +56,13 @@ export class MenuComponent implements OnInit, OnChanges {
     if(item?.externalRoute) {
       await Browser.open({ url: item.externalRoute });
     }
+  }
 
+  private getUserData() {
+    const userData = this._authSession.getCurrentUser();
+    if(userData) {
+      this.user = userData;
+    }
   }
 
 }

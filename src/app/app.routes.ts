@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { UnauthenticatedGuard } from './core/guards/auth/unauthenticated.guard';
 import { appointmentsRoutes } from './pages/dashboard/appointments/appointments.routing';
+import { dashboardRoutes } from './pages/dashboard/dashboard.routing';
 
 export const routes: Routes = [
   {
@@ -20,17 +21,15 @@ export const routes: Routes = [
     //canActivate: [UnauthenticatedGuard],
   },
   {
+    path: 'dashboard',
+    children: dashboardRoutes,
+  },
+  {
     path:'validate-code',
     loadComponent: ()=> import('./pages/validation-code/validation-code.component').then((m)=>m.ValidationCodeComponent),
   },
   {
     path:'onboarding',
     loadComponent:()=>import('./pages/onboarding/onbording.component').then((m)=>m.OnbordingComponent),
-  },
-  {
-    path: 'appointments',
-    loadComponent: () => import('./pages/dashboard/appointments/appointments.component').then((m) => m.AppointmentsComponent),
-    children: appointmentsRoutes,
-    canActivate: [UnauthenticatedGuard],
   }
 ];

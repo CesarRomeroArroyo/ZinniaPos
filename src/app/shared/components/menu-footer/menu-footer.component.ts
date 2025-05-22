@@ -58,7 +58,7 @@ export class MenuFooterComponent implements OnInit {
   }
 
   private async getUserData() {
-    this.userLogged = await JSON.parse(this._localStorageService.getItem(StorageKeys.USER_DATA))[0];
+    
     this.menu = footerMenu.filter( item => item.permissions.includes("1"));
   }
 

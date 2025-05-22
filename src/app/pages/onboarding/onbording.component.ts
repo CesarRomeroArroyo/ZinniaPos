@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import {IonButton, IonContent, IonFooter} from "@ionic/angular/standalone";
 import {NgOptimizedImage} from "@angular/common";
+import { MenuHeaderComponent } from 'src/app/shared/components/menu-header/menu-header.component';
 
 @Component({
   selector: 'app-onboarding',
@@ -11,7 +12,8 @@ import {NgOptimizedImage} from "@angular/common";
     IonContent,
     NgOptimizedImage,
     IonButton,
-      IonFooter
+    IonFooter,
+    MenuHeaderComponent,
   ]
 })
 export class OnbordingComponent implements OnInit {

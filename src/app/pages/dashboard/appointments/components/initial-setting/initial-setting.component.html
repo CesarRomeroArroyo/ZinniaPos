@@ -1,4 +1,12 @@
-<ion-content >
+<ion-content>
+  <div class="container">
+    <div class="quick-access-header">
+      <ion-label class="title bold">Gestión rápida</ion-label>
+      <ion-icon slot="end" name="create-outline" (click)="editQuickAccessItems()"></ion-icon>
+    </div>
+    <app-quick-access-list [items]="userQuickAccess"></app-quick-access-list>
+  </div>
+
   <div class="container">
     <ion-label class="title bold">Configura tu empresa</ion-label>
 

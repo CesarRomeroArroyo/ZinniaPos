@@ -2,26 +2,39 @@ import { delay, lastValueFrom, Observable, of } from 'rxjs';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
-import { ICustomer } from '../../interfaces/bussiness/customers.interface';
 import { IEmailVerifyResponse } from '../../interfaces/bussiness/verify.interface';
+import { ILoginRequest, ILoginResponse } from '../../interfaces/bussiness/login.interface';
+import { IUser } from '../../interfaces/bussiness/user.interface';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
 
-    private registeredUsers: any[]  = [
+    private registeredUsers: IUser[]  = [
         {
-            id: 1,
+            id: "1",
+            idunico: "2222",
+            onesignal: "",
             fullname: 'Jorge Luis Mendez',
             email: 'jorge.mendezj@cecar.edu.co',
-            password: '123',
+            activacion: "1101",
+            estado: "1",
+            mostrar: "",
+            token: "b368126gw"
         }
     ];
 
     constructor(
         private _httpClient: HttpClient,
     ) { }
+
+    public login(payload: ILoginRequest): Observable<ILoginResponse>{
+        /*
+        return this._httpClient.post<Array<ILoginResponse>>(`${environment.API}login/`, payload)
+        */
+       return of(this.registeredUsers).pipe(delay(3000));
+    }
 
     public registerUser(newUser: any): Observable<boolean> {
         /*
@@ -51,6 +64,13 @@ export class AuthService {
     public sendActivationCode(userId: string): Observable<boolean> {
         const responseMock = true;
         return of(responseMock).pipe(delay(3000));
+    }
+
+    public updateUserWithoutToken(data: any): Observable<boolean> {
+        /*
+        return this._http.put<any>(`${environment.API_WEB}updateuser/`, data);
+        */
+        return of(true).pipe(delay(3000));
     }
 
 }

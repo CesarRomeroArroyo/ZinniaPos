@@ -4,15 +4,15 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { environment } from 'src/environments/environment';
-import { ProxyService } from '../../core/services/proxy.service';
-import { TranslationService } from '../../core/services/translation.service';
-import { LocalStorageService } from '../../core/services/local-storage.service';
 import { eyeOutline, eyeOffOutline, mailOutline, lockClosedOutline } from 'ionicons/icons';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { IonicModule, ToastController } from '@ionic/angular';
+import { IonicModule } from '@ionic/angular';
 import { ModalController } from '@ionic/angular';
 import { DirectivesModule } from 'src/app/core/directives/directives.module';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core'
+import { AuthSessionService } from 'src/app/core/services/utils/auth-session.service';
+import { ToastService } from 'src/app/core/services/utils/toast.service';
+import { LoadingService } from 'src/app/core/services/utils/loading.service';
 
 @Component({
   selector: 'app-login',
@@ -33,17 +33,16 @@ import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core'
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class LoginComponent {
-  public usuario:any =  {user: '', pass:''};
+
   public loginImages = LoginImages
   public loginForm!: FormGroup;
 
   constructor(
-    public translationService: TranslationService,
-    private proxy:ProxyService,
-    private localStorage: LocalStorageService,
-    private toastController: ToastController,
     private router: Router,
     private _formBuild: FormBuilder,
+    private _toastService: ToastService,
+    private _loadingService: LoadingService,
+    private _authSessionService: AuthSessionService,
   ) { 
     addIcons({ mailOutline, lockClosedOutline, eyeOutline, eyeOffOutline });
   }
@@ -65,26 +64,22 @@ export class LoginComponent {
     //this.validateRememberSession();
   }
 
-  async login(){
-      const user: any = await this.proxy.postMethod('login/', this.usuario);
-    console.log(user);
-    if(user.length > 0){
-      this.localStorage.setItem('ZINNIA_USER', user[0]);
-      const toast = await this.toastController.create({
-        message: 'Bienvenido '+user[0].name,
-        duration: 3000,
-        color: 'success'
-      });
-      toast.present();
-      this.router.navigate(['inicio']);
-    }
-    else {
-      const toast = await this.toastController.create({
-        message: 'Usuario o Password Incorrecto',
-        duration: 3000,
-        color: 'danger'
-      });
-      toast.present();
-    }
+  public async login() {
+    if(this.loginForm.invalid) return;
+    await this._loadingService.showLoading("Iniciando sesión...");
+    const formValue = this.loginForm.value;
+
+    this._authSessionService.login(formValue).subscribe({
+      next: async(response) => {
+        await this._loadingService.hideLoading();
+        this.router.navigate(['/dashboard/']);
+      },
+      error: (err) => {
+        console.error(err);
+        this._toastService.showToast({ message: "Ha ocurrido un error desconocido al iniciar sesion. Intentalo nuevamente", color: "danger"});
+      }
+    });
+
   }
+
 }

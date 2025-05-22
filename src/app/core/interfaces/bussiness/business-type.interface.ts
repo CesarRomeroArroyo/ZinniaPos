@@ -1,5 +1,7 @@
+import { BusinessCategoryId } from "../../consts/enums/business/business-category.enum";
+
 export interface BusinessType {
-    id: string;
+    id: BusinessCategoryId;
     title: string;
     description: string;
 };

@@ -6,6 +6,13 @@ import { ProgressListComponent } from 'src/app/shared/components/progress-list/p
 import { CustomerUpsertComponent } from '../../../customers/components/customer-upsert/customer-upsert.component';
 import { BusinessHoursComponent } from '../business-hours/business-hours.component';
 import { IListTask } from 'src/app/core/consts/types/progress-list.type';
+import { QuickAccessListComponent } from 'src/app/shared/components/quick-access-list/quick-access-list.component';
+import { QuickAccessItem } from 'src/app/core/interfaces/quick-access-list.interface';
+import { QuickAccessService } from 'src/app/core/services/utils/quick-access.service';
+import { AuthSessionService } from 'src/app/core/services/utils/auth-session.service';
+import { BusinessCategoryId } from 'src/app/core/consts/enums/business/business-category.enum';
+import { SessionStorageService } from 'src/app/core/services/utils/session-storage.service';
+import { StorageKeys } from 'src/app/core/consts/enums/storage-keys.enum';
 
 @Component({
   selector: 'app-initial-setting',
@@ -16,19 +23,36 @@ import { IListTask } from 'src/app/core/consts/types/progress-list.type';
     CommonModule,
     IonicModule,
     RouterModule,
-    ProgressListComponent
+    ProgressListComponent,
+    QuickAccessListComponent
   ]
 })
 export class InitialSettingComponent implements OnInit {
 
   public initialTask: IListTask[] = [];
+  public businessCategoryId!: BusinessCategoryId | undefined;
+  public userQuickAccess: QuickAccessItem[] = [];
 
   constructor(
     private _modalCtrl: ModalController,
+    private _authSession: AuthSessionService,
+    private _quickAccessService: QuickAccessService,
   ) { }
 
   ngOnInit(): void {
+    this.getQuickAccessLsit();
     this.defineTasks();
+  }
+
+  public editQuickAccessItems() {
+    
+  }
+
+  private getQuickAccessLsit() {
+    this.businessCategoryId = this._authSession.getUserCompany()?.category;
+    if(this.businessCategoryId) {
+      this.userQuickAccess = this._quickAccessService.getUserQuickAccess(this.businessCategoryId);
+    }
   }
 
   private defineTasks(): void {
