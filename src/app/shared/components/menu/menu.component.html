@@ -15,8 +15,8 @@
       <ion-avatar class="avatar">
         <img alt="profile" src="assets/images/ic_energy.png" />
       </ion-avatar>
-      <h5 class="user-name">{{ user.fullname || 'Name not available' }}</h5>
-      <h6 class="user-email">{{ user.email || 'Email not available' }} </h6>
+      <h5 class="user-name">{{ user?.fullname || 'Name not available' }}</h5>
+      <h6 class="user-email">{{ user?.email || 'Email not available' }} </h6>
     </div>
 
     <ion-list class="menu-items ion-margin-top">

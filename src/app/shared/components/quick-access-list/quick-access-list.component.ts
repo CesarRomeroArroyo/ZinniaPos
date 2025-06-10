@@ -19,6 +19,7 @@ import { QuickAccessItem } from 'src/app/core/interfaces/quick-access-list.inter
 export class QuickAccessListComponent implements OnChanges {
   
   @Input() items: QuickAccessItem[] = [];
+  @Input() onAddItem!: () => void;
 
   private registeredIcons = new Set<string>();
 
@@ -45,6 +46,12 @@ export class QuickAccessListComponent implements OnChanges {
       if (Object.keys(iconsToRegister).length > 0) {
         addIcons(iconsToRegister);
       }
+    }
+  }
+
+  public addItem() {
+    if (this.onAddItem) {
+      this.onAddItem();
     }
   }
 }

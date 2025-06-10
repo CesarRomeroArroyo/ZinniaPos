@@ -4,7 +4,9 @@
       <ion-label class="title bold">Gestión rápida</ion-label>
       <ion-icon slot="end" name="create-outline" (click)="editQuickAccessItems()"></ion-icon>
     </div>
-    <app-quick-access-list [items]="userQuickAccess"></app-quick-access-list>
+    <app-quick-access-list
+      [items]="userQuickAccess">
+    </app-quick-access-list>
   </div>
 
   <div class="container">

@@ -13,6 +13,9 @@ import { AuthSessionService } from 'src/app/core/services/utils/auth-session.ser
 import { BusinessCategoryId } from 'src/app/core/consts/enums/business/business-category.enum';
 import { SessionStorageService } from 'src/app/core/services/utils/session-storage.service';
 import { StorageKeys } from 'src/app/core/consts/enums/storage-keys.enum';
+import { EditQuickAccessComponent } from 'src/app/shared/components/quick-access-list/components/edit-quick-access/edit-quick-access.component';
+import { ToastService } from 'src/app/core/services/utils/toast.service';
+import { quickAccessAddMessages, quickAccessEditConfig } from './initial-setting.consts';
 
 @Component({
   selector: 'app-initial-setting',
@@ -35,6 +38,7 @@ export class InitialSettingComponent implements OnInit {
 
   constructor(
     private _modalCtrl: ModalController,
+    private _toastService: ToastService,
     private _authSession: AuthSessionService,
     private _quickAccessService: QuickAccessService,
   ) { }
@@ -44,8 +48,37 @@ export class InitialSettingComponent implements OnInit {
     this.defineTasks();
   }
 
-  public editQuickAccessItems() {
-    
+  public async addQuickAccessItem(item: QuickAccessItem): Promise<boolean>  {
+    const userCompany = this._authSession.getUserCompany()
+    const success = await this._quickAccessService.addCustomItem(userCompany!.category, item);
+    return success;
+  }
+
+  public async removeQuickAccessItem(itemId: string): Promise<boolean> {
+    const success = await this._quickAccessService.removeCustomItem(itemId);
+    return success;
+  }
+
+  public async editQuickAccessItems() {
+    const allQuickAccess = this._quickAccessService.getQuickAccesslist();
+    const modal = await this._modalCtrl.create({
+      component: EditQuickAccessComponent,
+      componentProps: {
+        ...quickAccessEditConfig,
+        onSelectItem: this.addQuickAccessItem.bind(this),
+        onDeleteItem: this.removeQuickAccessItem.bind(this),
+        quickAccessItems: allQuickAccess 
+      },
+      cssClass: 'option-select-modal',
+      breakpoints: [0, 1],
+      initialBreakpoint: 1,
+    });
+    await modal.present();
+    const { data } = await modal.onDidDismiss();
+    if(data) {
+      this.getQuickAccessLsit();
+      this._toastService.showToast(quickAccessAddMessages[data]);
+    }
   }
 
   private getQuickAccessLsit() {

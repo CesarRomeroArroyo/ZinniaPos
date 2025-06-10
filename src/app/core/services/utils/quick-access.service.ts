@@ -35,21 +35,28 @@ export class QuickAccessService {
         return [ ...defaultList, ...customList ];
     }
 
-    public addCustomItem(categoryId: BusinessCategoryId, newItem: QuickAccessItem): void {
+    public async addCustomItem(categoryId: BusinessCategoryId, newItem: QuickAccessItem): Promise<boolean> {
         const quickAccess = this.getUserQuickAccess(categoryId);
         const customQuickAccess = this.getCustomQuickAccess();
         const exits = quickAccess.some(i => i.id === newItem.id);
-        
-        if(!exits) {
-            customQuickAccess.push(newItem);
-            this.saveCustomQuickAccess(customQuickAccess);
-        }
+
+        if(exits) { return false; }
+
+        customQuickAccess.push(newItem);
+        this.saveCustomQuickAccess(customQuickAccess);
+        return true;
     }
 
-    public removeCustomItem(itemId: string): void {
-        const allCustomItems = this.getCustomQuickAccess();
-        const updated = allCustomItems.filter(i => !(i.id === itemId));
-        this.saveCustomQuickAccess(updated);
+    public async removeCustomItem(itemId: string): Promise<boolean> {
+        try{
+            const allCustomItems = this.getCustomQuickAccess();
+            const updated = allCustomItems.filter(i => !(i.id === itemId));
+            this.saveCustomQuickAccess(updated);
+            return true;
+        } catch(error) {
+            console.error(error);
+            return false;
+        }
     }
 
     public clearCustomQuickAccess(categoryId: BusinessCategoryId): void {
