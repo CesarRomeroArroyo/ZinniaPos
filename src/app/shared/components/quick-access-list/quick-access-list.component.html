@@ -1,0 +1,15 @@
+<div class="quick-access-wrapper">
+  <div class="scroll-container">
+    <div class="items-container">
+      <a *ngFor="let item of items" class="quick-item" [routerLink]="item.route">
+        <ion-icon [name]="item.icon"></ion-icon>
+        <span>{{ item.label }}</span>
+      </a>
+      <a class="quick-item" *ngIf="addItem">
+        <ion-icon name="add-circle-outline" (click)="addItem()"></ion-icon>
+        <span>Agregar</span>
+      </a>
+    </div>
+    <div class="fade-overlay"></div>
+  </div>
+</div>

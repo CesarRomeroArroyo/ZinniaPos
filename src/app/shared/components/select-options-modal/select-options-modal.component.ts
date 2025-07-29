@@ -25,9 +25,10 @@ export class SelectOptionsModalComponent implements OnInit {
   @Input() actionButton: boolean = true;
   @Input() buttonClick?: () => void;
   @Input() componentToOpen!: any;
+  @Input() multiple: boolean = false;
 
-  
   public selectedOption!: ISelectOption;
+  public selectedOptions: ISelectOption[] = [];
   public isFormValid: boolean = false;
 
   constructor(
@@ -41,14 +42,13 @@ export class SelectOptionsModalComponent implements OnInit {
   public async onButtonClick() {
     if (this.componentToOpen) {
       const modal = await this._modalCtrl.create({
-      component: this.componentToOpen
-    });
-    await modal.present();
-    const { data } = await modal.onDidDismiss();
-  } else {
-    this.buttonClick ? this.buttonClick() : null;
-  }
-
+        component: this.componentToOpen
+      });
+      await modal.present();
+      const { data } = await modal.onDidDismiss();
+    } else {
+      this.buttonClick ? this.buttonClick() : null;
+    }
   }
 
   onRadioChange(event: any) {
@@ -57,12 +57,22 @@ export class SelectOptionsModalComponent implements OnInit {
     console.log("Form valid: ", this.isFormValid)
   }
 
+  onCheckboxChange() {
+    this.selectedOptions = this.optionsList.filter(opt => opt.selected);
+    this.isFormValid = this.selectedOptions.length > 0;
+  }
+
   dismiss() {
     this._modalCtrl.dismiss();
   }
 
   public saveSelection() {
-    this._modalCtrl.dismiss(this.selectedOption);
+    if (this.multiple) {
+      console.log(this.selectedOptions);
+      this._modalCtrl.dismiss(this.selectedOptions);
+    } else {
+      this._modalCtrl.dismiss([this.selectedOption]);
+    }
   }
 
 }

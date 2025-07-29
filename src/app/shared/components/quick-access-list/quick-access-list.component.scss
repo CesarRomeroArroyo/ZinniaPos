@@ -1,0 +1,49 @@
+.quick-access-wrapper {
+
+  .scroll-container {
+    position: relative;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+
+  .items-container {
+    display: flex;
+    gap: 1.5rem;
+    padding-right: 2rem;
+  }
+
+  .quick-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 64px;
+    text-align: center;
+    text-decoration: none;
+    color: inherit;
+
+    ion-icon {
+      font-size: 24px;
+      background: #f0f0f0;
+      border-radius: 50%;
+      padding: 12px;
+      margin-bottom: 0.3rem;
+    }
+
+    span {
+      font-size: 0.9rem;
+    }
+  }
+
+  .fade-overlay {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 40px;
+    height: 100%;
+    background: linear-gradient(to right, transparent, white);
+    pointer-events: none;
+  }
+}

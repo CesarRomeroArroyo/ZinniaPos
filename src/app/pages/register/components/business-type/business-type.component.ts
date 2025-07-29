@@ -1,14 +1,13 @@
 import {CustomInputComponent} from "../../../../shared/components/custom-input/custom-input.component";
 import {Component, EventEmitter, Output} from '@angular/core';
-import {IonItem, IonLabel, IonList} from '@ionic/angular/standalone';
-import {CommonModule, NgClass, NgForOf, NgIf} from "@angular/common";
+import {CommonModule} from "@angular/common";
 import {IonicModule} from "@ionic/angular";
 import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import { LocalStorageService } from "src/app/core/services/utils/local-storage.service";
 import { StorageKeys } from "src/app/core/consts/enums/storage-keys.enum";
 import { StepData } from "src/app/core/consts/types/steps.type";
 import { BusinessType } from "src/app/core/interfaces/bussiness/business-type.interface";
-import { businessCategories } from "./business-type.consts";
+import { businessCategories } from "src/app/core/consts/values/business-category.consts";
 
 @Component({
   selector: 'app-business-type',

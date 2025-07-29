@@ -3,10 +3,12 @@ import { AppointmentsMainComponent } from "./components/appointments-main/appoin
 import { InitialSettingComponent } from "./components/initial-setting/initial-setting.component";
 import { CustomerUpsertComponent } from "../customers/components/customer-upsert/customer-upsert.component";
 import { BusinessHoursComponent } from "./components/business-hours/business-hours.component";
+import { AppointmentsComponent } from "./appointments.component";
 
 export const appointmentsRoutes: Routes = [
     {
         path: '',
+        component: AppointmentsComponent,
         children: [
             {  
                 path: '',
