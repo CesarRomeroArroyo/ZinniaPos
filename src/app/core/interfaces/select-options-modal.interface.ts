@@ -3,6 +3,7 @@ export interface ISelectOption {
     subtitle?: string;
     image?: string;
     value: any;
+    selected?: boolean,
 }
 
 export interface ISelectModalConfig {
@@ -10,4 +11,5 @@ export interface ISelectModalConfig {
     optionsList: ISelectOption[];
     actionButton: boolean;
     componentToOpen?: any;
+    multiple?: boolean;
 };

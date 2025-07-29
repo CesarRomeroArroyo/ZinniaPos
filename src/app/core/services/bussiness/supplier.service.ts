@@ -2,20 +2,20 @@ import { delay, lastValueFrom, Observable, of } from 'rxjs';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
-import { ICustomer, ICustomerPayload } from '../../interfaces/bussiness/customers.interface';
+import { ISupplier, ISupplierPayload } from '../../interfaces/bussiness/supplier.interface';
 
 @Injectable({
   providedIn: 'root'
 })
-export class CustomersService {
+export class SupplierService {
 
-    private customersMock: ICustomer[]  = [
+    private suppliersMock: ISupplier[]  = [
         {
             id: '1',
-            fullname: 'Adalberto Fabra Rodriguez',
-            email: 'adalberto.fabra@cecar.edu.co',
-            mobile: '3116791102',
-            address: 'Calle 12 #7-235'
+            name: 'Proveedor 111',
+            phone: '30467911101',
+            email: 'provedor111@gmail.com',
+            address: 'Cll 12 #7-135',
         }
     ];
 
@@ -23,22 +23,21 @@ export class CustomersService {
         private _httpClient: HttpClient,
     ) { }
 
-    public getCustomers(userId: string): Observable<ICustomer[]> {
+    public getAllSuppliers(userId: string): Observable<ISupplier[]> {
         /*
         return await lastValueFrom(
             this._httpClient.get<any>(`${environment.API}/getByIdUnico/firmas/${userId}`
         ));
         */
-        return of(this.customersMock).pipe(delay(3000));
+        return of(this.suppliersMock).pipe(delay(3000));
     }
 
-    public saveCustomer(newCustomer: ICustomerPayload): Observable<boolean> {
+    public saveSupplier(newSupplier: ISupplierPayload): Observable<boolean> {
         /*
         return await lastValueFrom(
             this._httpClient.post<any>(`${environment.API}/save/firmas/`, payload
         ));
         */
-        this.customersMock.push(newCustomer);
         return of(true).pipe(delay(3000));
     }
 

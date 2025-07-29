@@ -16,12 +16,23 @@
 
 <ion-content>
   <div class="container">
-    <ion-list>
+    <ion-list *ngIf="!multiple">
       <ion-radio-group [(ngModel)]="selectedOption" (ionChange)="onRadioChange($event)">
         <ion-item *ngFor="let option of optionsList;" lines="none">
-          <ion-radio mode="md" [value]="option">{{ option.title }}</ion-radio>
+          <ion-radio mode="md" [value]="option">
+            <ion-label>{{ option.title }}</ion-label>
+            <ion-note> {{option.subtitle}}</ion-note>
+          </ion-radio>
         </ion-item>
       </ion-radio-group>
+    </ion-list>
+
+    <ion-list *ngIf="multiple">
+      <ion-item *ngFor="let option of optionsList;" lines="none">
+        <ion-checkbox slot="start" [(ngModel)]="option.selected" (ionChange)="onCheckboxChange()"></ion-checkbox>
+        <ion-label>{{ option.title }}</ion-label>
+        <ion-note>{{ option.subtitle }}</ion-note>
+      </ion-item>
     </ion-list>
   </div>
   <ion-button *ngIf="actionButton" slot="fixed" (click)="onButtonClick()">
