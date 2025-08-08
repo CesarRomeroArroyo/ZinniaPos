@@ -36,7 +36,9 @@ export class ProductService {
                 percentage: 19,
                 type: 'added',
             },
-            images: []
+            images: [
+                "https://ionicframework.com/docs/img/demos/thumbnail.svg"
+            ]
         },
         {
             id: '2',

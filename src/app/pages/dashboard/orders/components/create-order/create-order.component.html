@@ -1,18 +1,48 @@
 <app-header [settingHeader]="settingHeader" [customActionCompleted]="actionCompleted.bind(this)"></app-header>
 <ion-content>
   <div class="container">
-    <form class="form" [formGroup]="customerForm" *ngIf="customerForm">
+    <div class="section" *ngIf="!selectedCustomer">
       <ion-label for="customer" class="title bold">
         Informacion de cliente
       </ion-label>
-      <ion-searchbar
-        mode="md"
-        placeholder="Buscar cliente"
-        animated="true"
-        show-clear-button="focus"
-        (click)="openCustomerSelection()">
-      </ion-searchbar>
-    </form>
+      <form class="form" [formGroup]="customerForm" *ngIf="customerForm">
+        <ion-searchbar
+          mode="md"
+          placeholder="Buscar cliente"
+          animated="true"
+          show-clear-button="focus"
+          (click)="openCustomerSelection()">
+        </ion-searchbar>
+      </form>
+    </div>
+    <div class="section" *ngIf="selectedCustomer">
+      <div class="section-header">
+        <ion-label class="title bold">
+          Informacion de cliente
+        </ion-label>
+        <button class="remove-btn" (click)="removeSelectedCustomer()">
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
+      </div>
+      <div class="customer-info">
+        <div class="customer-field">
+          <label>Cliente</label>
+          <span>{{ selectedCustomer.fullname }}</span>
+        </div>
+        <div class="customer-field">
+          <label>Correo electrónico</label>
+          <span>{{ selectedCustomer.email }}</span>
+        </div>
+        <div class="customer-field">
+          <label>Teléfono / Celular</label>
+          <span>{{ selectedCustomer.mobile }}</span>
+        </div>
+        <div class="customer-field">
+          <label>Dirección</label>
+          <span>{{ selectedCustomer.address }}</span>
+        </div>
+      </div>
+    </div>
   </div> 
 
   <div class="container">
@@ -29,7 +59,9 @@
         <div class="products-list">
           <div class="product-item" *ngFor="let item of orderItems">
             <div class="product-icon">
-              <div class="icon-placeholder"></div>
+              <ion-thumbnail>
+                <img [src]="getImageSrc(item.product)" alt="Silhouette of mountains"/>
+              </ion-thumbnail>
             </div>
             
             <div class="product-content">
@@ -92,12 +124,12 @@
       <ion-note slot="end">{{ subtotal | currency }}</ion-note>
     </ion-item>
     <ion-item lines="none">
-      <ion-label class="title">Agregar descuento</ion-label>
-      <ion-note slot="end">{{ discount | currency }}</ion-note>
+      <ion-label class="title" (click)="addDiscount()">Agregar descuento</ion-label>
+      <ion-note slot="end">{{ discountValue  | currency }}</ion-note>
     </ion-item>
     <ion-item lines="none">
       <ion-label class="title">Impuesto estimado</ion-label>
-      <ion-note slot="end">{{ tax | currency }}</ion-note>
+      <ion-note slot="end">{{ estimatedTax | currency }}</ion-note>
     </ion-item>
     <ion-item lines="none">
       <ion-label class="title bold">Total</ion-label>
@@ -107,7 +139,12 @@
 </ion-content>
 
 <ion-footer class="ion-no-border footer">
-  <ion-button mode="md" expand="block" fill="solid">
+  <ion-button
+    mode="md"
+    expand="block"
+    fill="solid"
+    [disabled]="isOrderInvalid()"
+    (click)="confirmOrder()">
     Confirmar pedido
   </ion-button>
 </ion-footer>

@@ -26,12 +26,13 @@ export class DashboardComponent implements OnInit {
   ) { }
 
   async ngOnInit() {
+    /*
     const user = this._authSessionService.getCurrentUser();
 
     if (!user) {
       this._router.navigate(['/login']);
       return;
-    }
+    } */
   }
 
 }
