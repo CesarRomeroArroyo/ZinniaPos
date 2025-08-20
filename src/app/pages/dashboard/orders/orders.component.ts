@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { IonicModule, ModalController } from '@ionic/angular';
 import { HeaderComponent } from 'src/app/shared/components/header/header.component';
-import { ordersGetMessages, settingHeader, waitingMessageOrderLoading } from './orders.consts';
+import { ordersGetMessages, settingHeader } from './orders.consts';
 import { CreateOrderComponent } from './components/create-order/create-order.component';
 import { NoOrdersBannerComponent } from './components/no-orders-banner/no-orders-banner.component';
 import { OrderService } from 'src/app/core/services/bussiness/order.service';
@@ -13,6 +13,10 @@ import { LoadingService } from 'src/app/core/services/utils/loading.service';
 import { ToastService } from 'src/app/core/services/utils/toast.service';
 import { OrderListComponent } from './components/order-list/order-list.component';
 import { firstValueFrom } from 'rxjs';
+import { QuickAccessPanelComponent } from 'src/app/shared/components/quick-access-panel/quick-access-panel.component';
+import { ProgressListComponent } from 'src/app/shared/components/progress-list/progress-list.component';
+import { IListTask } from 'src/app/core/consts/types/progress-list.type';
+import { InitialBusinessSettingService } from 'src/app/core/services/utils/initial-setting.service';
 
 @Component({
   selector: 'app-orders',
@@ -25,9 +29,13 @@ import { firstValueFrom } from 'rxjs';
     HeaderComponent,
     NoOrdersBannerComponent,
     OrderListComponent,
+    QuickAccessPanelComponent,
+    ProgressListComponent,
   ]
 })
 export class OrdersComponent implements OnInit {
+
+  public initialTask: IListTask[] = [];
 
   public settingHeader = settingHeader;
   public orders: IOrder[] = [];
@@ -39,13 +47,16 @@ export class OrdersComponent implements OnInit {
     private _orderService: OrderService,
     private _toastService: ToastService,
     private _loadingService: LoadingService,
+    private _authSession: AuthSessionService,
     private _authSessionService: AuthSessionService,
+    private _initialBusinessSettingSrv : InitialBusinessSettingService
   ) { }
 
   ngOnInit() {  }
 
   async ionViewWillEnter() {
     this._loggedUser = this._authSessionService.getCurrentUser();
+    this.getInitialTask();
     await this.getOrders();
   }
 
@@ -60,6 +71,10 @@ export class OrdersComponent implements OnInit {
     });
     await modal.present();
     const { data } = await modal.onDidDismiss();
+  }
+
+  private getInitialTask() {
+    this.initialTask = this._initialBusinessSettingSrv.getInitialUserTask();
   }
 
   private async getOrders() {

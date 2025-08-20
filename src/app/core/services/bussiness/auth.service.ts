@@ -1,4 +1,4 @@
-import { delay, lastValueFrom, Observable, of } from 'rxjs';
+import { delay, lastValueFrom, Observable, of, throwError } from 'rxjs';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
@@ -22,6 +22,17 @@ export class AuthService {
             estado: "1",
             mostrar: "",
             token: "b368126gw"
+        },
+        {
+            id: '2',
+            idunico: '33202',
+            onesignal: '12345678',
+            fullname: 'Maria Alejandra Mendez',
+            email: 'maralmeji2@gmail.com',
+            activacion: '2202',
+            estado: '1',
+            mostrar: '',
+            token: 'H233847U'
         }
     ];
 
@@ -33,7 +44,12 @@ export class AuthService {
         /*
         return this._httpClient.post<Array<ILoginResponse>>(`${environment.API}login/`, payload)
         */
-       return of(this.registeredUsers).pipe(delay(3000));
+        const userFound = this.registeredUsers.find(user => user.email === payload.email);
+        if (!userFound) {
+            return throwError(() => new Error('Usuario no encontrado o credenciales inválidas'));
+        }
+
+        return of([userFound]).pipe(delay(3000));
     }
 
     public registerUser(newUser: any): Observable<boolean> {

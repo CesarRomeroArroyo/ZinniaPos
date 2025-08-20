@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { LocalStorageService } from './local-storage.service';
+import { LocalStorageService } from './storage/local-storage.service';
 import { StorageKeys } from '../../consts/enums/storage-keys.enum';
 
 @Injectable({

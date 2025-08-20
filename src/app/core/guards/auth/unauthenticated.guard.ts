@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
 import { Observable } from 'rxjs';
 import { CoreService } from '../../services/utils/core.service';
-import { LocalStorageService } from '../../services/utils/local-storage.service';
+import { LocalStorageService } from '../../services/utils/storage/local-storage.service';
 import { StorageKeys } from '../../consts/enums/storage-keys.enum';
 
 @Injectable({

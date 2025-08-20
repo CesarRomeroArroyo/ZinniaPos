@@ -1,7 +1,7 @@
 import { Injectable } from "@angular/core";
 import { StorageKeys } from "../../consts/enums/storage-keys.enum";
 import { QuickAccessItem } from "../../interfaces/quick-access-list.interface";
-import { SessionStorageService } from "./session-storage.service";
+import { SessionStorageService } from "./storage/session-storage.service";
 import { avalaibleQuickAccess, quickAccessMap } from "../../consts/values/quick-access.consts";
 import { BusinessCategoryId } from "../../consts/enums/business/business-category.enum";
 

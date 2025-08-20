@@ -4,7 +4,7 @@ import { menuItems } from './menu-consts';
 import { Browser } from '@capacitor/browser';
 import { AlertController, IonicModule, ToastController } from '@ionic/angular';
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { LocalStorageService } from 'src/app/core/services/utils/local-storage.service';
+import { LocalStorageService } from 'src/app/core/services/utils/storage/local-storage.service';
 import { CommonModule } from '@angular/common';
 import { cashOutline, lockClosedOutline, personOutline, shieldCheckmarkOutline, shieldOutline, trashOutline, logOutOutline, chevronForward } from 'ionicons/icons';
 import { AuthSessionService } from 'src/app/core/services/utils/auth-session.service';

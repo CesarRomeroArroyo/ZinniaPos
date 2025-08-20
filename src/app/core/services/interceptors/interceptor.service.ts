@@ -15,7 +15,7 @@ import { ResponseModalComponent } from 'src/app/shared/components/response-modal
 import { errorConnectionResponse, errorSessionResponse } from '../../consts/enums/connection-error-modal';
 import { HttpErrors } from '../../consts/enums/http-errors.enum';
 import { Router } from '@angular/router';
-import { LocalStorageService } from '../utils/local-storage.service';
+import { LocalStorageService } from '../utils/storage/local-storage.service';
 
 @Injectable()
 export class InterceptorService implements HttpInterceptor {

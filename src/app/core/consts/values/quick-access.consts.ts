@@ -1,5 +1,6 @@
 import { BusinessCategoryId } from "src/app/core/consts/enums/business/business-category.enum";
 import { QuickAccessItem } from "src/app/core/interfaces/quick-access-list.interface";
+import { IToastOptions } from "../../interfaces/toast.interface";
 
 export const quickAccessForServices = [
     {
@@ -89,3 +90,23 @@ export const quickAccessMap: Record<BusinessCategoryId, QuickAccessItem[]> = {
     [BusinessCategoryId.TECHNOLOGY]: [],
     [BusinessCategoryId.OTHER]: [],
 };
+
+export const quickAccessEditConfig = {
+    title: "Modulos",
+    description: "Agrega o elimina modulos adicionales a los establecidos por defecto para tu negocio."
+}
+
+export const quickAccessAddMessages: Record<string, IToastOptions> = {
+    "success": { message: 'Modulo agregado correctamente.', color: 'success'},
+    "error": { message: 'No se logro agregar el modulo.', color: 'danger'},
+};
+
+export const quickAccessDeletionMessage: Record<string, IToastOptions> = {
+    "success": { message: 'Modulo removido correctamente.', color: 'success'},
+    "error": { message: 'No se logro revover el modulo.', color: 'danger'},
+};
+
+export const quickAccessEditingActions: Record<string, Record<string, IToastOptions>> = {
+    "save": quickAccessAddMessages,
+    "delete": quickAccessDeletionMessage,
+}

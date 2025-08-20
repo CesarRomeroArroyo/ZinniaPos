@@ -7,4 +7,10 @@
     justify-content: start;
     background-color: var(--ion-color-primary-contrast);
     margin-top: 8px;
+
+    .quick-access-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;  
+    }
 }
