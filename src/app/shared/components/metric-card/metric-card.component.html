@@ -1,3 +1,22 @@
-<p>
-  metric-card works!
-</p>
+<div class="class-metrics">
+  <div class="main-content">
+      <div class="metrics">
+        <ion-label>{{ metricCardConfig.title }}</ion-label>
+        <ion-label>{{ metricCardConfig.valueMetric }}</ion-label>
+      </div>
+      <div class="graphics-section">
+
+      </div>
+  </div>
+  <div class="secondary-content" >
+    <ion-label>{{ metricCardConfig.deltaLabel }}</ion-label>
+    <ion-button
+      size="small"
+      fill="clear"
+      *ngIf="customizedDetailFunction">
+      Ver Detalles
+      <ion-icon name="chevron-forward-outline"></ion-icon>
+    </ion-button>
+  </div>
+
+</div>

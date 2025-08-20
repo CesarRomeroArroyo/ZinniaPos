@@ -10,10 +10,11 @@ import { AuthSessionService } from 'src/app/core/services/utils/auth-session.ser
 import { BusinessCategoryId } from 'src/app/core/consts/enums/business/business-category.enum';
 import { EditQuickAccessComponent } from 'src/app/shared/components/quick-access-list/components/edit-quick-access/edit-quick-access.component';
 import { ToastService } from 'src/app/core/services/utils/toast.service';
-import { quickAccessAddMessages, quickAccessEditConfig } from './initial-setting.consts';
+import { metricCardConfig, quickAccessAddMessages, quickAccessEditConfig } from './initial-setting.consts';
 import { InitialBusinessSettingService } from 'src/app/core/services/utils/initial-setting.service';
 import { QuickAccessPanelComponent } from 'src/app/shared/components/quick-access-panel/quick-access-panel.component';
 import { Subscription } from 'rxjs';
+import { MetricCardComponent } from 'src/app/shared/components/metric-card/metric-card.component';
 
 @Component({
   selector: 'app-initial-setting',
@@ -26,6 +27,7 @@ import { Subscription } from 'rxjs';
     RouterModule,
     ProgressListComponent,
     QuickAccessPanelComponent,
+    MetricCardComponent,
   ]
 })
 export class InitialSettingComponent implements OnInit, OnDestroy  {
@@ -33,6 +35,7 @@ export class InitialSettingComponent implements OnInit, OnDestroy  {
   public initialTask: IListTask[] = [];
   public businessCategoryId!: BusinessCategoryId | undefined;
   public userQuickAccess: QuickAccessItem[] = [];
+  public metricCardConfig = metricCardConfig;
 
   private tasksSubscription?: Subscription;
 

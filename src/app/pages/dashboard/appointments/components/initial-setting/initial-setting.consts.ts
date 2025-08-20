@@ -1,3 +1,4 @@
+import { IMetricCardInputs } from "src/app/core/interfaces/metric-card.interfaces";
 import { IToastOptions } from "src/app/core/interfaces/toast.interface";
 
 export const quickAccessEditConfig = {
@@ -20,3 +21,9 @@ export const quickAccessEditingActions: Record<string, Record<string, IToastOpti
     "delete": quickAccessDeletionMessage,
 }
 
+export const metricCardConfig: IMetricCardInputs = {
+    title: 'Ventas',
+    valueMetric: '',
+    deltaMetric: '',
+    graphicPoints: '',
+}
