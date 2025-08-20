@@ -28,8 +28,15 @@ export class ProgressListComponent implements OnInit {
   }
 
   onTaskClick(task: IListTask): void {
+    console.log('🔥 CLICK DETECTADO - Task clicked:', task.label);
+    console.log('🔥 Task object:', task);
+    console.log('🔥 Task has onClick:', !!task.onClick);
+    
     if (task.onClick) {
-      task.onClick();
+        console.log('🔥 Executing onClick...');
+        task.onClick();
+    } else {
+        console.warn('❌ No onClick handler for task:', task.label);
     }
   }
 

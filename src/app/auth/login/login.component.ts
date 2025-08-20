@@ -57,7 +57,7 @@ export class LoginComponent {
 
   private createForm(): void {
     this.loginForm = this._formBuild.group({
-      username: ['', [Validators.required, Validators.email]],
+      email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required]
     });
 
@@ -75,6 +75,7 @@ export class LoginComponent {
         this.router.navigate(['/dashboard/']);
       },
       error: (err) => {
+        this._loadingService.hideLoading();
         console.error(err);
         this._toastService.showToast({ message: "Ha ocurrido un error desconocido al iniciar sesion. Intentalo nuevamente", color: "danger"});
       }

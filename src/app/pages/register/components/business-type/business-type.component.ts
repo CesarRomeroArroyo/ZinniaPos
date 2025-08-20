@@ -3,7 +3,7 @@ import {Component, EventEmitter, Output} from '@angular/core';
 import {CommonModule} from "@angular/common";
 import {IonicModule} from "@ionic/angular";
 import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
-import { LocalStorageService } from "src/app/core/services/utils/local-storage.service";
+import { LocalStorageService } from "src/app/core/services/utils/storage/local-storage.service";
 import { StorageKeys } from "src/app/core/consts/enums/storage-keys.enum";
 import { StepData } from "src/app/core/consts/types/steps.type";
 import { BusinessType } from "src/app/core/interfaces/bussiness/business-type.interface";

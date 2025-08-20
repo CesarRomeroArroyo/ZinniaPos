@@ -1,33 +1,30 @@
 <app-header [settingHeader]="settingHeader" [customActionCompleted]="actionCompleted.bind(this)"></app-header>
 <ion-content>
+  <app-quick-access-panel></app-quick-access-panel>
+
   <div class="container">
-    <ion-searchbar
-      mode="md"
-      placeholder="Buscar pedido"
-      animated="true"
-      show-clear-button="focus">
-    </ion-searchbar>
+    <ion-label class="title bold">Configura tu empresa</ion-label>
+    <ion-label class="ion-text-wrap subtitle">Sigue estos pasos para poner en marcha tu empresa.</ion-label>
+    <app-progress-list [tasks]="initialTask"></app-progress-list>
+  </div>
 
-    <div class="initial-banner">
-      <div class="illustration-container ion-text-center">
-        <img src="assets/images/orders.svg" alt="Gestión de Pedidos" style="max-width: 70%; height: auto;">
-      </div>
-
-      <div class="ion-text-center">
-        <h3>Gestión de Pedidos</h3>
-        <p>
-          Revisa y gestiona los pedidos creados desde la app y los recibidos a través de WhatsApp
-        </p>
-      </div>
-
-      <div class="ion-text-center ion-padding">
-        <ion-button
-          expand="block"
-          color="dark"
-          (click)="goToCreateOrder()">
-          Crear pedido
-        </ion-button>
-      </div>
+  <div class="container">
+    <div class="search-section">
+      <ion-searchbar
+        mode="md"
+        placeholder="Buscar pedido"
+        animated="true"
+        show-clear-button="focus">
+      </ion-searchbar>
     </div>
+
+    @if (orders.length === 0){
+      <app-no-orders-banner></app-no-orders-banner>
+    } @else {
+      <app-order-list
+        [orders]="orders">
+      </app-order-list>
+    }
+
   </div>
 </ion-content>

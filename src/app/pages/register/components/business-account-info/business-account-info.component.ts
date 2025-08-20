@@ -1,7 +1,7 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { StepData } from 'src/app/core/consts/types/steps.type';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { LocalStorageService } from 'src/app/core/services/utils/local-storage.service';
+import { LocalStorageService } from 'src/app/core/services/utils/storage/local-storage.service';
 import { StorageKeys } from 'src/app/core/consts/enums/storage-keys.enum';
 import { IonicModule } from '@ionic/angular';
 import { CommonModule } from '@angular/common';

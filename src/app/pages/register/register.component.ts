@@ -9,7 +9,7 @@ import { StepData } from 'src/app/core/consts/types/steps.type';
 import { Router } from '@angular/router';
 import { LoadingService } from 'src/app/core/services/utils/loading.service';
 import { AuthService } from 'src/app/core/services/bussiness/auth.service';
-import { LocalStorageService } from 'src/app/core/services/utils/local-storage.service';
+import { LocalStorageService } from 'src/app/core/services/utils/storage/local-storage.service';
 import { StorageKeys } from 'src/app/core/consts/enums/storage-keys.enum';
 import { AlertService } from 'src/app/core/services/utils/alert.service';
 

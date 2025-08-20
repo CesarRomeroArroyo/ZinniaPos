@@ -68,10 +68,9 @@ export class SelectOptionsModalComponent implements OnInit {
 
   public saveSelection() {
     if (this.multiple) {
-      console.log(this.selectedOptions);
       this._modalCtrl.dismiss(this.selectedOptions);
     } else {
-      this._modalCtrl.dismiss([this.selectedOption]);
+      this._modalCtrl.dismiss(this.selectedOption);
     }
   }
 

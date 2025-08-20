@@ -19,7 +19,7 @@ export class DashboardRedirectGuard implements CanActivate {
           this.router.navigate(['/dashboard/appointments']);
           return false;
         case BusinessCategoryId.RETAIL:
-          this.router.navigate(['/dashboard/products']);
+          this.router.navigate(['/dashboard/orders']);
           return false;
         default:
           this.router.navigate(['/not-authorized']);

@@ -2,8 +2,6 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonicModule, ModalController } from '@ionic/angular';
-import { LocalStorageService } from 'src/app/core/services/utils/local-storage.service';
-import { HeaderComponent } from 'src/app/shared/components/header/header.component';
 import { MenuHeaderComponent } from 'src/app/shared/components/menu-header/menu-header.component';
 
 @Component({
@@ -14,7 +12,6 @@ import { MenuHeaderComponent } from 'src/app/shared/components/menu-header/menu-
   imports: [
     CommonModule,
     IonicModule,
-    HeaderComponent,
     MenuHeaderComponent
   ],
   providers: [
@@ -26,9 +23,7 @@ export class AppointmentsComponent implements OnInit {
   public selectedSegment = '';
 
   constructor(
-    private _router: Router,
-    private _localStorage: LocalStorageService,
-    private _modalCtrl: ModalController,
+    private readonly _router: Router,
   ) { }
 
   ngOnInit(): void {

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { StorageKeys } from 'src/app/core/consts/enums/storage-keys.enum';
-import { LocalStorageService } from 'src/app/core/services/utils/local-storage.service';
+import { LocalStorageService } from 'src/app/core/services/utils/storage/local-storage.service';
 import { footerMenu } from './menu-footer.consts';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';

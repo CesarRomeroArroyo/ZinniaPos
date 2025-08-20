@@ -149,6 +149,10 @@ export class BusinessHoursComponent implements OnInit {
     }
   }
 
+  public sendForm() {
+
+  }
+
   private buildConsultationForm(): void {
     this.typeAppointmentsForm = this._formBuilder.group({
       appointmentType: ['', Validators.required]
@@ -174,5 +178,5 @@ export class BusinessHoursComponent implements OnInit {
       }
     });
   }
-  
+
 }

@@ -6,7 +6,7 @@ import {IonButton, IonInput} from "@ionic/angular/standalone";
 import { StorageKeys } from 'src/app/core/consts/enums/storage-keys.enum';
 import { StepData } from 'src/app/core/consts/types/steps.type';
 import { FormService } from 'src/app/core/services/utils/form.service';
-import { LocalStorageService } from 'src/app/core/services/utils/local-storage.service';
+import { LocalStorageService } from 'src/app/core/services/utils/storage/local-storage.service';
 
 @Component({
     selector: 'app-user-account-info',

@@ -1,13 +1,14 @@
 import { Injectable } from '@angular/core';
-import { SessionStorageService } from './session-storage.service';
+import { SessionStorageService } from './storage/session-storage.service';
 import { ILoginRequest, ILoginResponse } from '../../interfaces/bussiness/login.interface';
 import { IUser } from '../../interfaces/bussiness/user.interface';
-import { Observable, throwError, tap, catchError, switchMap } from 'rxjs';
+import { Observable, throwError, tap, catchError, switchMap, Subject } from 'rxjs';
 import { Router } from '@angular/router';
 import { AuthService } from '../bussiness/auth.service';
 import { StorageKeys } from '../../consts/enums/storage-keys.enum';
 import { CompanyService } from '../bussiness/company.service';
 import { ICompany } from '../../interfaces/bussiness/company.interface';
+import { InitialBusinessSettingService } from './initial-setting.service';
 
 @Injectable({
   providedIn: 'root'
@@ -16,6 +17,9 @@ export class AuthSessionService {
 
   private readonly USER_KEY = StorageKeys.USER_DATA;
   private readonly COMPANY_KEY = StorageKeys.COMPANY_DATA;
+
+  private userAuthenticatedSubject = new Subject<ICompany>();
+  public userAuthenticated$ = this.userAuthenticatedSubject.asObservable();
 
   constructor(
     private router: Router,
@@ -30,9 +34,10 @@ export class AuthSessionService {
         if (response.length) {
           const user = response[0];
           this.sessionStorage.setProperty(this.USER_KEY, user);
-          return this._companyService.getCompanyByUser(user.id).pipe(
+          return this._companyService.getCompanyByUser(user.idunico).pipe(
             tap(company => {
               this.sessionStorage.setProperty(this.COMPANY_KEY, company);
+              this.userAuthenticatedSubject.next(company);
             }),
             switchMap(() => [response])
           );
