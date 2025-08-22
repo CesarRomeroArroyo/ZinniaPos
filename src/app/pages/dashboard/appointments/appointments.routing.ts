@@ -3,35 +3,41 @@ import { AppointmentsMainComponent } from "./components/appointments-main/appoin
 import { InitialSettingComponent } from "./components/initial-setting/initial-setting.component";
 import { CustomerUpsertComponent } from "../customers/components/customer-upsert/customer-upsert.component";
 import { BusinessHoursComponent } from "./components/business-hours/business-hours.component";
+import { AppointmentManagementComponent } from "./components/appointment-management/appointment-management.component";
 import { AppointmentsComponent } from "./appointments.component";
 
 export const appointmentsRoutes: Routes = [
-    {
-        path: '',
-        component: AppointmentsComponent,
-        children: [
-            {  
-                path: '',
-                redirectTo: 'initial-seting',
-                pathMatch: 'full'
-            },
-            {  
-                path: 'main',
-                component: AppointmentsMainComponent
-            },
-            {  
-                path: 'initial-seting',
-                component: InitialSettingComponent,
-                data: { showTab: true }
-            },
-            {   
-                path: 'customer-upsert',
-                component: CustomerUpsertComponent
-            },
-            {   
-                path: 'business-hours',
-                component: BusinessHoursComponent
-            },
-        ],
-    },
+  {
+    path: "",
+    component: AppointmentsComponent,
+    children: [
+      {
+        path: "",
+        redirectTo: "initial-seting",
+        pathMatch: "full",
+      },
+      {
+        path: "main",
+        component: AppointmentsMainComponent,
+      },
+      {
+        path: "initial-seting",
+        component: InitialSettingComponent,
+        data: { showTab: true },
+      },
+      {
+        path: "customer-upsert",
+        component: CustomerUpsertComponent,
+      },
+      {
+        path: "business-hours",
+        component: BusinessHoursComponent,
+      },
+      {
+        path: "appointment-management",
+        component: AppointmentManagementComponent,
+         data: { showTab: true },
+      },
+    ],
+  },
 ];

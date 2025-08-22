@@ -1,0 +1,49 @@
+<ion-header translucent="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button fill="clear" aria-label="Atrás" (click)="back()">
+        <ion-icon slot="icon-only" name="chevron-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title class="title">Detalle Cliente</ion-title>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" aria-label="Más" (click)="onMore()">
+        <ion-icon slot="icon-only" name="ellipsis-vertical"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content fullscreen="true">
+  <ion-item-divider class="section-divider">
+    <ion-label>Información de contacto</ion-label>
+  </ion-item-divider>
+
+  <div class="card">
+    <div class="row"><div class="col col--label">Nombre</div><div class="col col--value">{{ customer.nombre }}</div></div>
+    <div class="row"><div class="col col--label">Correo electrónico</div><div class="col col--value">{{ customer.email || '—' }}</div></div>
+    <div class="row"><div class="col col--label">Teléfono / Celular</div><div class="col col--value">{{ customer.telefono || '—' }}</div></div>
+    <div class="row"><div class="col col--label">Dirección</div><div class="col col--value">{{ customer.direccion || '—' }}</div></div>
+  </div>
+
+  <ion-item-divider class="section-divider">
+    <ion-label>Historial de pedidos</ion-label>
+  </ion-item-divider>
+
+  <ion-list>
+    <ion-item *ngFor="let o of customer.orders; trackBy: trackByOrder" button detail (click)="openOrder(o)">
+      <ion-label>
+        <h3 class="row-title">{{ o.id }}</h3>
+        <p class="row-sub">{{ o.createdAt | date:"d 'de' MMM, y 'a las' h:mm a" }}</p>
+        <p class="row-meta">
+          {{ o.items }} Artículo{{ o.items === 1 ? '' : 's' }}
+          <span class="dot">•</span>
+          {{ o.total | currency:'USD':'symbol-narrow':'1.2-2':'es-ES' }}
+        </p>
+      </ion-label>
+      <span [class]="statusClassMap[o.estado]">{{ o.estado }}</span>
+    </ion-item>
+  </ion-list>
+
+  <div style="height: 24px"></div>
+</ion-content>

@@ -1,0 +1,26 @@
+ion-header { --border-width: 0 0 0.5px 0; }
+.title { font-weight: 600; }
+
+.section-divider { --background: #f7f7fa; --color: #111827; font-weight: 700; }
+
+.card {
+  margin: 8px 12px 16px;
+  padding: 12px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.06) inset, 0 1px 3px rgba(0,0,0,.06);
+}
+.row { display: grid; grid-template-columns: minmax(110px, 1fr) 2fr; gap: 12px; padding: 8px 4px; border-bottom: 1px dashed rgba(0,0,0,.06); }
+.row:last-child { border-bottom: 0; }
+.col--label { color: #6b7280; }
+.col--value { color: #111827; word-break: break-word; }
+
+.row-title { margin: 0 0 2px; font-weight: 700; }
+.row-sub, .row-meta { margin: 0; color: #6b7280; }
+.row-meta { font-size: 13px; }
+.dot { margin: 0 6px; opacity: .6; }
+
+.status { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; margin-left: 8px; border-radius: 999px; font-size: 12px; font-weight: 700; border: 1px solid transparent; white-space: nowrap; }
+.status--pendiente  { color: #b45309; background: #FEF3C7; border-color: #FDE68A; }
+.status--confirmado { color: #2563EB; background: #EFF6FF; border-color: #BFDBFE; }
+.status--cancelado  { color: #DC2626; background: #FEF2F2; border-color: #FECACA; }

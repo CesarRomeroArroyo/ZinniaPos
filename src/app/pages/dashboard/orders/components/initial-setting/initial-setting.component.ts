@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ModalController } from '@ionic/angular';
+import { IonicModule, ModalController } from '@ionic/angular';
 import { BusinessCategoryId } from 'src/app/core/consts/enums/business/business-category.enum';
 import { IListTask } from 'src/app/core/consts/types/progress-list.type';
 import { QuickAccessItem } from 'src/app/core/interfaces/quick-access-list.interface';
@@ -7,17 +7,26 @@ import { AuthSessionService } from 'src/app/core/services/utils/auth-session.ser
 import { QuickAccessService } from 'src/app/core/services/utils/quick-access.service';
 import { ToastService } from 'src/app/core/services/utils/toast.service';
 import { CustomerUpsertComponent } from '../../../customers/components/customer-upsert/customer-upsert.component';
+import { QuickAccessListComponent } from 'src/app/shared/components/quick-access-list/quick-access-list.component';
+import { ProgressListComponent } from 'src/app/shared/components/progress-list/progress-list.component';
 
 @Component({
   selector: 'app-initial-setting',
   templateUrl: './initial-setting.component.html',
   styleUrls: ['./initial-setting.component.scss'],
+  standalone: true,
+  imports: [IonicModule,
+    QuickAccessListComponent,
+    ProgressListComponent
+
+  ]
 })
 export class InitialSettingComponent implements OnInit {
 
   public initialTask: IListTask[] = [];
   public businessCategoryId!: BusinessCategoryId | undefined;
   public userQuickAccess: QuickAccessItem[] = [];
+  
 
   constructor(
     private _modalCtrl: ModalController,
@@ -29,6 +38,10 @@ export class InitialSettingComponent implements OnInit {
   ngOnInit() {
     this.getQuickAccessLsit();
     this.defineTasks();
+  }
+
+  public editQuickAccessItems(){
+    
   }
 
   private getQuickAccessLsit() {

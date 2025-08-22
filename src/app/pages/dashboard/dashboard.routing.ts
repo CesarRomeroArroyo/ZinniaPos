@@ -16,4 +16,9 @@ export const dashboardRoutes: Routes = [
         loadComponent: () => import('./orders/orders.component').then((m) => m.OrdersComponent),
         data: { showTab: true }
     },
+     {
+        path: 'customers',
+        loadChildren: () => import('./customers/customers.routing').then((m) => m.customersRoutes),
+        data: { showTab: true }
+    },
 ];

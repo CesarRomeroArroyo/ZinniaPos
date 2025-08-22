@@ -1,0 +1,142 @@
+<ion-header translucent="true">
+  <ion-toolbar>
+    <ion-title class="title">Citas</ion-title>
+
+    <!-- Botón demo para alternar datos (quítalo en prod) -->
+    <ion-buttons slot="end">
+      <ion-button fill="clear" aria-label="Demo datos" (click)="toggleData()">
+        <ion-icon slot="icon-only" name="beaker-outline"></ion-icon>
+      </ion-button>
+      <ion-button fill="clear" aria-label="Añadir" (click)="onAdd()">
+        <ion-icon slot="icon-only" name="add-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<!-- 👇 contentId para que el menú se enganche a este contenido -->
+<ion-content id="main-content" fullscreen="true">
+  <!-- refresco -->
+  <ion-refresher slot="fixed" (ionRefresh)="reload($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- buscador + filtro -->
+  <div class="search-wrap">
+    <ion-searchbar
+      class="search"
+      [(ngModel)]="query"
+      placeholder="Buscar cita"
+      show-clear-button="never"
+      (ionInput)="applyFilter()">
+    </ion-searchbar>
+
+    <!-- abre el panel de filtros -->
+    <ion-menu-toggle menu="filters" [autoHide]="false">
+      <ion-button
+        class="filter"
+        fill="clear"
+        aria-label="Filtrar"
+        (click)="openFilters()">
+        <ion-icon slot="icon-only" name="funnel-outline"></ion-icon>
+      </ion-button>
+    </ion-menu-toggle>
+
+  </div>
+
+  <!-- Chips de filtro (opcional) -->
+  <div class="chips" *ngIf="activeFilter">
+    <ion-chip (click)="clearFilter()">
+      <ion-label>{{ activeFilter }}</ion-label>
+      <ion-icon name="close-circle"></ion-icon>
+    </ion-chip>
+  </div>
+
+  <!-- Skeletons mientras carga -->
+  <ng-container *ngIf="loading; else loaded">
+    <ion-list>
+      <ion-item *ngFor="let i of skeletons">
+        <ion-label>
+          <h3><ion-skeleton-text animated
+              style="width: 60%"></ion-skeleton-text></h3>
+          <p><ion-skeleton-text animated
+              style="width: 40%"></ion-skeleton-text></p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </ng-container>
+
+  <!-- Contenido cargado -->
+  <ng-template #loaded>
+    <!-- Hay citas (después de filtrar) -->
+    <ng-container *ngIf="grouped.length; else emptyOrSearchEmpty">
+      <ion-list *ngFor="let g of grouped">
+        <ion-item-divider class="section-divider">
+          <ion-label>{{ g.label }}</ion-label>
+        </ion-item-divider>
+
+        <ion-item *ngFor="let c of g.items; trackBy: trackById" button detail
+          (click)="open(c)">
+          <ion-label>
+            <h3 class="row-title">{{ c.id }}</h3>
+            <p class="row-sub">
+              {{ c.paciente }} • {{ c.date | date:'d \'de\' MMM, y' }} • {{
+              c.start }} - {{ c.end }}
+            </p>
+            <p class="row-type">{{ c.type }}</p>
+          </ion-label>
+
+          <span class="status"
+            [ngClass]="statusClassMap[c.status] || 'status--default'">
+            {{ c.status }}
+          </span>
+
+          <!-- SOLO si viene de WhatsApp -->
+          <ion-icon
+            *ngIf="c.origen === 'whatsapp'"
+            class="wa"
+            slot="end"
+            name="logo-whatsapp"
+            aria-label="Abrir WhatsApp"
+            (click)="openWhatsApp(c, $event)">
+          </ion-icon>
+        </ion-item>
+      </ion-list>
+    </ng-container>
+
+    <!-- Estados vacíos -->
+    <ng-template #emptyOrSearchEmpty>
+      <!-- Buscaste pero no hay resultados -->
+      <div class="no-results" *ngIf="query?.trim(); else emptyState">
+        <p>No encontramos resultados para “{{ query }}”.</p>
+        <ion-button expand="block" fill="outline"
+          (click)="clearSearch()">Limpiar búsqueda</ion-button>
+      </div>
+
+      <!-- No hay citas aún: muestra el hero -->
+      <ng-template #emptyState>
+        <div class="hero">
+          <img
+            class="hero-img"
+            src="https://img.freepik.com/free-vector/calendar-appointment-booking-concept_23-2148562956.jpg?w=360"
+            alt="Gestión de Citas" />
+          <h2 class="hero-title">Gestión de Citas</h2>
+          <p class="hero-subtitle">
+            Administra todas las citas de tus clientes, visualiza la
+            disponibilidad y ajusta los estados según el seguimiento de cada
+            consulta.
+          </p>
+          <div class="cta">
+            <ion-button expand="block" size="large" shape="round"
+              (click)="onCreate()">
+              Crear cita
+            </ion-button>
+          </div>
+        </div>
+      </ng-template>
+    </ng-template>
+  </ng-template>
+</ion-content>
+
+<!-- ////////////////////////////// -->
+
