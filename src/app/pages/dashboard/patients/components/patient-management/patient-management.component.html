@@ -1,6 +1,6 @@
 <ion-header translucent="true">
   <ion-toolbar>
-    <ion-title class="title">Clientes</ion-title>
+    <ion-title class="title">Pacientes</ion-title>
     <ion-buttons slot="end">
       <ion-button fill="clear" aria-label="Demo datos" (click)="toggleData()">
         <ion-icon slot="icon-only" name="beaker-outline"></ion-icon>
@@ -21,7 +21,7 @@
     <ion-searchbar
       class="search"
       [(ngModel)]="query"
-      placeholder="Buscar cliente"
+      placeholder="Buscar paciente"
       show-clear-button="never"
       (ionInput)="applyFilter()">
     </ion-searchbar>
@@ -43,34 +43,35 @@
   <ng-template #loaded>
     <ng-container *ngIf="filtered.length; else emptyOrSearchEmpty">
       <ion-list>
-        <ion-item *ngFor="let c of filtered; trackBy: trackById"
+        <ion-item *ngFor="let p of filtered; trackBy: trackById"
           button detail
-          (click)="open(c)">
+          (click)="open(p)">
           <ion-label>
-            <h3 class="row-title">{{ c.nombre }}</h3>
+            <h3 class="row-title">{{ p.nombre }}</h3>
             <p class="row-sub">
-              <span *ngIf="c.email">{{ c.email }}</span>
-              <span *ngIf="c.email && c.telefono" class="dot">•</span>
-              <span *ngIf="c.telefono">{{ c.telefono }}</span>
+              <span *ngIf="p.email">{{ p.email }}</span>
+              <span *ngIf="p.email && p.telefono" class="dot">•</span>
+              <span *ngIf="p.telefono">{{ p.telefono }}</span>
             </p>
             <p class="row-meta">
-              <span class="strong">{{ c.pedidos }} Pedido{{ c.pedidos === 1 ? ''
-                : 's' }}</span>
+              <span class="strong">{{ p.citas }} Cita{{ p.citas === 1 ? '' : 's'
+                }}</span>
               <span class="dot">•</span>
               <ng-container
-                *ngIf="c.pedidos > 0 && c.lastOrderDate; else noOrders">
-                Último pedido: {{ c.lastOrderDate | date:'d \'de\' MMM, y' }}
+                *ngIf="p.citas > 0 && p.lastAppointmentDate; else noAppt">
+                Última cita: {{ p.lastAppointmentDate | date:'d \'de\' MMM, y'
+                }}
               </ng-container>
-              <ng-template #noOrders>Sin pedidos registrados</ng-template>
+              <ng-template #noAppt>Sin citas registradas</ng-template>
             </p>
           </ion-label>
 
-          <ion-icon *ngIf="c.origen === 'whatsapp'"
+          <ion-icon *ngIf="p.origen === 'whatsapp'"
             class="wa"
             slot="end"
             name="logo-whatsapp"
             aria-label="Abrir WhatsApp"
-            (click)="openWhatsApp(c, $event)">
+            (click)="openWhatsApp(p, $event)">
           </ion-icon>
         </ion-item>
       </ion-list>
@@ -89,16 +90,15 @@
             class="hero-img"
             src="assets/images/customers-patients.png"
             alt="Gestión de Pacientes" />
-          <h2 class="hero-title">Gestión de Clientes</h2>
+          <h2 class="hero-title">Gestión de Pacientes</h2>
           <p class="hero-subtitle">
-            Consulta, edita y registra a tus clientes en un solo lugar.
-            Mantén actualizada su información para ofrecer un servicio
-            excepcional.
+            Organiza y centraliza la información de tus pacientes y
+            accede fácilmente a su historial clínico.
           </p>
           <div class="cta">
             <ion-button expand="block" size="large" shape="round"
               (click)="onCreate()">
-              Crear cliente
+              Crear cita
             </ion-button>
           </div>
         </div>

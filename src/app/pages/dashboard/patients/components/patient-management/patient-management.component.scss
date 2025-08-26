@@ -1,0 +1,57 @@
+/* ===== Header ===== */
+ion-header { --border-width: 0 0 0.5px 0; }
+.title { font-weight: 600; }
+
+/* ===== Search row ===== */
+.search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px 6px;
+}
+ion-searchbar.search {
+  flex: 1 1 auto;
+  --icon-color: #6b7280;
+  --placeholder-color: #6b7280;
+}
+ion-searchbar.search::part(container) {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.12) inset,
+    0 1px 3px rgba(0,0,0,0.04);
+}
+ion-searchbar.search::part(input) {
+  min-height: 44px;
+  font-size: 14px;
+  padding-right: 16px;
+}
+
+/* ===== Lista ===== */
+.row-title { margin: 0 0 2px; font-weight: 700; }
+.row-sub, .row-meta { margin: 0; color: #6b7280; }
+.row-meta { font-size: 13px; }
+.dot { margin: 0 6px; opacity: .6; }
+.strong { font-weight: 600; }
+
+/* WhatsApp con círculo menta */
+.wa {
+  font-size: 18px;
+  margin: 0 8px;
+  padding: 3px;
+  border-radius: 999px;
+  background: #D1FAF5;
+  color: #0D9488;
+}
+
+/* ===== Estado vacío ===== */
+.hero { text-align: center; padding: 16px 24px 0; }
+.hero-img { width: 70%; max-width: 280px; margin: 12px auto; display: block; }
+.hero-title { margin: 12px 0 6px; font-weight: 600; font-size: 22px; }
+.hero-subtitle { margin: 0 auto 20px; opacity: .7; max-width: 360px; line-height: 1.45; }
+.cta { width: 100%; padding: 0 16px 24px; }
+ion-button { --border-radius: 14px; font-weight: 600; --background: #111; --background-activated: #000; }
+
+/* ===== Sin resultados ===== */
+.no-results { padding: 8px 16px 16px; color: #6b7280; text-align: center; }
+.no-results ion-button { --background: #e5e7eb; color: #111; }
