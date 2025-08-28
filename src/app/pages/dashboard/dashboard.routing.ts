@@ -26,4 +26,9 @@ export const dashboardRoutes: Routes = [
         loadChildren: () => import('./patients/patients.routing').then((m) => m.patientsRoutes),
         data: { showTab: true }
     },
+    {
+        path: 'products',
+        loadChildren: () => import('./products/products.routing').then((m) => m.productsRoutes),
+        data: { showTab: true }
+    },
 ];

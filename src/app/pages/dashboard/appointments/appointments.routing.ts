@@ -5,6 +5,8 @@ import { CustomerUpsertComponent } from "../customers/components/customer-upsert
 import { BusinessHoursComponent } from "./components/business-hours/business-hours.component";
 import { AppointmentManagementComponent } from "./components/appointment-management/appointment-management.component";
 import { AppointmentsComponent } from "./appointments.component";
+import { UpsertAppointmentComponent } from "./components/upsert-appointment/upsert-appointment.component";
+import { UpsertAppointmentTypeComponent } from "./components/upsert-appointment-type/upsert-appointment-type.component";
 
 export const appointmentsRoutes: Routes = [
   {
@@ -37,6 +39,14 @@ export const appointmentsRoutes: Routes = [
         path: "appointment-management",
         component: AppointmentManagementComponent,
          data: { showTab: true },
+      },
+      {
+        path: "upsert-appointment",
+        component: UpsertAppointmentComponent,
+      },
+       {
+        path: "upsert-appointment-type",
+        component: UpsertAppointmentTypeComponent,
       },
     ],
   },

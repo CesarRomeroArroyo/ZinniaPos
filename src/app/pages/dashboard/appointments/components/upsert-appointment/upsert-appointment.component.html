@@ -1,12 +1,19 @@
-<app-header [settingHeader]="settingHeader" [customActionCompleted]="actionCompleted.bind(this)"></app-header>
+<app-header
+  [settingHeader]="settingHeader"
+  [customActionCompleted]="actionCompleted">
+</app-header>
+
+
 <ion-content>
   <div class="container">
-    <ion-label for="appointmentType" class="title bold">Informacion de cliente</ion-label>
+    <ion-label for="appointmentType" class="title bold">Información de cliente</ion-label>
   </div>
   
   <div class="container">
     <form class="form" [formGroup]="typeAppointmentsForm" *ngIf="typeAppointmentsForm">
       <ion-label for="appointmentType" class="title bold">Tipo de consulta</ion-label>
+
+      <!-- Selector de tipo -->
       <ion-item *ngIf="!loading" lines="none" class="bordered-item" (click)="selectAppointmentType()">
         <ion-input
           mode="md"
@@ -20,6 +27,7 @@
         <ion-icon name="chevron-forward-outline" slot="end"></ion-icon>
       </ion-item>
 
+      <!-- Skeleton -->
       <ion-item *ngIf="loading" lines="none" class="bordered-item skeleton">
         <ion-label>
           <ion-skeleton-text style="width: 87.53px;" [animated]="true"></ion-skeleton-text>
@@ -34,7 +42,8 @@
 
   <div class="container">
     <form class="form" [formGroup]="dateForm" *ngIf="dateForm">
-      <ion-label for="" class="title bold">Fecha y Hora</ion-label>
+      <ion-label class="title bold">Fecha y Hora</ion-label>
+
       <ion-item lines="none" class="bordered-item" (click)="selectDate()">
         <ion-input
           mode="md"
@@ -46,6 +55,7 @@
         </ion-input>
         <ion-icon name="chevron-forward-outline" slot="end"></ion-icon>
       </ion-item>
+
       <ion-item lines="none" class="bordered-item" (click)="selectTime()">
         <ion-input
           mode="md"
@@ -62,7 +72,7 @@
 </ion-content>
 
 <ion-footer class="ion-no-border footer">
-  <ion-button mode="md" expand="block" fill="solid">
+  <ion-button mode="md" expand="block" fill="solid" (click)="confirmAppointment()">
     Confirmar cita
   </ion-button>
 </ion-footer>

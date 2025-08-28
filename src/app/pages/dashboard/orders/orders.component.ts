@@ -31,7 +31,8 @@ import { InitialBusinessSettingService } from 'src/app/core/services/utils/initi
     OrderListComponent,
     QuickAccessPanelComponent,
     ProgressListComponent,
-  ]
+    CreateOrderComponent
+]
 })
 export class OrdersComponent implements OnInit {
 

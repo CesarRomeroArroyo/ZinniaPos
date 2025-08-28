@@ -1,3 +1,4 @@
+<app-menu-header></app-menu-header>
 <app-header [settingHeader]="settingHeader" [customActionCompleted]="actionCompleted.bind(this)"></app-header>
 <ion-content>
   <app-quick-access-panel></app-quick-access-panel>
@@ -8,24 +9,5 @@
     <app-progress-list [tasks]="initialTask"></app-progress-list>
   </div>
 
-  <div class="container">
-    <div class="search-section">
-      <ion-searchbar
-        mode="md"
-        placeholder="Buscar pedido"
-        animated="true"
-        show-clear-button="focus">
-      </ion-searchbar>
-    </div>
-
-    @if (orders.length === 0){
-      <app-no-orders-banner></app-no-orders-banner>
-    } @else {
-      <app-order-list
-        [orders]="orders">
-      </app-order-list>
-    }
-
-  </div>
-  <app-create-order></app-create-order>
+  
 </ion-content>

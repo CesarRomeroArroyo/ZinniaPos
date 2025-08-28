@@ -1,0 +1,45 @@
+<app-header
+  [settingHeader]="settingHeader"
+  [customActionCompleted]="onSubmit.bind(this)">
+</app-header>
+
+<ion-content>
+  <div class="container">
+    <form class="form" [formGroup]="categoryForm" *ngIf="categoryForm">
+      <div class="row">
+        <div class="group">
+          <ion-input
+            placeholder="Título de la categoría"
+            fill="outline"
+            mode="md"
+            formControlName="name">
+          </ion-input>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="group">
+          <ion-textarea
+            placeholder="Descripción"
+            fill="outline"
+            mode="md"
+            auto-grow="true"
+            formControlName="description">
+          </ion-textarea>
+        </div>
+      </div>
+    </form>
+  </div>
+</ion-content>
+
+<ion-footer class="ion-no-border footer">
+  <ion-button
+    mode="md"
+    expand="block"
+    fill="solid"
+    *ngIf="categoryForm"
+    [disabled]="categoryForm.invalid || saving"
+    (click)="onSubmit()">
+    Guardar
+  </ion-button>
+</ion-footer>

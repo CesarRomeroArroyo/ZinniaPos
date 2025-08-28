@@ -1,0 +1,101 @@
+<app-header
+  [settingHeader]="settingHeader"
+  [customActionCompleted]="onSubmit.bind(this)">
+</app-header>
+
+<ion-content>
+  <div class="container">
+    <form class="form" [formGroup]="taxForm" *ngIf="taxForm">
+
+      <div class="row">
+        <div class="group">
+          <ion-input
+            placeholder="Nombre"
+            fill="outline"
+            mode="md"
+            formControlName="name">
+          </ion-input>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="group">
+          <ion-input
+            placeholder="Tasa de impuesto (%)"
+            type="number"
+            inputmode="decimal"
+            step="0.01"
+            min="0"
+            max="100"
+            fill="outline"
+            mode="md"
+            formControlName="rate">
+          </ion-input>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="group">
+          <!-- Abre el bottom sheet -->
+          <ion-item button detail="true" (click)="openTypeSheet()"
+                    class="type-item" lines="none">
+            <ion-label>
+              <div class="type-title">Tipo de impuesto</div>
+              <div class="type-value">{{ typeLabel }}</div>
+            </ion-label>
+          </ion-item>
+        </div>
+      </div>
+
+    </form>
+  </div>
+</ion-content>
+
+<ion-footer class="ion-no-border footer">
+  <ion-button
+    mode="md"
+    expand="block"
+    fill="solid"
+    *ngIf="taxForm"
+    [disabled]="taxForm.invalid || saving"
+    (click)="onSubmit()">
+    Guardar
+  </ion-button>
+</ion-footer>
+
+<!-- ===== Bottom sheet: Tipo de impuesto ===== -->
+<ion-modal
+  [isOpen]="isTypeSheetOpen"
+  (didDismiss)="closeTypeSheet()"
+  class="type-sheet"
+  [breakpoints]="[0, 0.35, 0.5]"
+  [initialBreakpoint]="0.35"
+>
+  <ng-template>
+    <ion-content>
+      <div class="sheet-header">
+        <ion-button fill="clear" size="small" (click)="closeTypeSheet()">
+          <ion-icon name="chevron-down-outline"></ion-icon>
+        </ion-button>
+        <div class="sheet-title">Tipo de impuesto</div>
+        <ion-button fill="clear" size="small" (click)="applyTypeSheet()">
+          <ion-icon name="checkmark-outline"></ion-icon>
+        </ion-button>
+      </div>
+
+      <ion-list>
+        <ion-radio-group [(ngModel)]="tempType">
+          <ion-item lines="full">
+            <ion-label>Impuesto incluido en el precio</ion-label>
+            <ion-radio slot="end" value="included"></ion-radio>
+          </ion-item>
+
+          <ion-item>
+            <ion-label>Impuesto agregado al precio</ion-label>
+            <ion-radio slot="end" value="added"></ion-radio>
+          </ion-item>
+        </ion-radio-group>
+      </ion-list>
+    </ion-content>
+  </ng-template>
+</ion-modal>

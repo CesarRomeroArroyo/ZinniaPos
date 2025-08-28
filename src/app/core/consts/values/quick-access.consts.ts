@@ -7,13 +7,13 @@ export const quickAccessForServices = [
         id: 'citas',
         icon: 'calendar-outline',
         label: 'Citas',
-        route: '/citas'
+        route: '/dashboard/appointments/appointment-management'
     },
     {
         id: 'pacientes',
         label: 'Pacientes',
         icon: 'person-outline',
-        route: '/patients'
+        route: '/dashboard/patients'
     },
     {
         id: 'agenda',
@@ -28,19 +28,19 @@ export const quickAccessForRetail = [
         id: 'pedidos',
         label: 'Pedidos',
         icon: 'cart-outline',
-        route: '/pedidos'
+        route: '/dashboard/orders'
     },
     {
         id: 'clientes',
         label: 'Clientes',
         icon: 'person-outline',
-        route: '/customers'
+        route: '/dashboard/customers'
     },
     {
         id: 'productos',
         label: 'Productos',
         icon: 'cube-outline',
-        route: '/productos'
+        route: '/dashboard/products'
     },
 ];
 
@@ -55,7 +55,7 @@ export const avalaibleQuickAccess: QuickAccessItem[] = [
         id: 'pacientes',
         label: 'Pacientes',
         icon: 'person-outline',
-        route: '/patients'
+        route: '/dashboard/patients'
     },
     {
         id: 'agenda',
