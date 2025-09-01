@@ -23,9 +23,27 @@
             placeholder="Descripción"
             fill="outline"
             mode="md"
-            auto-grow="true"
+            [autoGrow]="true"
             formControlName="description">
           </ion-textarea>
+        </div>
+      </div>
+
+      <!-- Impuesto (%) -->
+      <div class="row">
+        <div class="group">
+          <ion-input
+            placeholder="Impuesto (%)"
+            fill="outline"
+            mode="md"
+            type="number"
+            inputmode="decimal"
+            step="0.01"
+            min="0"
+            max="100"
+            pattern="^\d+([.,]\d{1,2})?$"
+            formControlName="tax">
+          </ion-input>
         </div>
       </div>
     </form>

@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { Router, RouterModule } from '@angular/router';
+import { CustomerUpsertComponent } from "../customer-upsert/customer-upsert.component";
+import { PruebaBackendComponent } from '../prueba-backend/prueba-backend.component';
 
 type Origen = 'whatsapp' | 'app' | 'web' | 'tel';
 
@@ -21,7 +23,7 @@ export interface Customer {
   standalone: true,
   templateUrl: './customer-management.component.html',
   styleUrls: ['./customer-management.component.scss'],
-  imports: [IonicModule, CommonModule, FormsModule, RouterModule],
+  imports: [IonicModule, CommonModule, FormsModule, RouterModule, CustomerUpsertComponent, PruebaBackendComponent],
 })
 export class CustomerManagementComponent implements OnInit {
   constructor(private router: Router) {}

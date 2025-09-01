@@ -2,9 +2,7 @@
   <ion-toolbar>
     <ion-title class="title">Clientes</ion-title>
     <ion-buttons slot="end">
-      <ion-button fill="clear" aria-label="Demo datos" (click)="toggleData()">
-        <ion-icon slot="icon-only" name="beaker-outline"></ion-icon>
-      </ion-button>
+      <!-- Botón Añadir (mantengo tu acción) -->
       <ion-button fill="clear" aria-label="Añadir" (click)="onAdd()">
         <ion-icon slot="icon-only" name="add-outline"></ion-icon>
       </ion-button>
@@ -13,10 +11,21 @@
 </ion-header>
 
 <ion-content fullscreen="true">
+  <!-- Pull to refresh -->
   <ion-refresher slot="fixed" (ionRefresh)="reload($event)">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
+  <div *ngIf="error" class="error-bar" role="alert">
+    <ion-icon name="alert-circle-outline" aria-hidden="true"></ion-icon>
+    <span>{{ error }}</span>
+    <ion-button fill="clear" size="small" (click)="error = undefined"
+      aria-label="Cerrar error">
+      <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+    </ion-button>
+  </div>
+
+  <!-- Buscador -->
   <div class="search-wrap">
     <ion-searchbar
       class="search"
@@ -27,6 +36,7 @@
     </ion-searchbar>
   </div>
 
+  <!-- Skeletons de carga -->
   <ng-container *ngIf="loading; else loaded">
     <ion-list>
       <ion-item *ngFor="let i of skeletons">
@@ -40,12 +50,12 @@
     </ion-list>
   </ng-container>
 
+  <!-- Contenido -->
   <ng-template #loaded>
     <ng-container *ngIf="filtered.length; else emptyOrSearchEmpty">
       <ion-list>
         <ion-item *ngFor="let c of filtered; trackBy: trackById"
-          button detail
-          (click)="open(c)">
+          button detail (click)="open(c)">
           <ion-label>
             <h3 class="row-title">{{ c.nombre }}</h3>
             <p class="row-sub">
@@ -85,9 +95,7 @@
 
       <ng-template #emptyState>
         <div class="hero">
-          <img
-            class="hero-img"
-            src="assets/images/customers-patients.png"
+          <img class="hero-img" src="assets/images/customers-patients.png"
             alt="Gestión de Pacientes" />
           <h2 class="hero-title">Gestión de Clientes</h2>
           <p class="hero-subtitle">
@@ -105,4 +113,5 @@
       </ng-template>
     </ng-template>
   </ng-template>
+
 </ion-content>

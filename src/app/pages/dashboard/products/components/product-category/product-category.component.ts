@@ -1,14 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { IonicModule, ModalController } from '@ionic/angular';
+import { IonicModule, ModalController, ToastController } from '@ionic/angular';
 import { RouterModule } from '@angular/router';
 
 import { HeaderComponent } from 'src/app/shared/components/header/header.component';
-import { settingHeader } from '././product-category.consts';
+import { settingHeader } from './product-category.consts';
 
-// Servicio sugerido (ajusta la ruta si ya lo tienes en otro lugar)
-import { ProductCategoryService } from 'src/app/core/services/bussiness/product-category.service';
+import { Subscription } from 'rxjs';
+import { ProductCategoryService, CreateCategoriaDto } from 'src/app/core/services/bussiness/product-category.service';
 
 @Component({
   selector: 'app-product-category',
@@ -24,47 +24,114 @@ import { ProductCategoryService } from 'src/app/core/services/bussiness/product-
     RouterModule,
   ],
 })
-export class ProductCategoryComponent {
-
-  public settingHeader = settingHeader;
+export class ProductCategoryComponent implements OnDestroy {
+  public settingHeader = { ...settingHeader, rightDisabled: true };
   public categoryForm!: FormGroup;
   public saving = false;
+
+  private sub?: Subscription;
 
   constructor(
     private fb: FormBuilder,
     private modalCtrl: ModalController,
-    private categoryService: ProductCategoryService, // implementa saveCategory(...)
+    private categoryService: ProductCategoryService,
+    private toastCtrl: ToastController
   ) {}
 
   ionViewWillEnter() {
     this.buildForm();
   }
 
+  ngOnDestroy() {
+    this.sub?.unsubscribe();
+  }
+
   private buildForm(): void {
     this.categoryForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
       description: [''],
+      // Impuesto (%) 0–100 con hasta 2 decimales (coma o punto)
+      tax: [
+        '',
+        [
+          Validators.required,
+          Validators.pattern(/^\d+([.,]\d{1,2})?$/),
+          Validators.min(0),
+          Validators.max(100),
+        ],
+      ],
+    });
+
+    // Habilita/deshabilita el ✓ del header
+    this.sub = this.categoryForm.statusChanges.subscribe(() => {
+      this.settingHeader = {
+        ...this.settingHeader,
+        rightDisabled: this.categoryForm.invalid || this.saving,
+      };
     });
   }
 
-  public async onSubmit() {
-    if (!this.categoryForm || this.categoryForm.invalid || this.saving) return;
+  public onSubmit(): void {
+    this.save();
+  }
+
+  private parseTax(value: unknown): number {
+    const n = Number(String(value ?? '').replace(',', '.'));
+    if (Number.isNaN(n)) return 0;
+    // Clamp 0..100 y redondea a 2 decimales
+    return Math.min(100, Math.max(0, Math.round(n * 100) / 100));
+  }
+
+  public async save(): Promise<void> {
+    if (!this.categoryForm || this.categoryForm.invalid || this.saving) {
+      this.categoryForm?.markAllAsTouched();
+      (await this.toastCtrl.create({
+        message: 'Completa los campos requeridos',
+        duration: 1200,
+        position: 'bottom',
+      })).present();
+      return;
+    }
 
     this.saving = true;
-    const payload = this.categoryForm.value;
+    this.settingHeader = { ...this.settingHeader, rightDisabled: true };
 
-    // Guarda usando tu servicio (ajusta a tu API)
-    this.categoryService.saveCategory(payload).subscribe({
-      next: (ok: boolean) => {
-        this.saving = false;
-        if (ok) {
-          this.modalCtrl.dismiss({ completed: true, category: payload });
-        }
-      },
-      error: (err) => {
-        console.error(err);
-        this.saving = false;
+    try {
+      const f = this.categoryForm.getRawValue();
+      const dto: CreateCategoriaDto = {
+        nombre: String(f.name).trim(),
+        impuesto: this.parseTax(f.tax),
+        // (description queda solo para UI; el endpoint no la requiere)
+        // fecha_registro opcional:
+        // fecha_registro: new Date().toISOString().slice(0,19).replace('T',' '),
+      };
+
+      const { ok } = await this.categoryService.createCategoria(dto);
+      if (ok) {
+        (await this.toastCtrl.create({
+          message: 'Categoría creada',
+          duration: 1400,
+          position: 'bottom',
+        })).present();
+        this.modalCtrl.dismiss({ completed: true, category: dto });
+      } else {
+        throw new Error('El servidor no confirmó el registro');
       }
-    });
+    } catch (e: any) {
+      (await this.toastCtrl.create({
+        message: e?.message || 'No se pudo crear la categoría',
+        duration: 1600,
+        color: 'danger',
+        position: 'bottom',
+      })).present();
+    } finally {
+      this.saving = false;
+      this.settingHeader = {
+        ...this.settingHeader,
+        rightDisabled: this.categoryForm.invalid,
+      };
+    }
   }
+
+  public close() { this.modalCtrl.dismiss(); }
 }

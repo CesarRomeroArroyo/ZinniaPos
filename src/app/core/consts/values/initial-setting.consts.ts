@@ -12,7 +12,7 @@ export const initialTaskForHealth: Array<IListTask> = [
     {
         label: "Registrar clientes/pacientes",
         completed: false,
-        component: CustomerUpsertComponent
+        component: ProductCustomerComponent
     },
     {
         label: "Establecer horarios de atención",

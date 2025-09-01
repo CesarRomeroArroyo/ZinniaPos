@@ -1,29 +1,78 @@
-<app-header
-  [settingHeader]="settingHeader"
-></app-header>
-<ion-content>
+<ion-content fullscreen="true">
+  <!-- Título -->
   <div class="container">
-    <form class="form" [formGroup]="customerUpsertForm" *ngIf="customerUpsertForm">
-      <div class="row">
-        <div class="group">
-          <ion-input placeholder="Nombre" fill="outline" mode="md" formControlName="name"></ion-input>
-        </div>
-      </div>
-      <div class="row">
-        <div class="group">
-          <ion-input placeholder="Correo Electronico" type="email" fill="outline" mode="md" formControlName="email"></ion-input>
-        </div>
-      </div>
-      <div class="row">
-        <div class="group">
-          <ion-input placeholder="Teléfono / Celular" type="number" fill="outline" mode="md" formControlName="phone"></ion-input>
-        </div>
-      </div>
-      <div class="row">
-        <div class="group">
-          <ion-input placeholder="Dirección" type="text" fill="outline" mode="md" formControlName="address"></ion-input>
-        </div>
-      </div>
+    <ion-label class="title bold">Información de cliente</ion-label>
+  </div>
+
+  <!-- Formulario -->
+  <div class="container">
+    <form class="form" [formGroup]="form">
+      <!-- Nombre -->
+      <ng-container *ngIf="!loading; else skField">
+        <ion-item lines="none" class="bordered-item">
+          <ion-input
+            mode="md"
+            label="Nombre"
+            labelPlacement="stacked"
+            placeholder="Nombre"
+            formControlName="nombre">
+          </ion-input>
+        </ion-item>
+      </ng-container>
+
+      <!-- Correo -->
+      <ng-container *ngIf="!loading; else skField">
+        <ion-item lines="none" class="bordered-item">
+          <ion-input
+            mode="md"
+            type="email"
+            autocapitalize="off"
+            label="Correo electrónico"
+            labelPlacement="stacked"
+            placeholder="Correo electrónico"
+            formControlName="correo">
+          </ion-input>
+        </ion-item>
+      </ng-container>
+
+      <!-- Teléfono -->
+      <ng-container *ngIf="!loading; else skField">
+        <ion-item lines="none" class="bordered-item">
+          <ion-input
+            mode="md"
+            inputmode="tel"
+            label="Teléfono / Celular"
+            labelPlacement="stacked"
+            placeholder="Teléfono / Celular"
+            formControlName="telefono">
+          </ion-input>
+        </ion-item>
+      </ng-container>
+
+      <!-- Dirección -->
+      <ng-container *ngIf="!loading; else skField">
+        <ion-item lines="none" class="bordered-item">
+          <ion-textarea
+            mode="md"
+            [autoGrow]="true"
+            rows="3"
+            label="Dirección"
+            labelPlacement="stacked"
+            placeholder="Dirección"
+            formControlName="direccion">
+          </ion-textarea>
+        </ion-item>
+      </ng-container>
+
+      <!-- Skeleton reutilizable -->
+      <ng-template #skField>
+        <ion-item lines="none" class="bordered-item skeleton">
+          <ion-label>
+            <ion-skeleton-text style="width: 120px;" [animated]="true"></ion-skeleton-text>
+            <ion-skeleton-text style="width: 220px; height: 18px;" [animated]="true"></ion-skeleton-text>
+          </ion-label>
+        </ion-item>
+      </ng-template>
     </form>
   </div>
 </ion-content>
@@ -33,9 +82,8 @@
     mode="md"
     expand="block"
     fill="solid"
-    *ngIf="customerUpsertForm"
-    [disabled]="customerUpsertForm.invalid"
-    (click)="saveCustomer()">
+    [disabled]="form.invalid || loading"
+    (click)="save()">
     Guardar
   </ion-button>
 </ion-footer>

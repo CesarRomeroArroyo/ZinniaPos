@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  api_url: 'https://codigofuentecorp.eastus.cloudapp.azure.com/ZinniaApis/public/',
-  sockets_url: 'ws://172.178.104.234:3000/'
+  apiBase: 'https://codigofuentecorp.eastus.cloudapp.azure.com/zinnia-apis-php/public',
+  STORAGE_KEY: 'zinnia_local_prod'
 };

@@ -1,67 +1,113 @@
+// src/app/pages/dashboard/customers/components/customer-upsert/customer-upsert.component.ts
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterModule } from '@angular/router';
-import { IonicModule } from '@ionic/angular';
-import { HeaderComponent } from 'src/app/shared/components/header/header.component';
-import { settingHeader } from './customer-upsert.consts';
-import { CustomersService } from 'src/app/core/services/bussiness/customers.service';
-import { ModalController } from '@ionic/angular/standalone';
+import { IonicModule, ModalController, ToastController } from '@ionic/angular';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { ClientesService, CreateClienteDto } from 'src/app/core/services/bussiness/clientes.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-customer-upsert',
-  templateUrl: './customer-upsert.component.html',
-  styleUrls: ['./customer-upsert.component.scss'],
   standalone: true,
-  imports: [
-    CommonModule,
-    IonicModule,
-    HeaderComponent,
-    ReactiveFormsModule,
-    RouterModule,
-    FormsModule,
-  ],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA]
+  imports: [CommonModule, IonicModule, ReactiveFormsModule],
+  templateUrl: './customer-upsert.component.html',
+  styleUrls: ['./customer-upsert.component.scss'], // <- necesario para aplicar el SCSS
 })
-export class CustomerUpsertComponent {
+export class CustomerUpsertComponent implements OnInit, OnDestroy {
 
-  public settingHeader = settingHeader;
-  public customerUpsertForm!: FormGroup;
-  
+  loading = false;
+
+  // Config para tu header (si tu shell lo consume)
+  settingHeader: any = {
+    title: 'Nuevo cliente',
+    leftIcon: 'close-outline',
+    rightIcon: 'checkmark-outline',
+    rightDisabled: true,
+    isModal: true,
+  };
+  actionCompleted = () => this.save(); // el ✓ del header llama a save()
+
+  form = this.fb.nonNullable.group({
+    nombre:    ['', [Validators.required, Validators.minLength(2)]],
+    correo:    ['', [Validators.required, Validators.email]],
+    telefono:  ['', [Validators.required, Validators.minLength(5)]],
+    direccion: ['', [Validators.required, Validators.minLength(3)]],
+  });
+
+  private sub?: Subscription;
+
   constructor(
-    private _formBuild: FormBuilder,
-    private _modalCtrl: ModalController,
-    private _customerService: CustomersService,
-  ) {
+    private fb: FormBuilder,
+    private clientesSrv: ClientesService,
+    private modalCtrl: ModalController,
+    private toastCtrl: ToastController
+  ) {}
 
+  ngOnInit() {
+    // Habilita/deshabilita ✓ del header según validez/carga
+    this.sub = this.form.statusChanges.subscribe(() => {
+      this.settingHeader = {
+        ...this.settingHeader,
+        rightDisabled: this.form.invalid || this.loading,
+      };
+    });
   }
 
-  ionViewWillEnter() {
-    this.createForm();
-  }
+  ngOnDestroy() { this.sub?.unsubscribe(); }
 
-  public async saveCustomer() {
-    const newCustomer = this.customerUpsertForm.value;
-    this._customerService.saveCustomer(newCustomer).subscribe({
-      next: (response) => {
-        if(response === true) {
-          console.log("registro exitoso");
-          this._modalCtrl.dismiss({completed: true});
-        }
-      },
-      error: (error) => {
-        console.error(error);
+  async save() {
+    if (this.form.invalid || this.loading) {
+      this.form.markAllAsTouched();
+      (await this.toastCtrl.create({
+        message: 'Completa los campos requeridos',
+        duration: 1200,
+        position: 'bottom',
+      })).present();
+      return;
+    }
+
+    this.loading = true;
+    this.settingHeader = { ...this.settingHeader, rightDisabled: true };
+
+    try {
+      // timestamp opcional para la API (YYYY-MM-DD HH:mm:ss)
+      const nowIso = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+      const f = this.form.getRawValue();
+      const payload: CreateClienteDto = {
+        nombre:    String(f.nombre).trim(),
+        correo:    String(f.correo).trim(),
+        telefono:  String(f.telefono).trim(),
+        direccion: String(f.direccion).trim(),
+        fecha_registro: nowIso,
+      };
+
+      const ok = await this.clientesSrv.createCliente(payload); // devuelve boolean
+      if (ok) {
+        (await this.toastCtrl.create({
+          message: 'Cliente creado',
+          duration: 1400,
+          position: 'bottom',
+        })).present();
+        this.modalCtrl.dismiss({ completed: true });
+      } else {
+        throw new Error('El servidor no confirmó el registro');
       }
-    });
+    } catch (e: any) {
+      (await this.toastCtrl.create({
+        message: e?.message || 'No se pudo crear el cliente',
+        duration: 1600,
+        color: 'danger',
+        position: 'bottom',
+      })).present();
+    } finally {
+      this.loading = false;
+      this.settingHeader = {
+        ...this.settingHeader,
+        rightDisabled: this.form.invalid,
+      };
+    }
   }
 
-  private createForm(): void {
-    this.customerUpsertForm = this._formBuild.group({
-      name: ['', Validators.required],
-      email: ['', [Validators.required, Validators.email]],
-      phone: ['', Validators.required],
-      address: ['', Validators.required],
-    });
-  }
-
+  close() { this.modalCtrl.dismiss(); }
 }
