@@ -2,24 +2,20 @@
   <ion-toolbar>
     <ion-title class="title">Citas</ion-title>
     <ion-buttons slot="end">
-      <ion-button fill="clear" aria-label="Demo datos" (click)="toggleData()">
-        <ion-icon slot="icon-only" name="beaker-outline"></ion-icon>
-      </ion-button>
-      <ion-button fill="clear" aria-label="Añadir" (click)="onAdd()">
+      <ion-button fill="clear" aria-label="Añadir" (click)="onCreate()">
         <ion-icon slot="icon-only" name="add-outline"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<!-- 👇 contentId para que el menú se enganche a este contenido -->
+<!-- contentId para asociar el menú de filtros -->
 <ion-content id="main-content" fullscreen="true">
-  <!-- refresco -->
-  <ion-refresher slot="fixed" (ionRefresh)="reload($event)">
+  <ion-refresher slot="fixed" (ionRefresh)="load($event)">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <!-- buscador + filtro -->
+  <!-- Buscador + botón filtro -->
   <div class="search-wrap">
     <ion-searchbar
       class="search"
@@ -29,20 +25,14 @@
       (ionInput)="applyFilter()">
     </ion-searchbar>
 
-    <!-- abre el panel de filtros -->
     <ion-menu-toggle menu="filters" [autoHide]="false">
-      <ion-button
-        class="filter"
-        fill="clear"
-        aria-label="Filtrar"
-        (click)="openFilters()">
+      <ion-button class="filter" fill="clear" aria-label="Filtrar" (click)="openFilters()">
         <ion-icon slot="icon-only" name="funnel-outline"></ion-icon>
       </ion-button>
     </ion-menu-toggle>
-
   </div>
 
-  <!-- Chips de filtro (opcional) -->
+  <!-- Chips de filtro activos -->
   <div class="chips" *ngIf="activeFilter">
     <ion-chip (click)="clearFilter()">
       <ion-label>{{ activeFilter }}</ion-label>
@@ -50,90 +40,118 @@
     </ion-chip>
   </div>
 
-  <!-- Skeletons mientras carga -->
+  <!-- Loading -->
   <ng-container *ngIf="loading; else loaded">
     <ion-list>
       <ion-item *ngFor="let i of skeletons">
         <ion-label>
-          <h3><ion-skeleton-text animated
-              style="width: 60%"></ion-skeleton-text></h3>
-          <p><ion-skeleton-text animated
-              style="width: 40%"></ion-skeleton-text></p>
+          <h3><ion-skeleton-text animated style="width:60%"></ion-skeleton-text></h3>
+          <p><ion-skeleton-text animated style="width:40%"></ion-skeleton-text></p>
         </ion-label>
       </ion-item>
     </ion-list>
   </ng-container>
 
-  <!-- Contenido cargado -->
+  <!-- Contenido -->
   <ng-template #loaded>
-    <!-- Hay citas (después de filtrar) -->
-    <ng-container *ngIf="grouped.length; else emptyOrSearchEmpty">
-      <ion-list *ngFor="let g of grouped">
-        <ion-item-divider class="section-divider">
-          <ion-label>{{ g.label }}</ion-label>
-        </ion-item-divider>
+    <ion-card *ngIf="error">
+      <ion-card-header><ion-card-title>Error</ion-card-title></ion-card-header>
+      <ion-card-content>
+        {{ error }}
+        <ion-button expand="block" fill="outline" (click)="load()">Reintentar</ion-button>
+      </ion-card-content>
+    </ion-card>
 
-        <ion-item *ngFor="let c of g.items; trackBy: trackById" button detail
-          (click)="open(c)">
-          <ion-label>
-            <h3 class="row-title">{{ c.id }}</h3>
-            <p class="row-sub">
-              {{ c.paciente }} • {{ c.date | date:'d \'de\' MMM, y' }} • {{
-              c.start }} - {{ c.end }}
-            </p>
-            <p class="row-type">{{ c.type }}</p>
-          </ion-label>
+    <ng-container *ngIf="!error">
+      <ng-container *ngIf="grouped.length; else emptyOrSearchEmpty">
+        <ion-list *ngFor="let g of grouped">
+          <ion-item-divider class="section-divider">
+            <ion-label>{{ g.label }}</ion-label>
+          </ion-item-divider>
 
-          <span class="status"
-            [ngClass]="statusClassMap[c.status] || 'status--default'">
-            {{ c.status }}
-          </span>
+          <ion-item *ngFor="let c of g.items; trackBy: trackById" button detail (click)="open(c)">
+            <ion-label>
+              <h3 class="row-title">#{{ c.id }}</h3>
+              <p class="row-sub">
+                {{ c.paciente }} • {{ c.date | date:"d 'de' MMM, y" }} • {{ c.start }} - {{ c.end }}
+              </p>
+              <p class="row-type">{{ c.type }}</p>
+            </ion-label>
 
-          <!-- SOLO si viene de WhatsApp -->
-          <ion-icon
-            *ngIf="c.origen === 'whatsapp'"
-            class="wa"
-            slot="end"
-            name="logo-whatsapp"
-            aria-label="Abrir WhatsApp"
-            (click)="openWhatsApp(c, $event)">
-          </ion-icon>
-        </ion-item>
-      </ion-list>
-    </ng-container>
+            <span class="status" [ngClass]="statusClassMap[c.status] || 'status--default'">
+              {{ c.status }}
+            </span>
 
-    <!-- Estados vacíos -->
-    <ng-template #emptyOrSearchEmpty>
-      <!-- Buscaste pero no hay resultados -->
-      <div class="no-results" *ngIf="query?.trim(); else emptyState">
-        <p>No encontramos resultados para “{{ query }}”.</p>
-        <ion-button expand="block" fill="outline"
-          (click)="clearSearch()">Limpiar búsqueda</ion-button>
-      </div>
+            <ion-icon *ngIf="c.origen === 'whatsapp'" class="wa" slot="end"
+                      name="logo-whatsapp" aria-label="Abrir WhatsApp"
+                      (click)="openWhatsApp(c, $event)"></ion-icon>
+          </ion-item>
+        </ion-list>
+      </ng-container>
 
-      <!-- No hay citas aún: muestra el hero -->
-      <ng-template #emptyState>
-        <div class="hero">
-          <img
-            class="hero-img"
-            src="assets/images/appointments.png"
-            alt="Gestión de Citas" />
-          <h2 class="hero-title">Gestión de Citas</h2>
-          <p class="hero-subtitle">
-            Administra todas las citas de tus clientes, visualiza la
-            disponibilidad y ajusta los estados según el seguimiento de cada
-            consulta.
-          </p>
-          <div class="cta">
-            <ion-button expand="block" size="large" shape="round"
-              (click)="onCreate()">
-              Crear cita
-            </ion-button>
-          </div>
+      <ng-template #emptyOrSearchEmpty>
+        <div class="no-results" *ngIf="query?.trim(); else emptyState">
+          <p>No encontramos resultados para “{{ query }}”.</p>
+          <ion-button expand="block" fill="outline" (click)="clearSearch()">Limpiar búsqueda</ion-button>
         </div>
+
+        <ng-template #emptyState>
+          <div class="hero">
+            <img class="hero-img" src="assets/images/appointments.png" alt="Gestión de Citas" />
+            <h2 class="hero-title">Gestión de Citas</h2>
+            <p class="hero-subtitle">
+              Administra todas las citas y ajusta los estados según el seguimiento.
+            </p>
+            <div class="cta">
+              <ion-button expand="block" size="large" shape="round" (click)="onCreate()">Crear cita</ion-button>
+            </div>
+          </div>
+        </ng-template>
       </ng-template>
-    </ng-template>
+    </ng-container>
   </ng-template>
 </ion-content>
 
-<!-- ////////////////////////////// -->
+<!-- Menú lateral de filtros -->
+<ion-menu side="end" menuId="filters" contentId="main-content" class="filters-menu">
+  <ion-header>
+    <ion-toolbar>
+      <ion-title>Filtros</ion-title>
+      <ion-buttons slot="end">
+        <ion-button (click)="closeFilters()">
+          <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+        </ion-button>
+      </ion-buttons>
+    </ion-toolbar>
+  </ion-header>
+  <ion-content>
+    <ion-list>
+      <ion-item-divider><ion-label>Estados</ion-label></ion-item-divider>
+      <ion-item *ngFor="let s of statusOptions">
+        <ion-checkbox slot="start" [checked]="selectedStatuses.has(s)"
+                      (ionChange)="toggleStatus(s, $event.detail.checked)"></ion-checkbox>
+        <ion-label>{{ s }}</ion-label>
+      </ion-item>
+
+      <ion-item-divider><ion-label>Origen</ion-label></ion-item-divider>
+      <ion-item *ngFor="let o of origenOptions">
+        <ion-checkbox slot="start" [checked]="selectedOrigen.has(o)"
+                      (ionChange)="toggleOrigen(o, $event.detail.checked)"></ion-checkbox>
+        <ion-label>{{ o | titlecase }}</ion-label>
+      </ion-item>
+
+      <ion-item-divider><ion-label>Fecha de actualización</ion-label></ion-item-divider>
+      <ion-radio-group [(ngModel)]="dateFilter">
+        <ion-item *ngFor="let d of updatedDateOptions">
+          <ion-label>{{ d.label }}</ion-label>
+          <ion-radio slot="end" [value]="d.value"></ion-radio>
+        </ion-item>
+      </ion-radio-group>
+    </ion-list>
+
+    <div style="padding:12px 16px">
+      <ion-button expand="block" (click)="applyAndClose()">Aplicar</ion-button>
+      <ion-button expand="block" fill="outline" (click)="resetFilters()">Restablecer</ion-button>
+    </div>
+  </ion-content>
+</ion-menu>

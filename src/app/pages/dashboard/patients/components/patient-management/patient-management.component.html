@@ -2,9 +2,6 @@
   <ion-toolbar>
     <ion-title class="title">Pacientes</ion-title>
     <ion-buttons slot="end">
-      <ion-button fill="clear" aria-label="Demo datos" (click)="toggleData()">
-        <ion-icon slot="icon-only" name="beaker-outline"></ion-icon>
-      </ion-button>
       <ion-button fill="clear" aria-label="Añadir" (click)="onAdd()">
         <ion-icon slot="icon-only" name="add-outline"></ion-icon>
       </ion-button>
@@ -13,10 +10,11 @@
 </ion-header>
 
 <ion-content fullscreen="true">
-  <ion-refresher slot="fixed" (ionRefresh)="reload($event)">
+  <ion-refresher slot="fixed" (ionRefresh)="load($event)">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
+  <!-- Buscador -->
   <div class="search-wrap">
     <ion-searchbar
       class="search"
@@ -27,82 +25,72 @@
     </ion-searchbar>
   </div>
 
+  <!-- Cargando -->
   <ng-container *ngIf="loading; else loaded">
     <ion-list>
-      <ion-item *ngFor="let i of skeletons">
+      <ion-item *ngFor="let i of [1,2,3,4,5,6]">
         <ion-label>
-          <h3><ion-skeleton-text animated
-              style="width: 60%"></ion-skeleton-text></h3>
-          <p><ion-skeleton-text animated
-              style="width: 40%"></ion-skeleton-text></p>
+          <h3><ion-skeleton-text animated style="width: 60%"></ion-skeleton-text></h3>
+          <p><ion-skeleton-text animated style="width: 40%"></ion-skeleton-text></p>
         </ion-label>
       </ion-item>
     </ion-list>
   </ng-container>
 
   <ng-template #loaded>
-    <ng-container *ngIf="filtered.length; else emptyOrSearchEmpty">
-      <ion-list>
-        <ion-item *ngFor="let p of filtered; trackBy: trackById"
-          button detail
-          (click)="open(p)">
+    <!-- Error -->
+    <ion-card *ngIf="error">
+      <ion-card-header>
+        <ion-card-title>Error</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        {{ error }}
+        <ion-button expand="block" fill="outline" (click)="load()">Reintentar</ion-button>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Lista -->
+    <ng-container *ngIf="!error">
+      <ion-list *ngIf="filtered.length; else empty">
+        <ion-item
+          *ngFor="let p of filtered; trackBy: trackById"
+          button
+          detail
+          [routerLink]="[getId(p)]"
+          routerDirection="forward">
+
           <ion-label>
             <h3 class="row-title">{{ p.nombre }}</h3>
-            <p class="row-sub">
-              <span *ngIf="p.email">{{ p.email }}</span>
-              <span *ngIf="p.email && p.telefono" class="dot">•</span>
-              <span *ngIf="p.telefono">{{ p.telefono }}</span>
-            </p>
-            <p class="row-meta">
-              <span class="strong">{{ p.citas }} Cita{{ p.citas === 1 ? '' : 's'
-                }}</span>
-              <span class="dot">•</span>
-              <ng-container
-                *ngIf="p.citas > 0 && p.lastAppointmentDate; else noAppt">
-                Última cita: {{ p.lastAppointmentDate | date:'d \'de\' MMM, y'
-                }}
-              </ng-container>
-              <ng-template #noAppt>Sin citas registradas</ng-template>
-            </p>
-          </ion-label>
 
-          <ion-icon *ngIf="p.origen === 'whatsapp'"
-            class="wa"
-            slot="end"
-            name="logo-whatsapp"
-            aria-label="Abrir WhatsApp"
-            (click)="openWhatsApp(p, $event)">
-          </ion-icon>
+            <p class="row-sub" *ngIf="displaySub(p)">
+              {{ displaySub(p) }}
+            </p>
+
+            <p class="row-meta">
+              <span class="meta-strong">{{ getCitasLabel(p) }}</span>
+              <ng-container *ngIf="p.ultimaCitaDate; else noAppts">
+                <span class="dot">•</span>
+                <span>Última cita: {{ p.ultimaCitaDate | date:"d 'de' MMM, y" }}</span>
+              </ng-container>
+              <ng-template #noAppts>
+                <span class="dot">•</span>
+                <span>Sin citas registradas</span>
+              </ng-template>
+            </p>
+
+          </ion-label>
         </ion-item>
       </ion-list>
-    </ng-container>
 
-    <ng-template #emptyOrSearchEmpty>
-      <div class="no-results" *ngIf="query?.trim(); else emptyState">
-        <p>No encontramos resultados para “{{ query }}”.</p>
-        <ion-button expand="block" fill="outline"
-          (click)="clearSearch()">Limpiar búsqueda</ion-button>
-      </div>
-
-      <ng-template #emptyState>
-        <div class="hero">
-          <img
-            class="hero-img"
-            src="assets/images/customers-patients.png"
-            alt="Gestión de Pacientes" />
-          <h2 class="hero-title">Gestión de Pacientes</h2>
-          <p class="hero-subtitle">
-            Organiza y centraliza la información de tus pacientes y
-            accede fácilmente a su historial clínico.
-          </p>
-          <div class="cta">
-            <ion-button expand="block" size="large" shape="round"
-              (click)="onCreate()">
-              Crear cita
-            </ion-button>
-          </div>
+      <!-- Vacío -->
+      <ng-template #empty>
+        <div class="empty">
+          <img class="hero-img" src="assets/images/customers-patients.png" alt="Pacientes" />
+          <h2>Sin pacientes</h2>
+          <p>No se recibieron datos del servidor.</p>
+          <ion-button expand="block" (click)="load()">Actualizar</ion-button>
         </div>
       </ng-template>
-    </ng-template>
+    </ng-container>
   </ng-template>
 </ion-content>

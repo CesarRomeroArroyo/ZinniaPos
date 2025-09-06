@@ -1,110 +1,301 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { IonicModule } from '@ionic/angular';
-import { Router, RouterModule } from '@angular/router';
-import { CustomerUpsertComponent } from "../customer-upsert/customer-upsert.component";
-import { PruebaBackendComponent } from '../prueba-backend/prueba-backend.component';
+// src/app/pages/dashboard/customers/components/customer-management/customer-management.component.ts
+import { Component, OnInit } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { IonicModule } from "@ionic/angular";
+import { HttpClientModule } from "@angular/common/http";
+import { FormsModule } from "@angular/forms";
+import { RouterModule } from "@angular/router";
+import {
+  ClientesService,
+  ClienteApi,
+} from "src/app/core/services/bussiness/clientes.service";
+import { ModalController } from "@ionic/angular";
+import { ProductCustomerComponent } from "../../../products/components/product-customer/product-customer.component";
+import {
+  OrderService,
+  PedidoApi,
+} from "src/app/core/services/bussiness/order.service";
 
-type Origen = 'whatsapp' | 'app' | 'web' | 'tel';
-
-export interface Customer {
-  id: string;
-  nombre: string;
-  email?: string;
+interface ClienteUI extends Omit<ClienteApi, "correo" | "telefono"> {
+  correo?: string;
   telefono?: string;
-  pedidos: number;
-  lastOrderDate?: string | Date;
-  origen?: Origen;
+  fechaRegistroDate?: Date;
+  pedidosCount: number;
+  ultimoPedidoDate: Date | null;
 }
 
 @Component({
-  selector: 'app-customer-management',
+  selector: "app-customer-management",
   standalone: true,
-  templateUrl: './customer-management.component.html',
-  styleUrls: ['./customer-management.component.scss'],
-  imports: [IonicModule, CommonModule, FormsModule, RouterModule, CustomerUpsertComponent, PruebaBackendComponent],
+  templateUrl: "./customer-management.component.html",
+  styleUrls: ["./customer-management.component.scss"],
+  imports: [
+    CommonModule,
+    IonicModule,
+    HttpClientModule,
+    FormsModule,
+    RouterModule,
+  ],
 })
 export class CustomerManagementComponent implements OnInit {
-  constructor(private router: Router) {}
-
-  // UI
   loading = false;
   error?: string;
-  query = '';
 
-  // data
-  customers: Customer[] = [];
-  filtered: Customer[] = [];
+  clientes: ClienteUI[] = [];
+  filtered: ClienteUI[] = [];
+  query = "";
 
-  skeletons = Array.from({ length: 6 });
+  // control de hidratación
+  private hydrating = false;
+  private resumenCache = new Map<string, { total: number; last: Date | null }>();
 
-  ngOnInit(): void {
-    this.loadDemo(true);
+  constructor(
+    private clientesSrv: ClientesService,
+    private orderSrv: OrderService,
+    private modalCtrl: ModalController
+  ) {}
+
+  ngOnInit() {
+    this.load();
   }
 
-  async toggleData() {
-    await this.loadDemo(this.customers.length === 0);
-  }
-
-  async loadDemo(withData: boolean) {
+  async load(ev?: CustomEvent) {
     this.loading = true;
-    await new Promise(r => setTimeout(r, 300));
-    this.customers = withData ? DEMO_CUSTOMERS : [];
-    this.applyFilter();
-    this.loading = false;
+    this.error = undefined;
+
+    try {
+      const raw = await this.clientesSrv.getClientes(); // ← tu servicio de clientes
+      this.clientes = (raw ?? []).map(this.mapClienteBase); // pinta rápido
+      this.applyFilter();
+
+      // hidrata pedidos en segundo plano (sin bloquear)
+      setTimeout(() => this.hydrateInBatches(), 0);
+    } catch (e: any) {
+      this.error = e?.message || "Error al cargar clientes";
+    } finally {
+      this.loading = false;
+      (ev?.target as HTMLIonRefresherElement)?.complete?.();
+    }
   }
 
-  // filtros/búsqueda
-  applyFilter() {
-    const q = this.query.trim().toLowerCase();
-    let out = [...this.customers];
+  // ===== Normalización mínima (rápida) =====
+  private mapClienteBase = (c: ClienteApi): ClienteUI => {
+    const correo = String((c as any).correo ?? (c as any).email ?? "").trim();
+    const telefono = String(
+      (c as any).telefono ?? (c as any).phone ?? (c as any).celular ?? ""
+    ).trim();
 
-    if (q) {
-      out = out.filter(c =>
-        (c.nombre || '').toLowerCase().includes(q) ||
-        (c.email || '').toLowerCase().includes(q) ||
-        (c.telefono || '').toLowerCase().includes(q)
+    const isoReg = (c as any).fecha_registro?.toString()?.replace?.(" ", "T");
+    const fr = isoReg ? new Date(isoReg) : undefined;
+
+    // si ya vienen agregados desde el backend, úsalos
+    const rawCount =
+      (c as any).pedidosCount ??
+      (c as any).pedidos ??
+      (c as any).total_pedidos ??
+      (c as any).cant_pedidos ??
+      0;
+
+    const rawLast =
+      (c as any).ultimo_pedido ??
+      (c as any).fecha_ultimo_pedido ??
+      (c as any).fechaUltimoPedido ??
+      (c as any).ultimoPedido ??
+      null;
+
+    const last =
+      typeof rawLast === "string" && rawLast
+        ? new Date(rawLast.includes("T") ? rawLast : rawLast.replace(" ", "T"))
+        : null;
+
+    return {
+      ...(c as any),
+      correo: correo || undefined,
+      telefono: telefono || undefined,
+      fechaRegistroDate: fr && !Number.isNaN(fr.getTime()) ? fr : undefined,
+      pedidosCount: Number.isFinite(+rawCount) ? +rawCount : 0,
+      ultimoPedidoDate: last && !Number.isNaN(last.getTime()) ? last : null,
+    };
+  };
+
+  // ===== Hidratar pedidos por lotes con fallback por teléfono =====
+  private async hydrateInBatches() {
+    if (this.hydrating) return;
+    this.hydrating = true;
+
+    const MAX = 4; // concurrencia
+    const targets = this.clientes
+      .map((c, idx) => ({
+        idx,
+        id: this.getId(c),
+        phone: this.getPhone(c),
+      }))
+      .filter(
+        (x) =>
+          x.id &&
+          // Solo clientes que no traen datos agregados
+          !(this.clientes[x.idx].pedidosCount > 0) &&
+          !this.clientes[x.idx].ultimoPedidoDate
       );
+
+    for (let i = 0; i < targets.length; i += MAX) {
+      const slice = targets.slice(i, i + MAX);
+      await Promise.allSettled(
+        slice.map(async ({ id, phone, idx }) => {
+          try {
+            let cached = this.resumenCache.get(id);
+            if (!cached) {
+              cached = await this.getResumenSafe(id, phone);
+              this.resumenCache.set(id, cached);
+            }
+            this.clientes[idx].pedidosCount = cached.total ?? 0;
+            this.clientes[idx].ultimoPedidoDate = cached.last ?? null;
+          } catch {
+            // ignoramos pero no rompemos la UI
+          }
+        })
+      );
+
+      // refrescar la lista visible
+      this.applyFilter();
     }
 
-    out.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
-    this.filtered = out;
+    this.hydrating = false;
+  }
+
+  /**
+   * Intenta: getResumenByCliente → getByCliente → por teléfono (si existe método en OrderService)
+   */
+  private async getResumenSafe(
+    clienteId: string,
+    telefono?: string
+  ): Promise<{ total: number; last: Date | null }> {
+    const id = String(clienteId || "").trim();
+    if (!id) return { total: 0, last: null };
+
+    // 1) resumen directo si tu OrderService lo implementa
+    try {
+      const anySrv = this.orderSrv as any;
+      if (typeof anySrv.getResumenByCliente === "function") {
+        const r = await anySrv.getResumenByCliente(id);
+        return { total: Number(r?.total ?? 0), last: r?.lastDate ?? null };
+      }
+    } catch {
+      // seguimos
+    }
+
+    // 2) pedidos por cliente → calcula total/última fecha
+    try {
+      const pedidos: PedidoApi[] = await this.orderSrv.getByCliente(id);
+      if (Array.isArray(pedidos) && pedidos.length) {
+        let last: Date | null = null;
+        for (const p of pedidos) {
+          const d = this.parseDate(p.fecha);
+          if (d && (!last || d.getTime() > last.getTime())) last = d;
+        }
+        return { total: pedidos.length, last };
+      }
+    } catch {
+      // seguimos
+    }
+
+    // 3) fallback por teléfono si existe método y tenemos número
+    const cleanPhone = (telefono || "").toString().replace(/\D/g, "");
+    if (cleanPhone) {
+      const anySrv = this.orderSrv as any;
+      try {
+        if (typeof anySrv.getByTelefonoFlat === "function") {
+          const arr: PedidoApi[] = await anySrv.getByTelefonoFlat(cleanPhone);
+          let last: Date | null = null;
+          for (const p of arr) {
+            const d = this.parseDate(p.fecha);
+            if (d && (!last || d.getTime() > last.getTime())) last = d;
+          }
+          return { total: arr.length, last };
+        } else if (typeof anySrv.getByTelefono === "function") {
+          const r = await anySrv.getByTelefono(cleanPhone);
+          const arr: PedidoApi[] = [
+            ...(r?.pendientes ?? []),
+            ...(r?.confirmados ?? []),
+            ...(r?.entregados ?? []),
+          ];
+          let last: Date | null = null;
+          for (const p of arr) {
+            const d = this.parseDate(p.fecha);
+            if (d && (!last || d.getTime() > last.getTime())) last = d;
+          }
+          return { total: arr.length, last };
+        }
+      } catch {
+        // nada
+      }
+    }
+
+    return { total: 0, last: null };
+  }
+
+  private parseDate(s?: string): Date | null {
+    if (!s) return null;
+    const iso = s.includes("T") ? s : s.replace(" ", "T");
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  // ===== Filtro / búsqueda =====
+  applyFilter() {
+    const q = this.query.trim().toLowerCase();
+    if (!q) {
+      // fuerza cambio de referencia para refrescar la vista
+      this.filtered = [...this.clientes];
+      return;
+    }
+    this.filtered = this.clientes.filter((c) => {
+      const nombre = (c as any).nombre?.toLowerCase?.() ?? "";
+      const correo = (c.correo ?? "").toLowerCase();
+      const telefono = (c.telefono ?? "").toLowerCase();
+      const direccion = ((c as any).direccion ?? "").toLowerCase();
+      return (
+        nombre.includes(q) ||
+        correo.includes(q) ||
+        telefono.includes(q) ||
+        direccion.includes(q)
+      );
+    });
+    // cambio de referencia para asegurar detección
+    this.filtered = [...this.filtered];
   }
 
   clearSearch() {
-    this.query = '';
+    this.query = "";
     this.applyFilter();
   }
 
-  reload(ev?: CustomEvent) {
-    this.applyFilter();
-    (ev?.target as HTMLIonRefresherElement)?.complete();
+  // ===== Helpers UI =====
+  getId(c: any) {
+    return String(c?.id ?? c?.cliente_id ?? c?._id ?? "").trim();
   }
-
-  // Navegación al detalle con el ID real
-  open(c: Customer) {
-    this.router.navigate(['/dashboard/customers', c.id]);
+  getPhone(c: any) {
+    return String(c?.telefono ?? c?.phone ?? c?.celular ?? "").trim();
   }
-
-  onCreate() { console.log('Crear cliente'); }
-  onAdd()    { console.log('Añadir cliente'); }
-
-  openWhatsApp(c: Customer, ev?: Event) {
-    ev?.stopPropagation();       // evita navegar cuando pulsas el icono
-    if (!c.telefono) return;
-    const phone = c.telefono.replace(/\D/g, '');
-    const msg = `Hola ${c.nombre}`;
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+  getPedidosLabel(c: ClienteUI) {
+    const n = Number(c.pedidosCount ?? 0);
+    return `${n} ${n === 1 ? "Pedido" : "Pedidos"}`;
   }
+  displaySub(c: ClienteUI) {
+    return [c.correo, c.telefono].filter(Boolean).join(" • ");
+  }
+  trackById = (_: number, c: ClienteUI) => this.getId(c) || _;
 
-  trackById(_: number, c: Customer) { return c.id; }
+  // ===== Crear cliente =====
+  async onAdd() {
+    const modal = await this.modalCtrl.create({
+      component: ProductCustomerComponent,
+      cssClass: "option-select-modal",
+      breakpoints: [0, 1],
+      initialBreakpoint: 1,
+    });
+    await modal.present();
+    const { data } = await modal.onDidDismiss();
+    if (data?.completed) this.load();
+  }
 }
-
-// ===== Demo data =====
-const DEMO_CUSTOMERS: Customer[] = [
-  { id: 'C001', nombre: 'Juan Pérez', email: 'juan.perez@example.com', telefono: '555 1234', pedidos: 2, lastOrderDate: '2024-10-18', origen: 'whatsapp' },
-  { id: 'C002', nombre: 'Enrique Flores Gonzales', email: 'enrique@example.com', telefono: '301 3213212', pedidos: 0, origen: 'app' },
-  { id: 'C003', nombre: 'Mauricio Rodríguez Munoz', email: 'mauricio@example.com', telefono: '321 3213256', pedidos: 0, origen: 'web' },
-  { id: 'C004', nombre: 'Carol Martinez Minera', email: 'carol@example.com', telefono: '300 5698954', pedidos: 5, lastOrderDate: '2024-10-18', origen: 'tel' },
-];

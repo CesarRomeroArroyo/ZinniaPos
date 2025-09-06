@@ -21,7 +21,6 @@ import { settingHeader } from '././initial-setting.consts'; // ajusta la ruta si
     HeaderComponent,
     QuickAccessPanelComponent,
     ProgressListComponent,
-    MenuHeaderComponent
   ],
 })
 export class InitialSettingComponent implements OnInit {

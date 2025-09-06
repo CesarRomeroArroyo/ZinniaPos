@@ -1,19 +1,22 @@
+// src/app/pages/dashboard/patients/components/patient-management/patient-management.component.ts
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { IonicModule, ModalController } from '@ionic/angular';
+import { HttpClientModule } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { IonicModule } from '@ionic/angular';
-import { Router, RouterModule } from '@angular/router';
+import { RouterModule } from '@angular/router';
 
-type Origen = 'whatsapp' | 'app' | 'web' | 'tel';
+import { ClientesService, ClienteApi } from 'src/app/core/services/bussiness/clientes.service';
+// IMPORTA EL SERVICIO *PLURAL*:
+import { AppointmentsService, AppointmentApi } from 'src/app/core/services/bussiness/appointment.service';
+import { ProductCustomerComponent } from 'src/app/pages/dashboard/products/components/product-customer/product-customer.component';
 
-export interface Patient {
-  id: string;
-  nombre: string;
-  email?: string;
+interface PacienteUI extends Omit<ClienteApi, 'correo' | 'telefono'> {
+  correo?: string;
   telefono?: string;
-  citas: number;
-  lastAppointmentDate?: string | Date;
-  origen?: Origen;
+  fechaRegistroDate?: Date;
+  citasCount: number;
+  ultimaCitaDate: Date | null;
 }
 
 @Component({
@@ -21,53 +24,110 @@ export interface Patient {
   standalone: true,
   templateUrl: './patient-management.component.html',
   styleUrls: ['./patient-management.component.scss'],
-  imports: [IonicModule, CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, IonicModule, HttpClientModule, FormsModule, RouterModule],
 })
 export class PatientManagementComponent implements OnInit {
-  constructor(private router: Router) {}
-
-  // UI
   loading = false;
   error?: string;
+
+  pacientes: PacienteUI[] = [];
+  filtered: PacienteUI[] = [];
   query = '';
 
-  // data
-  patients: Patient[] = [];
-  filtered: Patient[] = [];
+  constructor(
+    private clientesSrv: ClientesService,
+    private apptSrv: AppointmentsService,
+    private modalCtrl: ModalController
+  ) {}
 
-  skeletons = Array.from({ length: 6 });
-
-  ngOnInit(): void {
-    this.loadDemo(true);
+  ngOnInit() {
+    this.load();
   }
 
-  async toggleData() {
-    await this.loadDemo(this.patients.length === 0);
-  }
-
-  async loadDemo(withData: boolean) {
+  async load(ev?: CustomEvent) {
     this.loading = true;
-    await new Promise(r => setTimeout(r, 300));
-    this.patients = withData ? DEMO_PATIENTS : [];
-    this.applyFilter();
-    this.loading = false;
+    this.error = undefined;
+    try {
+      // 1) Trae pacientes y píntalos rápido
+      const raw = await this.clientesSrv.getClientes();
+      this.pacientes = (raw ?? []).map(this.mapPacienteBase);
+      this.applyFilter();
+
+      // 2) Trae TODAS las citas una sola vez y arma el resumen por cliente
+      //    Si falla, no rompe UI ni dispara popups repetidos
+      const citas = await this.apptSrv.getAllSafe();
+      const resume = this.buildResumeFromAppointments(citas);
+
+      // 3) Inyecta los datos en las filas y refresca filtro
+      this.pacientes = this.pacientes.map(p => {
+        const r = resume[this.getId(p)] ?? { count: 0, last: null };
+        return { ...p, citasCount: r.count, ultimaCitaDate: r.last };
+      });
+      this.applyFilter();
+    } catch (e: any) {
+      this.error = e?.message || 'No se pudo cargar pacientes.';
+      this.pacientes = [];
+      this.filtered = [];
+    } finally {
+      this.loading = false;
+      (ev?.target as HTMLIonRefresherElement)?.complete?.();
+    }
   }
 
-  // filtros/búsqueda
-  applyFilter() {
-    const q = this.query.trim().toLowerCase();
-    let out = [...this.patients];
+  // ----- Mappers / helpers -----
+  private mapPacienteBase = (c: ClienteApi): PacienteUI => {
+    const correo = String((c as any).correo ?? (c as any).email ?? '').trim();
+    const telefono = String((c as any).telefono ?? (c as any).phone ?? (c as any).celular ?? '').trim();
+    const isoReg = (c as any).fecha_registro?.toString()?.replace?.(' ', 'T');
+    const fr = isoReg ? new Date(isoReg) : undefined;
 
-    if (q) {
-      out = out.filter(p =>
-        (p.nombre || '').toLowerCase().includes(q) ||
-        (p.email || '').toLowerCase().includes(q) ||
-        (p.telefono || '').toLowerCase().includes(q)
-      );
+    return {
+      ...(c as any),
+      correo: correo || undefined,
+      telefono: telefono || undefined,
+      fechaRegistroDate: fr && !Number.isNaN(fr.getTime()) ? fr : undefined,
+      citasCount: 0,
+      ultimaCitaDate: null,
+    };
+  };
+
+  /** Construye { clienteId: {count, last} } a partir de la lista completa de citas */
+  private buildResumeFromAppointments(appts: AppointmentApi[]) {
+    const out: Record<string, { count: number; last: Date | null }> = {};
+    for (const a of appts || []) {
+      const id = String(a.cliente_id || '');
+      if (!id) continue;
+      const d = this.combineDateTime(a.fecha, a.hora_inicio);
+      if (!out[id]) out[id] = { count: 0, last: null };
+      out[id].count += 1;
+      if (d && (!out[id].last || d.getTime() > out[id].last!.getTime())) out[id].last = d;
+    }
+    return out;
     }
 
-    out.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
-    this.filtered = out;
+  private combineDateTime(fecha?: string, hora?: string): Date | null {
+    const f = (fecha || '').trim();
+    const h = (hora || '00:00:00').trim();
+    if (!f) return null;
+    const d = new Date(`${f}T${h}`);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  // ----- Filtro / búsqueda -----
+  applyFilter() {
+    const q = this.query.trim().toLowerCase();
+    if (!q) {
+      this.filtered = [...this.pacientes];
+      return;
+    }
+    this.filtered = this.pacientes.filter((p) => {
+      const nombre = (p as any).nombre?.toLowerCase?.() ?? '';
+      const correo = (p.correo ?? '').toLowerCase();
+      const telefono = (p.telefono ?? '').toLowerCase();
+      const direccion = ((p as any).direccion ?? '').toLowerCase();
+      return nombre.includes(q) || correo.includes(q) || telefono.includes(q) || direccion.includes(q);
+    });
+    this.filtered = [...this.filtered];
   }
 
   clearSearch() {
@@ -75,34 +135,29 @@ export class PatientManagementComponent implements OnInit {
     this.applyFilter();
   }
 
-  reload(ev?: CustomEvent) {
-    this.applyFilter();
-    (ev?.target as HTMLIonRefresherElement)?.complete();
+  // ----- UI helpers -----
+  getId(c: any) {
+    return String(c?.id ?? c?.cliente_id ?? c?._id ?? '').trim();
   }
-
-  // Navegar a detalle (si luego creas patient-detail)
-  open(p: Patient) {
-    this.router.navigate(['/dashboard/patients', p.id]);
+  getCitasLabel(p: PacienteUI) {
+    const n = Number(p.citasCount ?? 0);
+    return `${n} ${n === 1 ? 'Cita' : 'Citas'}`;
   }
-
-  onCreate() { console.log('Crear cita'); }
-  onAdd()    { console.log('Añadir paciente'); }
-
-  openWhatsApp(p: Patient, ev?: Event) {
-    ev?.stopPropagation();       // evita navegar cuando pulsas el icono
-    if (!p.telefono) return;
-    const phone = p.telefono.replace(/\D/g, '');
-    const msg = `Hola ${p.nombre}`;
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+  displaySub(p: PacienteUI) {
+    return [p.correo, p.telefono].filter(Boolean).join(' • ');
   }
+  trackById = (_: number, p: PacienteUI) => this.getId(p) || _;
 
-  trackById(_: number, p: Patient) { return p.id; }
+  // Botón “+” (igual que clientes)
+  async onAdd() {
+    const modal = await this.modalCtrl.create({
+      component: ProductCustomerComponent,
+      cssClass: 'option-select-modal',
+      breakpoints: [0, 1],
+      initialBreakpoint: 1,
+    });
+    await modal.present();
+    const { data } = await modal.onDidDismiss();
+    if (data?.completed) this.load();
+  }
 }
-
-// ===== Demo data =====
-const DEMO_PATIENTS: Patient[] = [
-  { id: 'P001', nombre: 'Juan Pérez',    email: 'juan.perez@example.com',    telefono: '555 1234',    citas: 2, lastAppointmentDate: '2024-10-18', origen: 'whatsapp' },
-  { id: 'P002', nombre: 'Enrique Flores Gonzales', email: 'enrique@example.com', telefono: '301 3213212', citas: 0, origen: 'app' },
-  { id: 'P003', nombre: 'Mauricio Rodríguez Munoz', email: 'mauricio@example.com', telefono: '321 3213256', citas: 0, origen: 'web' },
-  { id: 'P004', nombre: 'Carol Martinez Minera', email: 'carol@example.com', telefono: '300 5698954', citas: 5, lastAppointmentDate: '2024-10-18', origen: 'tel' },
-];

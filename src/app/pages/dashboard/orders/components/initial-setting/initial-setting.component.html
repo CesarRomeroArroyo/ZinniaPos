@@ -1,17 +1,20 @@
+<app-header
+  [settingHeader]="settingHeader"
+  [customActionCompleted]="actionCompleted.bind(this)">
+</app-header>
 <ion-content>
-  <div class="container">
-    <div class="quick-access-header">
-      <ion-label class="title bold">Gestión rápida</ion-label>
-      <ion-icon slot="end" name="create-outline" (click)="editQuickAccessItems()"></ion-icon>
-    </div>
-    <app-quick-access-list
-      [items]="userQuickAccess">
-    </app-quick-access-list>
-  </div>
+  <app-quick-access-panel></app-quick-access-panel>
 
   <div class="container">
     <ion-label class="title bold">Configura tu empresa</ion-label>
-    <ion-label class="ion-text-wrap subtitle">Sigue estos pasos para poner en marcha tu empresa.</ion-label>
+    <ion-label class="ion-text-wrap subtitle">Sigue estos pasos para poner en
+      marcha tu empresa.</ion-label>
     <app-progress-list [tasks]="initialTask"></app-progress-list>
   </div>
+
+  <div class="container">
+    <ion-label class="title bold">Resumen General</ion-label>
+
+  </div>
+
 </ion-content>

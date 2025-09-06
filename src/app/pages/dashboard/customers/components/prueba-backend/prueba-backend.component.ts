@@ -8,7 +8,8 @@ import {
   ClienteApi,
 } from "src/app/core/services/bussiness/clientes.service";
 import { ModalController } from "@ionic/angular";
-import { CustomerUpsertComponent } from "src/app/pages/dashboard/customers/components/customer-upsert/customer-upsert.component";
+import { ProductCustomerComponent } from "../../../products/components/product-customer/product-customer.component";
+
 
 interface Cliente extends ClienteApi {
   fechaRegistroDate?: Date;
@@ -102,7 +103,7 @@ export class PruebaBackendComponent implements OnInit {
 
   async onAdd() {
     const modal = await this.modalCtrl.create({
-      component: CustomerUpsertComponent,
+      component: ProductCustomerComponent,
       cssClass: "option-select-modal", // opcional, si ya la usas en otros modales
       breakpoints: [0, 1],
       initialBreakpoint: 1,

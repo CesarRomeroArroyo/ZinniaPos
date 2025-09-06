@@ -1,56 +1,50 @@
-.title {
-  font-weight: 700;
-}
-
-.error-bar {
+/* Search */
+.search-wrap {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 12px 12px 0;
-  padding: 10px 12px;
+  gap: 10px;
+  padding: 8px 16px 6px;
+}
+ion-searchbar.search {
+  flex: 1 1 auto;
+  --icon-color: #6b7280;
+  --placeholder-color: #6b7280;
+}
+ion-searchbar.search::part(container) {
+  background: #fff;
   border-radius: 12px;
-  background: rgba(255, 77, 79, 0.12);
-  color: #b00020;
-  backdrop-filter: saturate(120%);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.12) inset,
+    0 1px 3px rgba(0,0,0,0.04);
+}
+ion-searchbar.search::part(input) {
+  min-height: 44px;
+  font-size: 14px;
+  padding-right: 16px;
 }
 
-.search-wrap {
-  padding: 8px 12px;
-}
+/* List rows */
+.row-title { margin: 0 0 2px; font-weight: 700; }
+.row-sub   { margin: 0; color: #6b7280; }
+.row-meta  { margin: 6px 0 0; color: #6b7280; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+.meta-strong { font-weight: 600; }
+.dot { margin: 0 4px; }
 
-.row-title { font-weight: 600; }
-.row-sub { color: var(--ion-color-medium); }
-.row-meta { color: var(--ion-color-medium); font-size: 12px; }
-.row-meta .strong { font-weight: 600; }
-.dot { margin: 0 6px; }
-
+/* WhatsApp chip (opcional) */
 .wa {
-  font-size: 22px;
-  color: #25D366;
+  font-size: 20px;
+  margin-left: 8px;
+  padding: 4px;
+  border-radius: 999px;
+  background: #D1FAF5;
+  color: #0D9488;
 }
 
-.hero {
-  text-align: center;
-  padding: 32px 16px 48px;
-}
+/* Empty state */
+.empty { text-align: center; padding: 24px; }
 .hero-img {
-  width: 240px;
-  max-width: 80%;
-  margin: 0 auto 16px;
+  width: 72%;
+  max-width: 280px;
+  margin: 16px auto;
   display: block;
-}
-.hero-title {
-  margin: 0 0 8px;
-  font-weight: 700;
-}
-.hero-subtitle {
-  color: var(--ion-color-medium);
-  margin: 0 auto 16px;
-  max-width: 560px;
-}
-.cta { padding: 8px 16px 0; }
-
-.no-results {
-  padding: 24px 16px;
-  text-align: center;
 }

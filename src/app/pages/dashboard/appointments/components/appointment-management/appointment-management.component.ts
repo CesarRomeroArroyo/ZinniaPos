@@ -1,26 +1,36 @@
-import { Component, OnInit } from "@angular/core";
+// src/app/pages/dashboard/appointments/components/appointment-management/appointment-management.component.ts
 import { CommonModule, registerLocaleData } from "@angular/common";
 import localeEs from "@angular/common/locales/es";
+import { Component, OnInit } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { RouterModule } from "@angular/router";
 import { IonicModule, MenuController } from "@ionic/angular";
+import { Router } from "@angular/router";
+
+import {
+  // OJO: si tu archivo es appointments.service.ts usa el import en plural:
+  AppointmentsService,
+  AppointmentApi,
+  CitaEstado,
+} from "src/app/core/services/bussiness/appointment.service";
 
 registerLocaleData(localeEs);
 
 type Status = "Agendada" | "Completada" | "Cancelada";
 type Origen = "whatsapp" | "app" | "web" | "tel";
 
-export interface Appointment {
+export interface AppointmentUI {
   id: string;
   paciente: string;
-  date: string | Date;
+  /** Siempre Date (o null) para evitar “Invalid time value” */
+  date: Date | null;
   start: string;
   end: string;
   type: string;
   status: Status;
   origen?: Origen;
   telefono?: string;
-  updatedAt?: string; // para “Fecha de actualización” (fallback a date)
+  updatedAt?: Date | null;
 }
 
 @Component({
@@ -31,7 +41,11 @@ export interface Appointment {
   imports: [IonicModule, CommonModule, FormsModule, RouterModule],
 })
 export class AppointmentManagementComponent implements OnInit {
-  constructor(private menuCtrl: MenuController) {}
+  constructor(
+    private menuCtrl: MenuController,
+    private appointmentsSrv: AppointmentsService,
+    private router: Router
+  ) {}
 
   // UI state
   loading = false;
@@ -39,29 +53,29 @@ export class AppointmentManagementComponent implements OnInit {
 
   // búsqueda / filtros
   query = "";
-  activeFilter: string | null = null; // <- texto del chip “Filtros activos”
+  activeFilter: string | null = null;
 
   // data
-  appointments: Appointment[] = [];
-  filtered: Appointment[] = [];
-  grouped: { label: string; items: Appointment[] }[] = [];
+  appointments: AppointmentUI[] = [];
+  filtered: AppointmentUI[] = [];
+  grouped: { label: string; items: AppointmentUI[] }[] = [];
 
   // opciones de filtro
   statusOptions: Status[] = ["Agendada", "Completada", "Cancelada"];
   origenOptions: Origen[] = ["whatsapp", "app", "web", "tel"];
   updatedDateOptions = [
-    { label: "Hoy", value: "hoy" },
-    { label: "Últimos 7 días", value: "7d" },
-    { label: "Últimos 30 días", value: "30d" },
-    { label: "Todo", value: "todo" },
-  ] as const;
+    { label: "Hoy", value: "hoy" as const },
+    { label: "Últimos 7 días", value: "7d" as const },
+    { label: "Últimos 30 días", value: "30d" as const },
+    { label: "Todo", value: "todo" as const },
+  ];
 
-  // selección de filtros
+  // selección
   selectedStatuses = new Set<Status>();
   selectedOrigen = new Set<Origen>();
   dateFilter: "hoy" | "7d" | "30d" | "todo" = "todo";
 
-  // chips de estado (para CSS)
+  // clases de estado
   public statusClassMap: Record<Status, string> = {
     Agendada: "status--agendada",
     Completada: "status--completada",
@@ -72,114 +86,132 @@ export class AppointmentManagementComponent implements OnInit {
   skeletons = Array.from({ length: 5 });
 
   ngOnInit(): void {
-    this.loadDemo(true);
+    this.load();
+  }
+
+  async load(ev?: CustomEvent) {
+    this.loading = true;
+    this.error = undefined;
+    try {
+      const rows = await this.appointmentsSrv.getAll();
+      this.appointments = rows.map(this.toUI);
+      this.applyFilter();
+    } catch (e: any) {
+      this.error = e?.message || "No se pudieron cargar las citas";
+    } finally {
+      this.loading = false;
+      (ev?.target as HTMLIonRefresherElement)?.complete?.();
+    }
+  }
+
+  onCreate(): void {
+    this.router.navigate(["/dashboard/appointments/upsert-appointment"]);
+  }
+  onAdd(): void {
+    this.onCreate();
+  }
+
+  // ====== Map backend → UI ======
+  private toUI = (a: AppointmentApi): AppointmentUI => {
+    const status = this.mapStatus(a.estado);
+
+    // hora segura (pueden venir vacías)
+    const start = ((a.hora_inicio ?? "").match(/^\d{2}:\d{2}/)?.[0] ?? "00:00");
+    const end   = ((a.hora_fin ?? "").match(/^\d{2}:\d{2}/)?.[0] ?? "00:00");
+
+    // fecha segura (si no hay, null)
+    const date =
+      this.safeDateFromParts(a.fecha, start) ??
+      this.safeDate(a.fecha) ??
+      null;
+
+    const updatedAt = this.safeDate(a.updated_at);
+
+    return {
+      id: a.id,
+      paciente: a.cliente_nombre ?? `Cliente ${a.cliente_id}`,
+      date,
+      start,
+      end,
+      type: a.servicio_nombre ?? "",
+      status,
+      origen: (a.origen as Origen) ?? undefined,
+      telefono: a.telefono,
+      updatedAt,
+    };
+  };
+
+  private mapStatus(s: CitaEstado): Status {
+    const k = String(s || "").toLowerCase();
+    if (k.includes("cancel")) return "Cancelada";
+    if (k.includes("complet")) return "Completada";
+    return "Agendada";
   }
 
   // ====== Menu control ======
-  openFilters() {
-    this.menuCtrl.open("filters");
-  }
-  closeFilters() {
-    this.menuCtrl.close("filters");
-  }
+  openFilters()  { this.menuCtrl.open("filters"); }
+  closeFilters() { this.menuCtrl.close("filters"); }
 
   resetFilters() {
     this.selectedStatuses.clear();
     this.selectedOrigen.clear();
-    this.dateFilter = "hoy";
-    this.applyFilter(); // NEW: actualiza lista y chip
+    this.dateFilter = "todo";
+    this.applyFilter();
   }
-
   applyAndClose() {
     this.applyFilter();
     this.closeFilters();
   }
 
-  // ====== Demo: alternar con/sin citas ======
-  async toggleData() {
-    const has = this.appointments.length > 0;
-    await this.loadDemo(!has);
-  }
-
-  async loadDemo(withData: boolean) {
-    this.loading = true;
-    this.error = undefined;
-    await new Promise((r) => setTimeout(r, 300));
-    this.appointments = withData ? DEMO_APPOINTMENTS : [];
-    this.applyFilter();
-    this.loading = false;
-  }
-
-  reload(ev?: CustomEvent) {
-    this.applyFilter();
-    (ev?.target as HTMLIonRefresherElement)?.complete();
-  }
-
   // ====== Filtros / búsqueda ======
   applyFilter() {
     const q = this.query.trim().toLowerCase();
-    const base = [...this.appointments];
 
-    // texto
     let out = !q
-      ? base
-      : base.filter(
+      ? [...this.appointments]
+      : this.appointments.filter(
           (a) =>
             a.id.toLowerCase().includes(q) ||
-            a.paciente.toLowerCase().includes(q) ||
-            a.type.toLowerCase().includes(q)
+            (a.paciente || "").toLowerCase().includes(q) ||
+            (a.type || "").toLowerCase().includes(q)
         );
 
-    // estado
     if (this.selectedStatuses.size) {
       out = out.filter((a) => this.selectedStatuses.has(a.status));
     }
-
-    // origen
     if (this.selectedOrigen.size) {
       out = out.filter((a) => a.origen && this.selectedOrigen.has(a.origen));
     }
 
-    // fecha de actualización
     if (this.dateFilter !== "todo") {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const today = this.startOfDay(new Date());
       let from = new Date(today);
-      if (this.dateFilter === "7d") from.setDate(today.getDate() - 7);
-      if (this.dateFilter === "30d") from.setDate(today.getDate() - 30);
-      // 'hoy' => from = today
+      if (this.dateFilter === "hoy")  from = today;
+      if (this.dateFilter === "7d")   from.setDate(today.getDate() - 7);
+      if (this.dateFilter === "30d")  from.setDate(today.getDate() - 30);
 
       out = out.filter((a) => {
-        const ref = new Date(a.updatedAt ?? a.date);
-        ref.setHours(0, 0, 0, 0);
-        return ref >= from;
+        const ref = a.updatedAt ?? a.date; // ya son Date|null
+        if (!ref) return false;
+        return this.startOfDay(ref).getTime() >= from.getTime();
       });
     }
 
     this.filtered = out;
     this.grouped = this.groupByDay(this.filtered);
-
-    // NEW: actualiza el texto del chip (debajo del buscador)
     this.activeFilter = this.buildActiveFilterLabel();
   }
 
-  // NEW: arma el texto “Agendada, Completada • whatsapp • Hoy”
   private buildActiveFilterLabel(): string | null {
     const parts: string[] = [];
-
-    if (this.selectedStatuses.size) {
+    if (this.selectedStatuses.size)
       parts.push(Array.from(this.selectedStatuses).join(", "));
-    }
-    if (this.selectedOrigen.size) {
+    if (this.selectedOrigen.size)
       parts.push(Array.from(this.selectedOrigen).join(", "));
-    }
     if (this.dateFilter !== "todo") {
-      const label = this.updatedDateOptions.find(
-        (o) => o.value === this.dateFilter
-      )?.label;
+      const label = this.updatedDateOptions.find((o) => o.value === this.dateFilter)?.label;
       if (label) parts.push(label);
     }
-
     return parts.length ? parts.join(" • ") : null;
   }
 
@@ -190,137 +222,80 @@ export class AppointmentManagementComponent implements OnInit {
     checked ? this.selectedOrigen.add(o) : this.selectedOrigen.delete(o);
   }
 
-  clearSearch() {
-    this.query = "";
-    this.applyFilter();
-  }
-  clearFilter() {
-    this.resetFilters();
-  }
+  clearSearch() { this.query = ""; this.applyFilter(); }
+  clearFilter() { this.resetFilters(); }
 
   // ====== Helpers UI ======
-  open(a: Appointment) {
+  open(a: AppointmentUI) {
     console.log("Abrir cita", a);
   }
 
-  openWhatsApp(a: Appointment, ev?: Event) {
+  openWhatsApp(a: AppointmentUI, ev?: Event) {
     ev?.stopPropagation();
     if (!a.telefono) return;
     const phone = a.telefono.replace(/\D/g, "");
     const msg = `Hola ${a.paciente}, sobre tu cita ${a.id}`;
-    window.open(
-      `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`,
-      "_blank"
-    );
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank");
   }
 
-  trackById(_: number, a: Appointment) {
-    return a.id;
-  }
+  trackById(_: number, a: AppointmentUI) { return a.id; }
 
-  private groupByDay(items: Appointment[]) {
+  // ====== Fecha segura ======
+  private safeDate(x?: string | Date | null): Date | null {
+    if (!x) return null;
+    if (x instanceof Date) return isNaN(x.getTime()) ? null : x;
+    const s = String(x).trim();
+    if (!s) return null;
+    const d = new Date(s.includes("T") ? s : s.replace(" ", "T"));
+    return isNaN(d.getTime()) ? null : d;
+  }
+  private safeDateFromParts(fecha?: string, hora?: string): Date | null {
+    const f = (fecha || "").trim();
+    if (!f) return null;
+    const hhmm = (hora || "00:00").slice(0, 5);
+    const d = new Date(`${f}T${hhmm}:00`);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  private startOfDay(d: Date) {
+    const x = new Date(d);
+    x.setHours(0, 0, 0, 0);
+    return x;
+  }
+  private formatHeader(d: Date): string {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const map = new Map<string, Appointment[]>();
+    const diffMs = this.startOfDay(today).getTime() - this.startOfDay(d).getTime();
+    const one = 24 * 60 * 60 * 1000;
+    if (diffMs === 0) return "Hoy";
+    if (diffMs === one) return "Ayer";
+    return new Intl.DateTimeFormat("es-CO", { weekday: "long" })
+      .format(d)
+      .replace(/^\w/, (c) => c.toUpperCase());
+  }
+
+  private groupByDay(items: AppointmentUI[]) {
+    const map = new Map<string, AppointmentUI[]>();
+    const noDate: AppointmentUI[] = [];
 
     for (const a of items) {
-      const d = new Date(a.date);
-      d.setHours(0, 0, 0, 0);
-      const label =
-        d.getTime() === today.getTime()
-          ? "Hoy"
-          : this.capitalize(d.toLocaleDateString("es-ES", { weekday: "long" }));
-
-      if (!map.has(label)) map.set(label, []);
-      map.get(label)!.push(a);
+      if (!a.date) { noDate.push(a); continue; }
+      const key = this.startOfDay(a.date).toISOString();
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(a);
     }
 
-    const order = Array.from(map.entries()).sort((A, B) => {
-      const dA = new Date(A[1][0].date).getTime();
-      const dB = new Date(B[1][0].date).getTime();
-      return dA - dB;
-    });
+    const entries = Array.from(map.entries()).sort(
+      (a, b) => +new Date(b[0]) - +new Date(a[0])
+    );
 
-    for (const [, arr] of order) {
-      arr.sort((x, y) => x.start.localeCompare(y.start));
+    const groups = entries.map(([key, arr]) => ({
+      label: this.formatHeader(new Date(key)),
+      items: arr.sort((x, y) => x.start.localeCompare(y.start)),
+    }));
+
+    if (noDate.length) {
+      groups.push({ label: "Sin fecha", items: noDate });
     }
 
-    return order.map(([label, items]) => ({ label, items }));
-  }
-
-  private capitalize(s: string) {
-    return s.charAt(0).toUpperCase() + s.slice(1);
-  }
-
-  // ====== Callbacks header/buttons ======
-  onCreate(): void {
-    console.log("Crear cita");
-  }
-  onAdd(): void {
-    console.log("Añadir cita");
-  }
-  onFilter(): void {
-    this.openFilters();
+    return groups;
   }
 }
-
-// ====== Datos de ejemplo ======
-const DEMO_APPOINTMENTS: Appointment[] = [
-  {
-    id: "#B002",
-    paciente: "Juan Pérez",
-    date: "2024-10-18",
-    start: "09:00",
-    end: "10:00",
-    type: "Consulta Especializada",
-    status: "Agendada",
-    origen: "whatsapp",
-    telefono: "573001112233",
-    updatedAt: "2024-10-18",
-  },
-  {
-    id: "#B003",
-    paciente: "Juan Pérez",
-    date: "2024-10-18",
-    start: "10:30",
-    end: "11:00",
-    type: "Consulta General",
-    status: "Agendada",
-    origen: "app",
-    updatedAt: "2024-10-18",
-  },
-  {
-    id: "#B004",
-    paciente: "Juan Pérez",
-    date: "2024-10-18",
-    start: "11:30",
-    end: "12:00",
-    type: "Consulta Especializada",
-    status: "Completada",
-    origen: "web",
-    updatedAt: "2024-10-19",
-  },
-  {
-    id: "#B005",
-    paciente: "Juan Pérez",
-    date: "2024-10-19",
-    start: "09:00",
-    end: "10:00",
-    type: "Consulta General",
-    status: "Cancelada",
-    origen: "whatsapp",
-    telefono: "573224445566",
-    updatedAt: "2024-10-19",
-  },
-  {
-    id: "#B006",
-    paciente: "Juan Pérez",
-    date: "2024-10-19",
-    start: "10:30",
-    end: "11:30",
-    type: "Consulta Especializada",
-    status: "Agendada",
-    origen: "tel",
-    updatedAt: "2024-10-20",
-  },
-];

@@ -28,7 +28,7 @@ export const quickAccessForRetail = [
         id: 'pedidos',
         label: 'Pedidos',
         icon: 'cart-outline',
-        route: '/dashboard/orders'
+        route: '/dashboard/orders/order-management'
     },
     {
         id: 'clientes',
@@ -67,7 +67,7 @@ export const avalaibleQuickAccess: QuickAccessItem[] = [
         id: 'pedidos',
         label: 'Pedidos',
         icon: 'cart-outline',
-        route: '/pedidos'
+        route: '/dashboard/orders'
     },
     {
         id: 'clientes',
@@ -79,7 +79,7 @@ export const avalaibleQuickAccess: QuickAccessItem[] = [
         id: 'productos',
         label: 'Productos',
         icon: 'cube-outline',
-        route: '/productos'
+        route: '/dashboard/products/product-management'
     }
 ];
 

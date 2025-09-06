@@ -1,88 +1,188 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule, registerLocaleData } from '@angular/common';
-import localeEs from '@angular/common/locales/es';
-import { IonicModule } from '@ionic/angular';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+// src/app/pages/dashboard/customers/components/customer-detail/customer-detail.component.ts
+import { Component, OnInit } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { IonicModule, NavController } from "@ionic/angular";
+import { HttpClientModule } from "@angular/common/http";
+import { ActivatedRoute } from "@angular/router";
+import { ClientesService } from "src/app/core/services/bussiness/clientes.service";
+import {
+  OrderService,
+  PedidoApi,
+} from "src/app/core/services/bussiness/order.service";
 
-registerLocaleData(localeEs);
+type UIOrderStatus = "Pendiente" | "Confirmado" | "Entregado" | "Cancelado" | string;
 
-type EstadoPedido = 'Pendiente' | 'Confirmado' | 'Cancelado';
-
-interface Order {
-  id: string;
-  createdAt: string | Date;
-  items: number;
-  total: number;
-  estado: EstadoPedido;
-}
-
-interface CustomerDetail {
+interface UICustomer {
   id: string;
   nombre: string;
-  email?: string;
+  correo?: string;
   telefono?: string;
   direccion?: string;
-  orders: Order[];
+}
+
+interface UIOrder {
+  id: string;
+  status: UIOrderStatus;
+  date?: Date | null;
+  itemsCount: number;
+  total: number;
 }
 
 @Component({
-  selector: 'app-customer-detail',
+  selector: "app-customer-detail",
   standalone: true,
-  templateUrl: './customer-detail.component.html',
-  styleUrls: ['./customer-detail.component.scss'],
-  imports: [IonicModule, CommonModule, RouterModule],
+  imports: [CommonModule, IonicModule, HttpClientModule],
+  templateUrl: "./customer-detail.component.html",
+  styleUrls: ["./customer-detail.component.scss"],
 })
 export class CustomerDetailComponent implements OnInit {
-  customer!: CustomerDetail;
+  loading = false;
+  error?: string;
 
-  statusClassMap: Record<EstadoPedido, string> = {
-    Pendiente: 'status status--pendiente',
-    Confirmado: 'status status--confirmado',
-    Cancelado:  'status status--cancelado',
-  };
+  customer?: UICustomer | null;
+  orders: UIOrder[] = [];
 
-  constructor(private route: ActivatedRoute) {}
+  private id = "";
+
+  constructor(
+    private route: ActivatedRoute,
+    private nav: NavController,
+    private clientesSrv: ClientesService,
+    private orderSrv: OrderService
+  ) {}
 
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id') || '';
-
-    // DEMO: mapa simple por id
-    const map: Record<string, CustomerDetail> = {
-      C001: DEMO_CUSTOMER,
-      C002: DEMO_CUSTOMER_2,
-    };
-    this.customer = map[id] ?? DEMO_CUSTOMER;
+    this.id = String(this.route.snapshot.paramMap.get("id") || "");
+    this.load();
   }
 
-  back() { history.back(); }
-  onMore() { console.log('Más acciones'); }
-  openOrder(o: Order) { console.log('Abrir pedido', o.id); }
-  trackByOrder(_: number, o: Order) { return o.id; }
+  async load(ev?: CustomEvent) {
+    this.loading = true;
+    this.error = undefined;
+    try {
+      await this.loadCustomer();
+      await this.loadOrdersWithFallback();   // 👈 trae pedidos con fallback
+    } catch (e: any) {
+      this.error = e?.message || "No se pudo cargar el cliente";
+    } finally {
+      this.loading = false;
+      (ev?.target as HTMLIonRefresherElement)?.complete?.();
+    }
+  }
+
+  // ===== Navegación atrás con fallback =====
+  goBack() {
+    if (history.length > 1) this.nav.back();
+    else this.nav.navigateBack(["/customers"]);
+  }
+
+  // ====== Data ======
+  private async loadCustomer() {
+    let raw: any = null;
+
+    // si tienes getClienteById úsalo; si no, busca en la lista
+    const anySrv: any = this.clientesSrv as any;
+    if (typeof anySrv.getClienteById === "function") {
+      raw = await anySrv.getClienteById(this.id);
+    } else {
+      const list: any[] = await this.clientesSrv.getClientes();
+      raw =
+        list.find(
+          (x: any) =>
+            String(x?.id ?? x?._id ?? x?.cliente_id ?? "") === this.id
+        ) ?? null;
+    }
+
+    if (!raw) {
+      this.customer = null;
+      throw new Error("Cliente no encontrado");
+    }
+
+    this.customer = this.toUICustomer(raw);
+  }
+
+  /** Intenta primero por cliente_id; si viene vacío y hay teléfono, intenta por teléfono */
+  private async loadOrdersWithFallback() {
+    let arr: PedidoApi[] = [];
+
+    // 1) por cliente_id
+    try {
+      arr = await this.orderSrv.getByCliente(this.id);
+    } catch (e) {
+      // ignora; probamos fallback
+    }
+
+    // 2) fallback por teléfono si no hay pedidos y tenemos teléfono
+    const phone = (this.customer?.telefono || "").toString().replace(/\D/g, "");
+    if ((!arr || arr.length === 0) && phone) {
+      const srv: any = this.orderSrv as any;
+      try {
+        if (typeof srv.getByTelefonoFlat === "function") {
+          arr = await srv.getByTelefonoFlat(phone);
+        } else if (typeof srv.getByTelefono === "function") {
+          const r = await srv.getByTelefono(phone);
+          arr = [
+            ...(r?.pendientes ?? []),
+            ...(r?.confirmados ?? []),
+            ...(r?.entregados ?? []),
+          ];
+        }
+      } catch {
+        // no tirar la pantalla, seguimos con vacío
+      }
+    }
+
+    // mapear a UI y ordenar por fecha desc
+    this.orders = (arr ?? []).map(this.toUIOrder).sort((a, b) => {
+      const ta = a.date ? a.date.getTime() : 0;
+      const tb = b.date ? b.date.getTime() : 0;
+      return tb - ta;
+    });
+  }
+
+  // ====== Mappers ======
+  private toUICustomer = (c: any): UICustomer => ({
+    id: String(c?.id ?? c?._id ?? c?.cliente_id ?? ""),
+    nombre: String(c?.nombre ?? c?.name ?? "").trim(),
+    correo: (c?.correo ?? c?.email ?? "") || undefined,
+    telefono: (c?.telefono ?? c?.phone ?? c?.celular ?? "") || undefined,
+    direccion: (c?.direccion ?? c?.address ?? "") || undefined,
+  });
+
+  private toUIOrder = (o: PedidoApi): UIOrder => {
+    const dateStr = String(o.fecha ?? "").replace(" ", "T");
+    const d = dateStr ? new Date(dateStr) : null;
+
+    const itemsCount =
+      Array.isArray(o.items)
+        ? o.items.reduce((acc, it: any) => acc + Number(it?.cantidad ?? 0), 0)
+        : 0;
+
+    const s = String(o.estado ?? "").toLowerCase();
+    const status: UIOrderStatus =
+      s === "pendiente"  ? "Pendiente"  :
+      s === "confirmado" ? "Confirmado" :
+      s === "entregado"  ? "Entregado"  :
+      s === "cancelado"  ? "Cancelado"  : (o.estado || "");
+
+    return {
+      id: String(o.id),
+      status,
+      date: d && !Number.isNaN(d.getTime()) ? d : null,
+      itemsCount,
+      total: Number(o.total ?? 0),
+    };
+  };
+
+  // ====== UI helpers ======
+  pillClass(o: UIOrder) {
+    const s = (o.status || "").toLowerCase();
+    if (s.includes("pend")) return "pill pill--pendiente";
+    if (s.includes("conf")) return "pill pill--confirmado";
+    if (s.includes("entre") || s.includes("entreg")) return "pill pill--entregado";
+    if (s.includes("canc")) return "pill pill--cancelado";
+    return "pill";
+  }
+
+  trackOrderId(_: number, o: UIOrder) { return o.id; }
 }
-
-// ===== Demo =====
-const DEMO_CUSTOMER: CustomerDetail = {
-  id: 'C001',
-  nombre: 'Juan Pérez',
-  email: 'juan.perez@example.com',
-  telefono: '555-1234',
-  direccion: 'Av. Siempre Viva 123, Ciudad',
-  orders: [
-    { id: '#B002', createdAt: '2024-10-18T15:49:00', items: 2, total: 750, estado: 'Pendiente' },
-    { id: '#B003', createdAt: '2024-10-18T15:49:00', items: 2, total: 750, estado: 'Pendiente' },
-    { id: '#B004', createdAt: '2024-10-18T15:49:00', items: 2, total: 750, estado: 'Confirmado' },
-  ],
-};
-
-const DEMO_CUSTOMER_2: CustomerDetail = {
-  id: 'C002',
-  nombre: 'Enrique Flores Gonzales',
-  email: 'enrique@example.com',
-  telefono: '301-321-3212',
-  direccion: 'Cra. 45 #10-23, Bogotá',
-  orders: [
-    { id: '#B101', createdAt: '2024-11-02T10:15:00', items: 1, total: 120, estado: 'Pendiente' },
-    { id: '#B087', createdAt: '2024-10-25T16:40:00', items: 3, total: 980, estado: 'Confirmado' },
-    { id: '#B065', createdAt: '2024-10-12T09:05:00', items: 2, total: 450, estado: 'Cancelado' },
-  ],
-};

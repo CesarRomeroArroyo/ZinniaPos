@@ -1,0 +1,136 @@
+<ion-header translucent="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/inventory"></ion-back-button>
+    </ion-buttons>
+
+    <ion-title class="title">Detalle de inventario</ion-title>
+
+    <ion-buttons slot="end">
+      <ion-button fill="clear" aria-label="Más" (click)="openMore()">
+        <ion-icon slot="icon-only" name="ellipsis-vertical"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <!-- ===== Skeleton ===== -->
+  <ng-container *ngIf="loading; else loaded">
+    <div class="card product-card">
+      <div class="row">
+        <div class="thumb big"></div>
+        <div class="meta">
+          <div class="line"></div>
+          <div class="pill"></div>
+          <div class="line small"></div>
+        </div>
+        <div class="dots"></div>
+      </div>
+    </div>
+    <ion-item class="btn-outline" lines="none">
+      <ion-skeleton-text animated style="width: 60%"></ion-skeleton-text>
+    </ion-item>
+    <ion-list>
+      <ion-item><ion-label>Alerta de stock mínimo</ion-label><ion-toggle
+          disabled></ion-toggle></ion-item>
+      <ion-item><ion-label>Stock mínimo</ion-label><ion-badge
+          slot="end"><ion-skeleton-text animated
+            style="width:28px"></ion-skeleton-text></ion-badge></ion-item>
+    </ion-list>
+    <ion-list>
+      <ion-item-divider>Cantidad</ion-item-divider>
+      <ion-item><ion-label>Disponible</ion-label><ion-badge
+          slot="end">—</ion-badge></ion-item>
+      <ion-item><ion-label>Reservado</ion-label><ion-badge
+          slot="end">—</ion-badge></ion-item>
+      <ion-item><ion-label>Existencias</ion-label><ion-badge
+          slot="end">—</ion-badge></ion-item>
+    </ion-list>
+  </ng-container>
+
+  <!-- ===== Content ===== -->
+  <ng-template #loaded>
+    <ng-container *ngIf="item; else errorTpl">
+      <!-- Tarjeta resumen -->
+      <div class="card product-card">
+        <div class="row">
+          <div class="thumb big">
+            <img *ngIf="heroImage; else noImage" [src]="heroImage"
+              alt="Producto" />
+            <ng-template #noImage><div class="noimg"></div></ng-template>
+          </div>
+          <div class="meta">
+            <div class="name">{{ item.name }}</div>
+            <ion-chip class="chip" *ngIf="item.categoryName"><ion-label>{{
+                item.categoryName }}</ion-label></ion-chip>
+            <div class="desc" *ngIf="item.description">{{ item.description
+              }}</div>
+          </div>
+          <ion-button fill="clear" class="more" (click)="openMore()">
+            <ion-icon name="ellipsis-vertical"></ion-icon>
+          </ion-button>
+        </div>
+      </div>
+
+      <!-- Ver historial -->
+      <ion-item class="btn-outline" lines="full" button (click)="viewHistory()">
+        <ion-label>Ver historial de movimientos</ion-label>
+      </ion-item>
+
+      <!-- Preferencias de inventario -->
+      <ion-list class="prefs">
+        <ion-item lines="full">
+          <ion-label>Alerta de stock mínimo</ion-label>
+          <ion-toggle slot="end" [checked]="item.minAlertEnabled"
+            (ionChange)="toggleMinAlert($event)"></ion-toggle>
+        </ion-item>
+        <ion-item lines="full">
+          <ion-label>Stock mínimo</ion-label>
+          <ion-input slot="end" type="number" inputmode="numeric"
+            [(ngModel)]="item.stockMin" (ionBlur)="saveStockMin()"></ion-input>
+        </ion-item>
+      </ion-list>
+
+      <!-- Cantidad -->
+      <ion-list class="qty">
+        <ion-item-divider>Cantidad</ion-item-divider>
+        <ion-item>
+          <ion-label>Disponible</ion-label>
+          <ion-badge slot="end" mode="ios">{{ item.stockAvailable }}</ion-badge>
+        </ion-item>
+        <ion-item>
+          <ion-label>Reservado</ion-label>
+          <ion-badge slot="end" mode="ios">{{ item.stockReserved }}</ion-badge>
+        </ion-item>
+        <ion-item>
+          <ion-label>Existencias</ion-label>
+          <ion-badge slot="end" mode="ios">{{ item.stockOnHand }}</ion-badge>
+        </ion-item>
+      </ion-list>
+    </ng-container>
+
+    <ng-template #errorTpl>
+      <div class="error-state">
+        <p>{{ error || 'No se pudo cargar el inventario.' }}</p>
+        <ion-button fill="outline" (click)="reload()">Reintentar</ion-button>
+      </div>
+    </ng-template>
+  </ng-template>
+</ion-content>
+
+<!-- CTAs inferiores -->
+<ion-footer *ngIf="item">
+  <ion-toolbar class="footer">
+    <div class="cta-grid">
+      <ion-button expand="block" size="large" shape="round" class="btn-in"
+        (click)="addEntry()">
+        Agregar Entrada
+      </ion-button>
+      <ion-button expand="block" size="large" shape="round" class="btn-out"
+        (click)="addExit()">
+        Agregar Salida
+      </ion-button>
+    </div>
+  </ion-toolbar>
+</ion-footer>

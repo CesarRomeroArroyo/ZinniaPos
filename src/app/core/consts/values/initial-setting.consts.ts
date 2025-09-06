@@ -1,4 +1,4 @@
-import { CustomerUpsertComponent } from "src/app/pages/dashboard/customers/components/customer-upsert/customer-upsert.component";
+
 import { IListTask } from "../types/progress-list.type";
 import { BusinessCategoryId } from "src/app/core/consts/enums/business/business-category.enum";
 import { BusinessHoursComponent } from "src/app/pages/dashboard/appointments/components/business-hours/business-hours.component";
@@ -25,7 +25,7 @@ export const initialTaskForServices: Array<IListTask> = [
     {
         label: "Registrar clientes",
         completed: false,
-        component: CustomerUpsertComponent
+        component: ProductCustomerComponent
     },
     {
         label: "Establecer horarios de atención",

@@ -1,7 +1,6 @@
 import { Routes } from "@angular/router";
 import { AppointmentsMainComponent } from "./components/appointments-main/appointments-main.component";
 import { InitialSettingComponent } from "./components/initial-setting/initial-setting.component";
-import { CustomerUpsertComponent } from "../customers/components/customer-upsert/customer-upsert.component";
 import { BusinessHoursComponent } from "./components/business-hours/business-hours.component";
 import { AppointmentManagementComponent } from "./components/appointment-management/appointment-management.component";
 import { AppointmentsComponent } from "./appointments.component";
@@ -26,10 +25,6 @@ export const appointmentsRoutes: Routes = [
         path: "initial-seting",
         component: InitialSettingComponent,
         data: { showTab: true },
-      },
-      {
-        path: "customer-upsert",
-        component: CustomerUpsertComponent,
       },
       {
         path: "business-hours",
