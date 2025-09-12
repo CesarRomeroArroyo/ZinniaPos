@@ -1,3 +1,4 @@
+// src/app/pages/dashboard/products/components/product-management/product-management.component.ts
 import { CommonModule } from "@angular/common";
 import { Component, OnInit } from "@angular/core";
 import { FormsModule } from "@angular/forms";
@@ -47,6 +48,9 @@ export class ProductManagementComponent implements OnInit {
   products: UIProduct[] = [];
   filtered: UIProduct[] = [];
 
+  // cache de portadas por id => url | null
+  private coverCache = new Map<string, string | null>();
+
   // opciones
   statusOptions: Status[] = ["Activo", "Inactivo"];
   categoryOptions: { id: string; name: string }[] = [];
@@ -91,8 +95,12 @@ export class ProductManagementComponent implements OnInit {
     this.loading = true;
     this.error = undefined;
     try {
-      const list = await this.productsSrv.getAll(); // ProductApi[]
-      this.products = list.map(this.toUI);
+      const apiList = await this.productsSrv.getAll(); // ProductApi[]
+      this.products = apiList.map(this.toUI);
+
+      // hidratar portadas (usa idunico cuando exista)
+      await this.hydrateCovers(this.products, apiList);
+
       this.applyFilter();
     } catch (e: any) {
       this.error = e?.message || "No se pudo cargar productos";
@@ -106,13 +114,38 @@ export class ProductManagementComponent implements OnInit {
     name: p.nombre,
     stock: Number(p.stock_actual ?? 0),
     status: (p.estado as Status) || "Activo",
-    image: null,
+    image: null, // se completa en hydrateCovers
     categoryId: p.categoria_id,
     providerId: p.proveedor_id,
   });
 
-  reload(ev?: CustomEvent) {
-    this.applyFilter();
+  /** Descarga y asigna la portada de cada producto (con caché). */
+  private async hydrateCovers(uiList: UIProduct[], apiList: ProductApi[]) {
+    const byId = new Map(apiList.map(a => [a.id, a]));
+    const tasks = uiList.map(async (row) => {
+      if (this.coverCache.has(row.id)) {
+        row.image = this.coverCache.get(row.id)!;
+        return;
+      }
+      const api = byId.get(row.id);
+      let url: string | null = null;
+      try {
+        // intenta endpoint que prueba id + idunico
+        if (api?.idunico) {
+          url = await this.productsSrv.getCoverUrl({ id: row.id, idunico: api.idunico });
+        } else {
+          url = await this.productsSrv.getCoverUrl(row.id);
+        }
+      } catch { url = null; }
+      this.coverCache.set(row.id, url);
+      row.image = url;
+    });
+
+    await Promise.allSettled(tasks);
+  }
+
+  async reload(ev?: CustomEvent) {
+    await this.loadProducts(); // vuelve a pedir datos e imágenes
     (ev?.target as HTMLIonRefresherElement)?.complete?.();
   }
 
@@ -203,6 +236,8 @@ export class ProductManagementComponent implements OnInit {
 
     const { data } = await modal.onDidDismiss();
     if (data?.completed) {
+      // limpia caché para ver la imagen del nuevo
+      this.coverCache.clear();
       await this.loadProducts();
     }
   }

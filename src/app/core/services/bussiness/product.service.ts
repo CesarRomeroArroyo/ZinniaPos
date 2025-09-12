@@ -1,9 +1,8 @@
-// src/app/core/services/bussiness/product.service.ts
-import { Injectable } from '@angular/core';
-import { Observable, firstValueFrom, map } from 'rxjs';
-import { ApiService } from 'src/app/data/api.service';
-import { IProduct } from 'src/app/core/interfaces/bussiness/product.interface';
-import { ITax } from 'src/app/core/interfaces/bussiness/tax.interface';
+import { Injectable } from "@angular/core";
+import { Observable, firstValueFrom, map } from "rxjs";
+import { ApiService } from "src/app/data/api.service";
+import { IProduct } from "src/app/core/interfaces/bussiness/product.interface";
+import { ITax } from "src/app/core/interfaces/bussiness/tax.interface";
 
 /** Modelo normalizado desde el backend */
 export interface ProductApi {
@@ -11,23 +10,23 @@ export interface ProductApi {
   nombre: string;
   categoria_id: string;
 
-  /** campos opcionales */
+  /** opcionales */
   descripcion?: string;
-  estado?: string;          // 'Activo' | 'Inactivo'
+  estado?: string; // 'Activo' | 'Inactivo'
   proveedor_id?: string;
-  impuesto?: number;        // p. ej. 18 -> 18%
+  impuesto?: number; // p. ej. 18 -> 18%
+  idunico?: string; // endpoints de imágenes usan esto
 
   /** precios y stock */
-  stock_actual?: number;
-  precio?: number;          // si el backend envía un único campo
-  precio_venta?: number;    // ← mapeado desde precio_venta | sale_price | pvp
-  precio_costo?: number;    // ← mapeado desde precio_costo | cost_price | costo
+  stock_actual?: number; // normalizamos desde stock | stock_actual
+  precio?: number;
+  precio_venta?: number; // pvp | precio | precio_venta
+  precio_costo?: number; // costo | precio_costo
 }
 
-/** Crear / Actualizar */
 export interface CreateProductDto {
   nombre: string;
-  precio: number; // si tu API usa precio_venta/costo en create, ajusta aquí
+  precio: number;
   categoria_id: string;
   descripcion?: string;
   stock_actual?: number;
@@ -42,208 +41,501 @@ export interface CreateProductResult {
   raw?: any;
 }
 
+/** Crear producto (x-www-form-urlencoded) con campos completos */
+export interface CreateProductFullDto {
+  nombre: string;
+  descripcion?: string;
+  precio_venta: number;
+  precio_costo: number;
+  stock: number;
+  categoria_id: string | number;
+  proveedor_id?: string | number;
+  impuesto?: number;
+  idunico?: string;
+}
+export interface CreateProductFullResult {
+  ok: boolean;
+  id?: string | number;
+  idunico?: string;
+  raw?: any;
+}
+
 type BackendErrors = Record<string, string | string[]>;
 
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: "root" })
 export class ProductService {
-  private static readonly BASE   = '/productos';
-  private static readonly BY_ID  = (id: string) => `/productos/${id}`;
-  private static readonly SEARCH = (q: string) => `/productosBuscar/${encodeURIComponent(q)}/`; // con "/" final
-  private static readonly STOCK  = (productoId: string) => `/inventario/stock/${encodeURIComponent(productoId)}`;
+  private static readonly BASE = "/productos";
+  private static readonly BY_ID = (id: string) =>
+    `/productos/${encodeURIComponent(id)}`;
+  private static readonly SEARCH = (q: string) =>
+    `/productosBuscar/${encodeURIComponent(q)}/`;
+  // Fallback legacy; preferimos PUT /productos/:id
+  private static readonly STOCK = (productoId: string) =>
+    `/inventario/stock/${encodeURIComponent(productoId)}`;
 
   constructor(private api: ApiService) {}
 
-  // ============ Helpers ============
-  /** Convierte strings con coma/punto a number seguro */
+  // ===== Helpers
   private toNumber(v: any): number {
-    if (v === null || v === undefined || v === '') return 0;
-    if (typeof v === 'number') return isFinite(v) ? v : 0;
+    if (v === null || v === undefined || v === "") return 0;
+    if (typeof v === "number") return isFinite(v) ? v : 0;
     const s = String(v).trim();
-    if (!s) return 0;
-    // normaliza "1.234,56" o "1,234.56"
     let nStr = s;
-    const hasComma = s.includes(',');
-    const hasDot = s.includes('.');
-    if (hasComma && hasDot) {
-      nStr = s.replace(/\./g, '').replace(',', '.');
-    } else if (hasComma) {
-      nStr = s.replace(',', '.');
-    }
+    const hasComma = s.includes(","),
+      hasDot = s.includes(".");
+    if (hasComma && hasDot) nStr = s.replace(/\./g, "").replace(",", ".");
+    else if (hasComma) nStr = s.replace(",", ".");
     const n = parseFloat(nStr);
     return isFinite(n) ? n : 0;
   }
-
-  private normalize = (raw: any): ProductApi => ({
-    id: String(raw?.id ?? ''),
-    nombre: String(raw?.nombre ?? raw?.name ?? ''),
-    categoria_id: String(raw?.categoria_id ?? raw?.category_id ?? raw?.categoriaId ?? ''),
-
-    descripcion: raw?.descripcion ?? raw?.description ?? undefined,
-    estado: raw?.estado ?? raw?.status ?? undefined,
-    proveedor_id: raw?.proveedor_id ?? raw?.supplier_id ?? undefined,
-    impuesto: raw?.impuesto != null ? this.toNumber(raw.impuesto) : undefined,
-
-    // stock puede venir como stock_actual o stock
-    stock_actual:
-      raw?.stock_actual != null ? this.toNumber(raw.stock_actual)
-      : raw?.stock != null ? this.toNumber(raw.stock)
-      : undefined,
-
-    // precios: acepta múltiples nombres de campo
-    precio: raw?.precio != null ? this.toNumber(raw.precio) : (
-      raw?.price != null ? this.toNumber(raw.price) : undefined
-    ),
-    precio_venta: (() => {
-      if (raw?.precio_venta != null) return this.toNumber(raw.precio_venta);
-      if (raw?.sale_price != null)   return this.toNumber(raw.sale_price);
-      if (raw?.pvp != null)          return this.toNumber(raw.pvp);
-      if (raw?.precio != null)       return this.toNumber(raw.precio); // fallback
-      return undefined;
-    })(),
-    precio_costo: (() => {
-      if (raw?.precio_costo != null) return this.toNumber(raw.precio_costo);
-      if (raw?.cost_price != null)   return this.toNumber(raw.cost_price);
-      if (raw?.costo != null)        return this.toNumber(raw.costo);
-      return undefined;
-    })(),
-  });
-
-  /** Convierte ProductApi → IProduct para las UIs que lo usan */
-  public toIProduct = (p: ProductApi): IProduct => ({
-    id: p.id as any,
-    name: p.nombre,
-    description: p.descripcion ?? '',
-    // Usa precio_costo y precio_venta si existen; hace fallback a precio
-    costPrice: this.toNumber(p.precio_costo ?? 0),
-    salePrice: this.toNumber(p.precio_venta ?? p.precio ?? 0),
-    stock: this.toNumber(p.stock_actual ?? 0),
-    category: this.mapCategory(p.categoria_id),
-    supplier: this.mapSupplier(p.proveedor_id),
-    tax: this.mapTax(p.impuesto),
-    images: [],
-    status: (p.estado as any) ?? 'Activo',
-  });
-
-  /** number → ITax (ajusta al shape real de tu ITax si difiere) */
-  private mapTax(raw?: number): ITax | undefined {
-    if (raw == null) return undefined;
-    const value = this.toNumber(raw);
-    const taxObj = {
-      id: 'default-tax',
-      name: 'Impuesto',
-      value,
-      type: 'PERCENTAGE',
-    } as any;
-    return taxObj as ITax;
-  }
-
-  private mapCategory(id?: string) {
-    if (!id) return undefined as any;
-    return { id, name: '' } as any;
-  }
-
-  private mapSupplier(id?: string) {
-    if (!id) return undefined as any;
-    return { id, name: '' } as any;
+  private isHttpUrl(s?: string): boolean {
+    return !!s && /^https?:\/\//i.test(s);
   }
 
   private firstError(err: any): string | undefined {
-    if (typeof err?.error?.message === 'string' && err.error.message.trim()) return err.error.message.trim();
-    const errors = (err?.error?.errors ?? err?.errors) as BackendErrors | undefined;
-    if (errors && typeof errors === 'object') {
+    if (typeof err?.error?.message === "string" && err.error.message.trim())
+      return err.error.message.trim();
+    const errors = (err?.error?.errors ?? err?.errors) as
+      | BackendErrors
+      | undefined;
+    if (errors && typeof errors === "object") {
       const v = Object.values(errors)[0];
-      if (Array.isArray(v)) return String(v[0] ?? '').trim() || undefined;
-      if (typeof v === 'string') return v.trim() || undefined;
+      if (Array.isArray(v)) return String(v[0] ?? "").trim() || undefined;
+      if (typeof v === "string") return v.trim() || undefined;
     }
-    if (typeof err?.message === 'string' && err.message.trim()) return err.message.trim();
+    if (typeof err?.message === "string" && err.message.trim())
+      return err.message.trim();
     return undefined;
   }
 
-  // ============ Endpoints ============
+  private normalize = (raw: any): ProductApi => ({
+    id: String(raw?.id ?? ""),
+    nombre: String(raw?.nombre ?? raw?.name ?? ""),
+    categoria_id: String(
+      raw?.categoria_id ?? raw?.category_id ?? raw?.categoriaId ?? ""
+    ),
+    idunico: raw?.idunico != null ? String(raw.idunico) : undefined,
 
-  /** GET /productos (por defecto where=1). Devuelve Observable<ProductApi[]> */
-  getAll$(params?: { where?: string | number; categoria_id?: string; proveedor_id?: string }): Observable<ProductApi[]> {
+    descripcion: raw?.descripcion ?? raw?.description ?? undefined,
+    estado: raw?.estado ?? raw?.status ?? undefined,
+    proveedor_id:
+      raw?.proveedor_id != null
+        ? String(raw.proveedor_id)
+        : raw?.supplier_id != null
+        ? String(raw.supplier_id)
+        : undefined,
+    impuesto: raw?.impuesto != null ? this.toNumber(raw.impuesto) : undefined,
+
+    stock_actual:
+      raw?.stock_actual != null
+        ? this.toNumber(raw.stock_actual)
+        : raw?.stock != null
+        ? this.toNumber(raw.stock)
+        : undefined,
+
+    precio:
+      raw?.precio != null
+        ? this.toNumber(raw.precio)
+        : raw?.price != null
+        ? this.toNumber(raw.price)
+        : undefined,
+
+    precio_venta: (() => {
+      if (raw?.precio_venta != null) return this.toNumber(raw.precio_venta);
+      if (raw?.pvp != null) return this.toNumber(raw.pvp);
+      if (raw?.precio != null) return this.toNumber(raw.precio);
+      return undefined;
+    })(),
+
+    precio_costo: (() => {
+      if (raw?.precio_costo != null) return this.toNumber(raw.precio_costo);
+      if (raw?.costo != null) return this.toNumber(raw.costo);
+      return undefined;
+    })(),
+  });
+
+  /** ProductApi → IProduct (compat) */
+  public toIProduct = (p: ProductApi): IProduct => ({
+    id: p.id as any,
+    name: p.nombre,
+    description: p.descripcion ?? "",
+    costPrice: this.toNumber(p.precio_costo ?? 0),
+    salePrice: this.toNumber(p.precio_venta ?? p.precio ?? 0),
+    stock: this.toNumber(p.stock_actual ?? 0),
+    category: p.categoria_id
+      ? ({ id: p.categoria_id, name: "" } as any)
+      : (undefined as any),
+    supplier: p.proveedor_id
+      ? ({ id: p.proveedor_id, name: "" } as any)
+      : (undefined as any),
+    tax: ((): ITax | undefined => {
+      if (p.impuesto == null) return undefined;
+      return {
+        id: "default-tax",
+        name: "Impuesto",
+        value: this.toNumber(p.impuesto),
+        type: "PERCENTAGE",
+      } as any;
+    })(),
+    images: [],
+    status: (p.estado as any) ?? "Activo",
+  });
+
+  // ===== Endpoints
+  getAll$(params?: {
+    where?: string | number;
+    categoria_id?: string;
+    proveedor_id?: string;
+  }): Observable<ProductApi[]> {
     const query: Record<string, any> = { where: 1, ...(params ?? {}) };
     return this.api.get<any>(ProductService.BASE, query).pipe(
       map((data: any) => {
-        const arr: unknown[] = Array.isArray(data) ? data : (data?.data ?? []);
+        const arr: unknown[] = Array.isArray(data) ? data : data?.data ?? [];
         return (arr as any[]).map(this.normalize);
       })
     );
   }
-
-  /** Promise wrapper si prefieres await */
-  async getAll(params?: { where?: string | number; categoria_id?: string; proveedor_id?: string }): Promise<ProductApi[]> {
+  async getAll(params?: {
+    where?: string | number;
+    categoria_id?: string;
+    proveedor_id?: string;
+  }): Promise<ProductApi[]> {
     return await firstValueFrom(this.getAll$(params));
   }
 
-  /** GET /productos/{id} */
   async getById(id: string): Promise<ProductApi> {
     try {
-      const data = await firstValueFrom(this.api.get<any>(ProductService.BY_ID(id)));
+      const data = await firstValueFrom(
+        this.api.get<any>(ProductService.BY_ID(id))
+      );
       return this.normalize(data);
     } catch (e: any) {
-      throw new Error(this.firstError(e) ?? 'No se pudo obtener el producto');
+      throw new Error(this.firstError(e) ?? "No se pudo obtener el producto");
     }
   }
 
-  /** GET /productosBuscar/{search}/ */
   async search(search: string): Promise<ProductApi[]> {
     try {
-      const data = await firstValueFrom(this.api.get<any>(ProductService.SEARCH(search)));
-      const arr: unknown[] = Array.isArray(data) ? data : (data?.data ?? []);
+      const data = await firstValueFrom(
+        this.api.get<any>(ProductService.SEARCH(search))
+      );
+      const arr: unknown[] = Array.isArray(data) ? data : data?.data ?? [];
       return (arr as any[]).map(this.normalize);
     } catch (e: any) {
-      throw new Error(this.firstError(e) ?? 'No se pudo buscar productos');
+      throw new Error(this.firstError(e) ?? "No se pudo buscar productos");
     }
   }
 
-  /** POST /productos */
   async create(input: CreateProductDto): Promise<CreateProductResult> {
     try {
-      const resp = await firstValueFrom(this.api.post<any>(ProductService.BASE, input));
+      const resp = await firstValueFrom(
+        this.api.post<any>(ProductService.BASE, input)
+      );
       const ok = resp?.success === true || resp?.ok === true || true;
       const rawId = resp?.id;
       const id = rawId != null && rawId !== true ? String(rawId) : undefined;
       return { ok, id, raw: resp };
     } catch (e: any) {
-      throw new Error(this.firstError(e) ?? 'No se pudo crear el producto');
+      throw new Error(this.firstError(e) ?? "No se pudo crear el producto");
     }
   }
 
-  /** PUT /productos/{id} */
-  async update(id: string, changes: UpdateProductDto): Promise<boolean> {
+  async createProduct(
+    input: CreateProductFullDto
+  ): Promise<CreateProductFullResult> {
+    const form: Record<string, any> = {
+      nombre: input.nombre,
+      descripcion: input.descripcion ?? "",
+      precio_venta: String(input.precio_venta),
+      precio_costo: String(input.precio_costo),
+      stock: String(input.stock),
+      categoria_id: String(input.categoria_id),
+      ...(input.proveedor_id
+        ? { proveedor_id: String(input.proveedor_id) }
+        : {}),
+      ...(input.impuesto != null ? { impuesto: String(input.impuesto) } : {}),
+      ...(input.idunico ? { idunico: String(input.idunico) } : {}),
+    };
     try {
-      await firstValueFrom(this.api.put<any>(ProductService.BY_ID(id), changes));
+      const resp: any = await firstValueFrom(
+        this.api.postUrlEncoded<any>(ProductService.BASE, form)
+      );
+      const ok = resp?.success === true || resp?.ok === true || true;
+      const id = resp?.id ?? resp?.data?.id;
+      const idunico =
+        resp?.idunico ?? resp?.data?.idunico ?? resp?.producto?.idunico;
+      return { ok, id, idunico, raw: resp };
+    } catch (e: any) {
+      throw new Error(this.firstError(e) ?? "No se pudo crear el producto");
+    }
+  }
+
+  // ProductService.update
+  async update(id: string, changes: Record<string, any>): Promise<boolean> {
+    const url = ProductService.BY_ID(String(id));
+    console.log("[ProductService.update] url=", url, "payload=", changes);
+    try {
+      await firstValueFrom(this.api.put<any>(url, { ...changes }));
+      console.log("[ProductService.update] OK");
       return true;
     } catch (e: any) {
-      throw new Error(this.firstError(e) ?? 'No se pudo actualizar el producto');
+      console.error("[ProductService.update] ERROR", e);
+      const msg = this.firstError(e) ?? "No se pudo actualizar el producto";
+      throw new Error(msg);
     }
   }
 
-  /** DELETE /productos/{id} */
   async remove(id: string): Promise<boolean> {
     try {
       await firstValueFrom(this.api.delete<any>(ProductService.BY_ID(id)));
       return true;
     } catch (e: any) {
-      throw new Error(this.firstError(e) ?? 'No se pudo eliminar el producto');
+      throw new Error(this.firstError(e) ?? "No se pudo eliminar el producto");
     }
   }
 
-  /** GET /inventario/stock/{productoId} → { success, stock } */
+  // ===== Imágenes
+  async getCoverUrl(
+    arg: { id?: string; idunico?: string } | string
+  ): Promise<string | null> {
+    const id = typeof arg === "string" ? arg : arg?.id;
+    const idunico = typeof arg === "string" ? undefined : arg?.idunico;
+
+    const bases: string[] = [];
+    if (id) bases.push(`/productos/${encodeURIComponent(id)}/imagenes`);
+    if (idunico)
+      bases.push(`/productos/${encodeURIComponent(idunico)}/imagenes`);
+
+    let usedBase: string | null = null;
+    let data: any;
+
+    for (const b of bases) {
+      try {
+        data = await firstValueFrom(this.api.get<any>(b));
+        usedBase = b;
+        break;
+      } catch {}
+    }
+    if (!usedBase) return null;
+
+    const list: any[] = Array.isArray(data)
+      ? data
+      : Array.isArray(data?.imagenes)
+      ? data.imagenes
+      : Array.isArray(data?.images)
+      ? data.images
+      : Array.isArray(data?.files)
+      ? data.files
+      : [];
+
+    const coverCandidate =
+      data?.portada ?? data?.cover ?? data?.imagen_portada_url ?? null;
+    let url = this.pickImageUrl(coverCandidate, usedBase);
+    if (!url && list.length) url = this.pickImageUrl(list[0], usedBase);
+    return url ?? null;
+  }
+
+  async getImages(
+    arg: { id?: string; idunico?: string } | string
+  ): Promise<string[]> {
+    const id = typeof arg === "string" ? arg : arg?.id;
+    const idunico = typeof arg === "string" ? undefined : arg?.idunico;
+
+    const bases: string[] = [];
+    if (id) bases.push(`/productos/${encodeURIComponent(id)}/imagenes`);
+    if (idunico)
+      bases.push(`/productos/${encodeURIComponent(idunico)}/imagenes`);
+
+    for (const base of bases) {
+      try {
+        const data = await firstValueFrom(this.api.get<any>(base));
+        const rawList: any[] = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.imagenes)
+          ? data.imagenes
+          : Array.isArray(data?.images)
+          ? data.images
+          : Array.isArray(data?.files)
+          ? data.files
+          : [];
+        if (!rawList.length) continue;
+
+        const toUrl = (x: any) => {
+          const s =
+            typeof x === "string"
+              ? x
+              : x?.url ?? x?.src ?? x?.file ?? x?.filename ?? "";
+          return this.ensureUrlFromBase(String(s), base);
+        };
+        return rawList.map(toUrl).filter(Boolean);
+      } catch {}
+    }
+
+    const cover = await this.getCoverUrl({ id, idunico });
+    return cover ? [cover] : [];
+  }
+
+  /** Eliminar una imagen SOLO con DELETE: /productos/:key/imagenes/:filename */
+  async deleteImage(
+    arg: { id?: string; idunico?: string } | string,
+    fileOrUrl: string
+  ): Promise<boolean> {
+    const id = typeof arg === "string" ? arg : arg?.id;
+    const idunico = typeof arg === "string" ? undefined : arg?.idunico;
+    const key = idunico || id;
+    if (!key) throw new Error("Falta id o idunico para eliminar imagen");
+
+    // filename limpio (sin querystring)
+    const filename = this.extractFilename(fileOrUrl);
+    const base = `/productos/${encodeURIComponent(key)}/imagenes`;
+    const url = `${base}/${encodeURIComponent(filename)}`;
+
+    try {
+      await firstValueFrom(this.api.delete<any>(url));
+      return true;
+    } catch (e: any) {
+      // Propaga el error “real” del backend
+      const msg = this.firstError(e) ?? "No se pudo eliminar la imagen";
+      throw new Error(msg);
+    }
+  }
+
+  private pickImageUrl(entry: any, basePath: string): string | null {
+    if (!entry) return null;
+    if (typeof entry === "object") {
+      const cand =
+        entry.url ??
+        entry.href ??
+        entry.src ??
+        entry.path ??
+        entry.file ??
+        entry.filename;
+      if (cand) return this.ensureUrlFromBase(String(cand), basePath);
+    }
+    if (typeof entry === "string")
+      return this.ensureUrlFromBase(entry, basePath);
+    return null;
+  }
+  private ensureUrlFromBase(val: string, basePath: string): string {
+    const s = String(val).trim();
+    if (this.isHttpUrl(s)) return s;
+    const base = basePath.endsWith("/") ? basePath : basePath + "/";
+    return `${base}${s}`;
+  }
+  private extractFilename(url: string): string {
+    try {
+      return String(url).split("?")[0].split("/").pop() || String(url);
+    } catch {
+      return String(url);
+    }
+  }
+
+  // ===== Inventario (solo PUT)
+  async setStock(productoId: string | number, stock: number): Promise<boolean> {
+    const id = String(productoId);
+    const n = this.toNumber(stock);
+
+    const urlById = ProductService.BY_ID(id);
+    const urlLegacy = ProductService.STOCK(id); // /inventario/stock/:id
+
+    // algunos backends devuelven HTML aunque actualicen: toléralo si es 2xx
+    const okDespiteParse = (e: any) => {
+      const status = Number(e?.status ?? 0);
+      const raw = typeof e?.error === "string" ? e.error : e?.error?.text;
+      return (
+        (status >= 200 && status < 300) ||
+        /parsing|Unexpected token|<!DOCTYPE/i.test(
+          String(e?.message ?? raw ?? "")
+        )
+      );
+    };
+
+    // intentos SOLO con PUT (nunca POST)
+    try {
+      await firstValueFrom(this.api.put<any>(urlById, { stock: n }));
+      return true;
+    } catch (e1: any) {
+      if (okDespiteParse(e1)) return true;
+      try {
+        await firstValueFrom(this.api.put<any>(urlById, { stock_actual: n }));
+        return true;
+      } catch (e2: any) {
+        if (okDespiteParse(e2)) return true;
+        try {
+          await firstValueFrom(this.api.put<any>(urlLegacy, { stock: n }));
+          return true;
+        } catch (e3: any) {
+          if (okDespiteParse(e3)) return true;
+          try {
+            await firstValueFrom(
+              this.api.put<any>(urlLegacy, { stock_actual: n })
+            );
+            return true;
+          } catch (e4: any) {
+            const msg =
+              this.firstError(e4) ||
+              this.firstError(e3) ||
+              this.firstError(e2) ||
+              this.firstError(e1) ||
+              "No se pudo actualizar el stock";
+            throw new Error(msg);
+          }
+        }
+      }
+    }
+  }
+
+  async updateStock(
+    productoId: string | number,
+    stock: number
+  ): Promise<boolean> {
+    return this.setStock(productoId, stock);
+  }
+
+  async updateInventory(
+    productoId: string | number,
+    changes: { stock?: number; stock_actual?: number; stock_minimo?: number }
+  ): Promise<boolean> {
+    const val = changes.stock ?? changes.stock_actual;
+    if (val == null) throw new Error("Falta valor de stock");
+    return this.setStock(productoId, Number(val));
+  }
+
   async getStock(productoId: string): Promise<number> {
     try {
-      const data = await firstValueFrom(this.api.get<any>(ProductService.STOCK(productoId)));
-      return this.toNumber(data?.stock ?? 0);
-    } catch (e: any) {
-      throw new Error(this.firstError(e) ?? 'No se pudo obtener el stock');
+      const p = await this.getById(productoId);
+      return this.toNumber((p as any)?.stock ?? p.stock_actual ?? 0);
+    } catch {
+      try {
+        const data = await firstValueFrom(
+          this.api.get<any>(ProductService.STOCK(productoId))
+        );
+        return this.toNumber(data?.stock ?? 0);
+      } catch {
+        return 0;
+      }
     }
   }
 
-  // ============ Compatibilidad con pantallas existentes ============
-  /** Devuelve IProduct[] (mapea ProductApi → IProduct) */
+  // ===== Subida de imágenes
+  async uploadImages(idunico: string, files: File[]): Promise<any> {
+    const url = `${ProductService.BASE}/${encodeURIComponent(
+      idunico
+    )}/imagenes`;
+    const fd = new FormData();
+    if (files.length === 1) fd.append("file", files[0], files[0].name);
+    files.forEach((f) => fd.append("files[]", f, f.name));
+    try {
+      return await firstValueFrom(this.api.post<any>(url, fd));
+    } catch (e: any) {
+      throw new Error(
+        this.firstError(e) ?? "No se pudieron subir las imágenes"
+      );
+    }
+  }
+
+  // ===== Compat con pantallas existentes
   getAllProducts(_: string | undefined = undefined): Observable<IProduct[]> {
-    return this.getAll$().pipe(map(list => list.map(this.toIProduct)));
+    return this.getAll$().pipe(map((list) => list.map(this.toIProduct)));
   }
 }

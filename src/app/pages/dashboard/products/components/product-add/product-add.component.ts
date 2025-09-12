@@ -1,60 +1,50 @@
 import { CommonModule } from '@angular/common';
-import { Component, ViewChild, ElementRef } from '@angular/core';
+import { Component, ViewChild, ElementRef, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { IonicModule, ModalController } from '@ionic/angular';
-import { RouterModule } from '@angular/router';
+import { IonicModule, ModalController, ToastController, NavController } from '@ionic/angular';
+import { RouterModule, Router } from '@angular/router';
 
 import { HeaderComponent } from 'src/app/shared/components/header/header.component';
 import { settingHeader } from './product-add.const';
 
-// (Opcional) cambia por tus servicios reales
+import { ProductCategoryService, CategoriaApi } from 'src/app/core/services/bussiness/product-category.service';
+import { ProductService } from 'src/app/core/services/bussiness/product.service';
+
 type IdLabel = { id: string; label: string };
-const DEMO_CATEGORIES: IdLabel[] = [
-  { id: 'cat-1', label: 'Bebidas' },
-  { id: 'cat-2', label: 'Snacks' },
-  { id: 'cat-3', label: 'Limpieza' },
-];
-const DEMO_SUPPLIERS: IdLabel[] = [
-  { id: 'sup-1', label: 'Proveedor A' },
-  { id: 'sup-2', label: 'Proveedor B' },
-];
-const DEMO_TAXES: IdLabel[] = [
-  { id: 'tax-1', label: 'IVA 0%' },
-  { id: 'tax-2', label: 'IVA 5%' },
-  { id: 'tax-3', label: 'IVA 19%' },
-];
 
 @Component({
   selector: 'app-product-add',
   standalone: true,
   templateUrl: './product-add.component.html',
   styleUrls: ['./product-add.component.scss'],
-  imports: [
-    CommonModule,
-    IonicModule,
-    HeaderComponent,
-    ReactiveFormsModule,
-    FormsModule,
-    RouterModule,
-  ],
+  imports: [CommonModule, IonicModule, HeaderComponent, ReactiveFormsModule, FormsModule, RouterModule],
 })
-export class ProductAddComponent {
+export class ProductAddComponent implements OnInit {
   public settingHeader = settingHeader;
   public form!: FormGroup;
   public saving = false;
 
-  // Imagen
+  // Imagenes
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
-  imagePreview?: string;
+  imageFiles: File[] = [];
+  imagePreviews: string[] = [];
 
   // Sheets
   isCatOpen = false;
   isSupOpen = false;
   isTaxOpen = false;
 
-  categories = DEMO_CATEGORIES;
-  suppliers  = DEMO_SUPPLIERS;
-  taxes      = DEMO_TAXES;
+  categories: IdLabel[] = [];
+  suppliers:  IdLabel[] = [
+    // TODO: reemplazar por servicio real si lo tienes
+    { id: '1', label: 'Proveedor A' },
+    { id: '2', label: 'Proveedor B' },
+  ];
+  taxes:      IdLabel[] = [
+    { id: '0',  label: 'IVA 0%'  },
+    { id: '5',  label: 'IVA 5%'  },
+    { id: '19', label: 'IVA 19%' },
+  ];
 
   // selección temporal para radio-group
   tmpCategoryId?: string;
@@ -64,10 +54,16 @@ export class ProductAddComponent {
   constructor(
     private fb: FormBuilder,
     private modalCtrl: ModalController,
+    private toastCtrl: ToastController,
+    private nav: NavController,
+    private router: Router,
+    private categoriesSrv: ProductCategoryService,
+    private productSrv: ProductService,
   ) {}
 
-  ionViewWillEnter() {
+  ngOnInit(): void {
     this.buildForm();
+    this.loadCategories();
   }
 
   private buildForm() {
@@ -80,25 +76,45 @@ export class ProductAddComponent {
       categoryId: [null, Validators.required],
       supplierId: [null],
       taxId: [null],
-      image: [null], // Base64/URL
     });
   }
 
-  // ===== Imagen =====
-  pickImage() {
-    this.fileInput?.nativeElement?.click();
+  private async loadCategories() {
+    try {
+      const list: CategoriaApi[] = await this.categoriesSrv.getCategorias();
+      this.categories = (list || []).map(c => ({ id: c.id, label: c.nombre || `Cat. ${c.id}` }));
+    } catch (e) {
+      await this.toast('No se pudieron cargar las categorías', 'danger');
+    }
   }
-  onFileSelected(ev: Event) {
+
+  // ===== Imagenes =====
+  pickImages() { this.fileInput?.nativeElement?.click(); }
+
+  onFilesSelected(ev: Event) {
     const input = ev.target as HTMLInputElement;
-    const file = input.files && input.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      this.imagePreview = reader.result as string;
-      this.form.get('image')!.setValue(this.imagePreview);
-    };
-    reader.readAsDataURL(file);
+    const files = Array.from(input.files || []);
+    if (!files.length) return;
+
+    // añadir a la lista
+    for (const f of files) {
+      this.imageFiles.push(f);
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.imagePreviews.push(String(reader.result || ''));
+      };
+      reader.readAsDataURL(f);
+    }
+    // limpia el input para permitir volver a seleccionar los mismos archivos si hace falta
+    input.value = '';
   }
+
+  removeImage(i: number) {
+    this.imageFiles.splice(i, 1);
+    this.imagePreviews.splice(i, 1);
+  }
+
+  trackByIndex = (_: number, __: any) => _;
 
   // ===== Stepper stock =====
   decStock(ev?: Event) {
@@ -119,7 +135,7 @@ export class ProductAddComponent {
   }
   get supplierLabel() {
     const id = this.form.get('supplierId')!.value as string | null;
-    return this.suppliers.find(x => x.id === id)?.label ?? 'Proveedor';
+    return this.suppliers.find(x => x.id === id)?.label ?? 'Proveedor (opcional)';
   }
   get taxLabel() {
     const id = this.form.get('taxId')!.value as string | null;
@@ -127,18 +143,9 @@ export class ProductAddComponent {
   }
 
   // ===== Sheets =====
-  openCatSheet() {
-    this.tmpCategoryId = this.form.get('categoryId')!.value;
-    this.isCatOpen = true;
-  }
-  openSupSheet() {
-    this.tmpSupplierId = this.form.get('supplierId')!.value;
-    this.isSupOpen = true;
-  }
-  openTaxSheet() {
-    this.tmpTaxId = this.form.get('taxId')!.value;
-    this.isTaxOpen = true;
-  }
+  openCatSheet() { this.tmpCategoryId = this.form.get('categoryId')!.value; this.isCatOpen = true; }
+  openSupSheet() { this.tmpSupplierId = this.form.get('supplierId')!.value; this.isSupOpen = true; }
+  openTaxSheet() { this.tmpTaxId = this.form.get('taxId')!.value; this.isTaxOpen = true; }
   closeCat() { this.isCatOpen = false; }
   closeSup() { this.isSupOpen = false; }
   closeTax() { this.isTaxOpen = false; }
@@ -148,18 +155,54 @@ export class ProductAddComponent {
   applyTax() { this.form.get('taxId')!.setValue(this.tmpTaxId ?? null); this.closeTax(); }
 
   // ===== Submit =====
-  onSubmit() {
+  async onSubmit() {
     if (!this.form || this.form.invalid || this.saving) return;
     this.saving = true;
 
-    // Aquí llamarías a tu ProductService.create(...)
-    const payload = this.form.value;
-    console.log('Nuevo producto →', payload);
+    try {
+      // 1) Crear producto
+      const res = await this.productSrv.createProduct({
+        nombre: this.form.value.title,
+        descripcion: this.form.value.description || '',
+        precio_costo: Number(this.form.value.costPrice || 0),
+        precio_venta: Number(this.form.value.salePrice || 0),
+        stock: Number(this.form.value.stock || 0),
+        categoria_id: String(this.form.value.categoryId),
+        proveedor_id: this.form.value.supplierId ? String(this.form.value.supplierId) : undefined,
+        impuesto: this.form.value.taxId != null ? Number(this.form.value.taxId) : 0,
+      });
 
-    // Simulación de guardado:
-    setTimeout(() => {
+      // 2) Subir imágenes (si hay)
+      if (this.imageFiles.length) {
+        const idunico = res.idunico || res.raw?.idunico || res.raw?.data?.idunico || res.id || res.raw?.data?.id;
+        if (!idunico) {
+          await this.toast('Producto creado, pero no se recibió "idunico" para subir imágenes.', 'danger');
+        } else {
+          await this.productSrv.uploadImages(String(idunico), this.imageFiles);
+        }
+      }
+
+      await this.toast('Producto guardado correctamente', 'success');
+
+      // Cerrar (modal o página)
+      const top = await this.modalCtrl.getTop();
+      if (top) {
+        await this.modalCtrl.dismiss({ completed: true });
+      } else {
+        if (history.length > 1) this.nav.back();
+        else this.router.navigate(['/dashboard/products']);
+      }
+    } catch (e: any) {
+      const msg = e?.message || 'No se pudo guardar el producto';
+      await this.toast(msg, 'danger');
+    } finally {
       this.saving = false;
-      this.modalCtrl.dismiss({ completed: true, product: payload });
-    }, 600);
+    }
+  }
+
+  private async toast(message: string, color: 'success' | 'danger' | 'primary' = 'success') {
+    const t = await this.toastCtrl.create({ message, duration: 2200, color });
+    await t.present();
   }
 }
+

@@ -5,10 +5,10 @@
 
 <ion-content>
   <div class="container" [formGroup]="form" *ngIf="form">
-    <!-- Imagen -->
-    <div class="image-box" (click)="pickImage()">
-      <ng-container *ngIf="imagePreview; else emptyImage">
-        <img [src]="imagePreview" alt="Imagen del producto" />
+    <!-- Imagen principal (toca para añadir más) -->
+    <div class="image-box" (click)="pickImages()">
+      <ng-container *ngIf="imagePreviews.length; else emptyImage">
+        <img [src]="imagePreviews[0]" alt="Imagen del producto" />
       </ng-container>
       <ng-template #emptyImage>
         <div class="image-placeholder"></div>
@@ -16,10 +16,22 @@
     </div>
 
     <div class="add-image">
-      <ion-button fill="solid" shape="round" class="add-btn" (click)="pickImage()">
+      <ion-button fill="solid" shape="round" class="add-btn" (click)="pickImages()">
         <ion-icon name="add-outline"></ion-icon>
+        &nbsp;Añadir imágenes
       </ion-button>
-      <input #fileInput type="file" accept="image/*" hidden (change)="onFileSelected($event)" />
+      <!-- 👇 múltiples archivos -->
+      <input #fileInput type="file" accept="image/*" multiple hidden (change)="onFilesSelected($event)" />
+    </div>
+
+    <!-- Thumbnails -->
+    <div class="thumbs" *ngIf="imagePreviews.length > 1">
+      <div class="thumb" *ngFor="let url of imagePreviews; let i = index; trackBy: trackByIndex">
+        <img [src]="url" alt="preview {{i+1}}">
+        <ion-button fill="clear" size="small" class="remove" (click)="removeImage(i)">
+          <ion-icon name="close-outline"></ion-icon>
+        </ion-button>
+      </div>
     </div>
 
     <!-- Título -->

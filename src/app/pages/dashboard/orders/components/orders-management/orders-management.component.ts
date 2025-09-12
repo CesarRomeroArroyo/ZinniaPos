@@ -1,8 +1,15 @@
+// src/app/pages/dashboard/orders/components/orders-management/orders-management.component.ts
 import { Component, OnInit, ViewChild } from "@angular/core";
 import { IonicModule, ModalController, IonPopover } from "@ionic/angular";
 import { CommonModule } from "@angular/common";
 import { RouterModule } from "@angular/router";
 import { FormsModule } from "@angular/forms";
+import {
+  HttpBackend,
+  HttpClient,
+  HttpClientModule,
+} from "@angular/common/http";
+import { firstValueFrom } from "rxjs";
 
 import {
   OrderService,
@@ -10,6 +17,10 @@ import {
   PedidoEstado,
 } from "src/app/core/services/bussiness/order.service";
 import { CreateOrderComponent } from "../create-order/create-order.component";
+import {
+  ClientesService,
+  ClienteApi,
+} from "src/app/core/services/bussiness/clientes.service";
 
 /** Filtros UI */
 type FechaFiltro = "todas" | "hoy";
@@ -31,7 +42,13 @@ interface Grouped {
   templateUrl: "./orders-management.component.html",
   styleUrls: ["./orders-management.component.scss"],
   standalone: true,
-  imports: [IonicModule, CommonModule, RouterModule, FormsModule],
+  imports: [
+    IonicModule,
+    CommonModule,
+    RouterModule,
+    FormsModule,
+    HttpClientModule,
+  ],
 })
 export class OrdersManagementComponent implements OnInit {
   @ViewChild("filtersPopover", { read: IonPopover, static: false })
@@ -41,11 +58,11 @@ export class OrdersManagementComponent implements OnInit {
   error?: string;
 
   // Dataset
-  orders: PedidoApi[] = [];   // todos (crudos del backend normalizados)
+  orders: PedidoApi[] = []; // todos (crudos del backend normalizados)
   filtered: PedidoApi[] = []; // resultado de filtros
-  grouped: Grouped[] = [];    // agrupado por fecha
+  grouped: Grouped[] = []; // agrupado por fecha
 
-  /** filtro de texto local (id/estado/total/teléfono) */
+  /** filtro de texto local (id/estado/total/teléfono/nombre) */
   query = "";
 
   /** Estado de filtros UI */
@@ -55,52 +72,298 @@ export class OrdersManagementComponent implements OnInit {
     fecha: "todas",
   };
 
+  // URL ABSOLUTA (bypassa interceptores)
+  private readonly ABS_URL =
+    "https://codigofuentecorp.eastus.cloudapp.azure.com/zinnia-apis-php/public/pedidos";
+
+  // HttpClient sin interceptores
+  private httpNoIx: HttpClient;
+
+  /** índices locales para resolver nombre de cliente */
+  private clientesById = new Map<string, string>();
+  private clientesByPhone = new Map<string, string>();
+
   constructor(
     private ordersSrv: OrderService,
-    private modalCtrl: ModalController
-  ) {}
+    private modalCtrl: ModalController,
+    backend: HttpBackend,
+    private clientesSrv: ClientesService
+  ) {
+    this.httpNoIx = new HttpClient(backend);
+  }
 
   ngOnInit() {
-    // ✅ carga inicial: TODOS con paginación + fallback simple
     this.loadAll();
   }
 
-  /** Trae TODOS (paginado) con fallback y log */
- async loadAll() {
-  this.loading = true;
-  this.error = undefined;
+  /** ========== CARGA PRINCIPAL ========== */
+  async loadAll() {
+    this.loading = true;
+    this.error = undefined;
 
-  try {
-    let data: PedidoApi[] = [];
-
-    // 1) Paginado
     try {
-      data = await this.ordersSrv.getPedidosAll({ pageSize: 100, maxPages: 200 });
-      console.log('[Orders] paginado:', data.length);
-    } catch {
-      // ignoramos para intentar fallback
+      const [pedidos, clientes] = await Promise.all([
+        this.getViaHttpBackend().catch(async () => [] as PedidoApi[]),
+        this.getClientesSafe(),
+      ]);
+
+      this.orders = pedidos.length
+        ? pedidos
+        : await this.ordersSrv.getPedidos();
+
+      // Indexar clientes
+      this.buildClienteIndices(clientes || []);
+
+      // Enriquecer cada pedido con cliente_nombre y dejar itemsCount ya calculado
+      this.orders = this.orders.map((o: any) => {
+        o.cliente_nombre = this.getClienteNombre(o);
+        // si por alguna razón no vino en normalizeOrder, intenta calcular aquí
+        if (typeof o.itemsCount !== "number")
+          o.itemsCount = this.computeItemsCount(o);
+        return o as PedidoApi;
+      });
+
+      this.runFiltersAndGrouping();
+    } catch (e: any) {
+      console.error("[Orders] loadAll error →", e);
+      this.error = e?.message || "Error al cargar pedidos";
+      this.orders = [];
+      this.filtered = [];
+      this.grouped = [];
+    } finally {
+      this.loading = false;
     }
-
-    // 2) Fallback a GET simple
-    if (!Array.isArray(data) || data.length === 0) {
-      data = await this.ordersSrv.getPedidos();
-      console.log('[Orders] simple:', data.length);
-    }
-
-    this.orders = data ?? [];
-    this.runFiltersAndGrouping();
-
-  } catch (e: any) {
-    this.error = e?.message || 'Error al cargar pedidos';
-    this.orders = [];
-    this.filtered = [];
-    this.grouped = [];
-    console.error('[Orders] loadAll error:', e);
-  } finally {
-    this.loading = false;
   }
-}
 
+  /** GET /pedidos sin interceptores y con parseo robusto */
+  private async getViaHttpBackend(): Promise<PedidoApi[]> {
+    const text = await firstValueFrom(
+      this.httpNoIx.get(this.ABS_URL, { responseType: "text" })
+    );
+
+    const parsed = this.parseMaybeJson(text);
+    const arr = this.extractArrayDeep(parsed);
+    return arr.map(this.normalizeOrder);
+  }
+
+  private async getClientesSafe(): Promise<ClienteApi[] | null> {
+    try {
+      return await this.clientesSrv.getClientes();
+    } catch {
+      return null;
+    }
+  }
+
+  private buildClienteIndices(clientes: ClienteApi[]) {
+    this.clientesById.clear();
+    this.clientesByPhone.clear();
+    for (const c of clientes) {
+      const id = String(c.id ?? "");
+      const nombre = c.nombre || "";
+      const tel = String(c.telefono ?? "").replace(/\D/g, "");
+      if (id && nombre) this.clientesById.set(id, nombre);
+      if (tel && nombre) this.clientesByPhone.set(tel, nombre);
+    }
+  }
+
+  getClienteNombre(o: any): string {
+    const id = String(o?.cliente_id ?? "").trim();
+    const tel = String(o?.numero_celular ?? "").replace(/\D/g, "");
+
+    // Usa mapas si existen en el componente (no falla si no están)
+    const byId: Map<string, string> | undefined = (this as any).clientesById;
+    const byTel: Map<string, string> | undefined = (this as any)
+      .clientesByPhone;
+
+    if (id && byId?.has?.(id)) return byId.get(id)!;
+    if (tel && byTel?.has?.(tel)) return byTel.get(tel)!;
+
+    // Campos embebidos posibles
+    const emb =
+      o?.cliente_nombre ||
+      o?.nombre_cliente ||
+      o?.cliente?.nombre ||
+      o?.cliente?.name ||
+      "";
+    return String(emb || "");
+  }
+
+  private parseMaybeJson(text: string): any {
+    try {
+      return JSON.parse(text);
+    } catch {
+      const i = text.indexOf("[");
+      const j = text.lastIndexOf("]");
+      if (i >= 0 && j > i) {
+        try {
+          return JSON.parse(text.slice(i, j + 1));
+        } catch {
+          return {};
+        }
+      }
+      const oi = text.indexOf("{");
+      const oj = text.lastIndexOf("}");
+      if (oi >= 0 && oj > oi) {
+        try {
+          return JSON.parse(text.slice(oi, oj + 1));
+        } catch {
+          return {};
+        }
+      }
+      return {};
+    }
+  }
+
+  getItemsCount(o: any): number {
+    const arr =
+      (Array.isArray(o?.items) && o.items) ||
+      (Array.isArray(o?.detalle) && o.detalle) ||
+      (Array.isArray(o?.productos) && o.productos) ||
+      (Array.isArray(o?.order_items) && o.order_items) ||
+      null;
+
+    if (arr) {
+      let sum = 0;
+      for (const it of arr) {
+        const qty = Number(it?.cantidad ?? it?.qty ?? it?.quantity ?? 1);
+        sum += Number.isFinite(qty) && qty > 0 ? qty : 1;
+      }
+      return sum;
+    }
+
+    const agg = [
+      o?.items_count,
+      o?.productos_count,
+      o?.cantidad_items,
+      o?.cantidad_articulos,
+      o?.articulos,
+      o?.itemsLength,
+      o?.total_items,
+    ]
+      .map((v) => (v != null ? Number(v) : NaN))
+      .filter((n) => Number.isFinite(n) && n >= 0) as number[];
+
+    return agg.length ? Math.max(...agg) : 0;
+  }
+
+  private extractArrayDeep(raw: any): any[] {
+    if (Array.isArray(raw)) return raw;
+    const keys = [
+      "data",
+      "pedidos",
+      "orders",
+      "results",
+      "rows",
+      "items",
+      "list",
+    ];
+    const tryKeys = (o: any): any[] | null => {
+      for (const k of keys) {
+        const v = o?.[k];
+        if (Array.isArray(v)) return v;
+        if (v && typeof v === "object") {
+          const r = tryKeys(v);
+          if (r) return r;
+        }
+      }
+      return null;
+    };
+    const hit = tryKeys(raw);
+    if (hit) return hit;
+
+    let best: any[] | null = null;
+    const scan = (o: any, d = 0) => {
+      if (!o || typeof o !== "object" || d > 2) return;
+      for (const v of Object.values(o)) {
+        if (Array.isArray(v)) {
+          if (!best || v.length > best.length) best = v;
+        } else if (v && typeof v === "object") {
+          scan(v, d + 1);
+        }
+      }
+    };
+    scan(raw, 0);
+    return best ?? [];
+  }
+
+  /** Normalizador local (+ itemsCount calculado en TS) */
+  private normalizeOrder = (raw: any): PedidoApi => {
+    // Construye objeto base
+    const obj: any = {
+      id: String(raw?.id ?? ""),
+      cliente_id: String(raw?.cliente_id ?? raw?.clienteId ?? ""),
+      numero_celular:
+        raw?.numero_celular ?? raw?.telefono ?? raw?.celular ?? "",
+      estado: raw?.estado ?? "",
+      total: raw?.total != null ? Number(raw.total) : undefined,
+      fecha:
+        raw?.fecha ??
+        raw?.fecha_pedido ??
+        raw?.fecha_creacion ??
+        raw?.created_at ??
+        raw?.createdAt ??
+        raw?.updated_at ??
+        "",
+      items: Array.isArray(raw?.items)
+        ? raw.items.map((it: any) => ({
+            producto_id: Number(
+              it?.producto_id ?? it?.productoId ?? it?.id ?? 0
+            ),
+            cantidad: Number(it?.cantidad ?? it?.qty ?? 0),
+            nombre:
+              it?.nombre ??
+              it?.producto_nombre ??
+              it?.productoNombre ??
+              undefined,
+            precio_venta:
+              it?.precio_venta != null
+                ? Number(it.precio_venta)
+                : it?.precio != null
+                ? Number(it.precio)
+                : undefined,
+            subtotal: it?.subtotal != null ? Number(it.subtotal) : undefined,
+          }))
+        : undefined,
+    };
+
+    // ✅ Conteo robusto de artículos
+    obj.itemsCount = this.computeItemsCount({ ...raw, items: obj.items });
+
+    return obj as PedidoApi;
+  };
+
+  /** Cuenta el total de artículos (suma cantidades si existen) */
+  private computeItemsCount(o: any): number {
+    const arr =
+      (Array.isArray(o?.items) && o.items) ||
+      (Array.isArray(o?.detalle) && o.detalle) ||
+      (Array.isArray(o?.productos) && o.productos) ||
+      (Array.isArray(o?.order_items) && o.order_items) ||
+      null;
+
+    if (arr) {
+      let sum = 0;
+      for (const it of arr) {
+        const qty = Number(it?.cantidad ?? it?.qty ?? it?.quantity ?? 1);
+        sum += Number.isFinite(qty) && qty > 0 ? qty : 1;
+      }
+      return sum;
+    }
+
+    const agg = [
+      o?.items_count,
+      o?.productos_count,
+      o?.cantidad_items,
+      o?.cantidad_articulos,
+      o?.articulos,
+      o?.itemsLength,
+      o?.total_items,
+    ]
+      .map((v) => (v != null ? Number(v) : NaN))
+      .filter((n) => Number.isFinite(n) && n >= 0) as number[];
+
+    return agg.length ? Math.max(...agg) : 0;
+  }
 
   // ---------- Getters útiles ----------
   get activeFiltersCount(): number {
@@ -110,8 +373,6 @@ export class OrdersManagementComponent implements OnInit {
     if (this.filters.fecha === "hoy") n++;
     return n;
   }
-
-  /** Evita usar Array.from(...) en el template */
   get estadosArray(): PedidoEstado[] {
     return Array.from(this.filters.estados) as PedidoEstado[];
   }
@@ -120,12 +381,10 @@ export class OrdersManagementComponent implements OnInit {
   applyQueryFilter() {
     this.runFiltersAndGrouping();
   }
-
   applyFilters() {
     this.filtersPopover?.dismiss();
     this.runFiltersAndGrouping();
   }
-
   clearSearch() {
     this.query = "";
     this.applyQueryFilter();
@@ -140,14 +399,13 @@ export class OrdersManagementComponent implements OnInit {
     this.runFiltersAndGrouping();
   }
 
-  removeFilterChip(kind: "estado" | "whatsapp" | "fecha", value?: PedidoEstado) {
-    if (kind === "estado" && value) {
-      this.filters.estados.delete(value);
-    } else if (kind === "whatsapp") {
-      this.filters.canalWhatsapp = false;
-    } else if (kind === "fecha") {
-      this.filters.fecha = "todas";
-    }
+  removeFilterChip(
+    kind: "estado" | "whatsapp" | "fecha",
+    value?: PedidoEstado
+  ) {
+    if (kind === "estado" && value) this.filters.estados.delete(value);
+    else if (kind === "whatsapp") this.filters.canalWhatsapp = false;
+    else if (kind === "fecha") this.filters.fecha = "todas";
     this.runFiltersAndGrouping();
   }
 
@@ -159,9 +417,9 @@ export class OrdersManagementComponent implements OnInit {
   // ---------- Pipeline de filtrado + agrupado ----------
   private runFiltersAndGrouping() {
     // 1) base
-    let arr = [...this.orders];
+    let arr = [...this.orders] as any[];
 
-    // 2) query texto
+    // 2) query texto (incluye nombre)
     const q = (this.query || "").trim().toLowerCase();
     if (q) {
       arr = arr.filter((o) => {
@@ -169,7 +427,18 @@ export class OrdersManagementComponent implements OnInit {
         const est = (o.estado ?? "").toLowerCase();
         const tel = (o.numero_celular ?? "").toLowerCase();
         const tot = o.total != null ? String(o.total) : "";
-        return id.includes(q) || est.includes(q) || tel.includes(q) || tot.includes(q);
+        const nom = (
+          o.cliente_nombre ??
+          this.getClienteNombre(o) ??
+          ""
+        ).toLowerCase();
+        return (
+          id.includes(q) ||
+          est.includes(q) ||
+          tel.includes(q) ||
+          tot.includes(q) ||
+          nom.includes(q)
+        );
       });
     }
 
@@ -182,43 +451,55 @@ export class OrdersManagementComponent implements OnInit {
     if (this.filters.canalWhatsapp) {
       arr = arr.filter(
         (o) =>
-          !!(o.numero_celular && (o.numero_celular + "").replace(/\D/g, "").length >= 7)
+          !!(
+            o.numero_celular &&
+            (o.numero_celular + "").replace(/\D/g, "").length >= 7
+          )
       );
     }
     if (this.filters.fecha === "hoy") {
       const todayStr = this.onlyDateISO(new Date());
-      arr = arr.filter((o) => this.onlyDateISO(this.asDate(o.fecha)) === todayStr);
+      arr = arr.filter(
+        (o) => this.onlyDateISO(this.asDate(o.fecha)) === todayStr
+      );
     }
 
-    this.filtered = arr;
+    this.filtered = arr as PedidoApi[];
 
-    // 4) AGRUPAR por fecha real (clave = YYYY-MM-DD).
+    // 4) AGRUPAR por fecha
     type Bucket = { label: string; items: PedidoApi[]; epoch: number };
     const byDate = new Map<string, Bucket>();
 
     for (const o of arr) {
-      const d = this.asDate(o.fecha);
+      const d = this.asDate((o as any).fecha);
       const key = this.onlyDateISO(d);
-      const epoch = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+      const epoch = new Date(
+        d.getFullYear(),
+        d.getMonth(),
+        d.getDate()
+      ).getTime();
       const label = this.dateLabel(d);
 
       if (!byDate.has(key)) byDate.set(key, { label, items: [], epoch });
-      byDate.get(key)!.items.push(o);
+      byDate.get(key)!.items.push(o as PedidoApi);
     }
 
-    // 5) ordenar items por hora DESC y grupos por fecha DESC
     const groups: Grouped[] = Array.from(byDate.values())
-      .map(g => ({
+      .map((g) => ({
         label: g.label,
         epoch: g.epoch,
-        items: g.items.sort((a, b) => this.asDate(b.fecha).getTime() - this.asDate(a.fecha).getTime())
+        items: (g.items as any[]).sort(
+          (a, b) =>
+            this.asDate((b as any).fecha).getTime() -
+            this.asDate((a as any).fecha).getTime()
+        ) as PedidoApi[],
       }))
       .sort((a, b) => b.epoch - a.epoch);
 
     this.grouped = groups;
   }
 
-  // ---------- Helpers de fecha (públicos para usarlos en el template) ----------
+  // ---------- Helpers de fecha ----------
   asDate(dateLike?: string): Date {
     if (!dateLike) return new Date();
     const t = dateLike.includes("T") ? dateLike : dateLike.replace(" ", "T");
@@ -233,14 +514,30 @@ export class OrdersManagementComponent implements OnInit {
   }
   private dateLabel(d: Date): string {
     const today = new Date();
-    const dOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-    const tOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+    const dOnly = new Date(
+      d.getFullYear(),
+      d.getMonth(),
+      d.getDate()
+    ).getTime();
+    const tOnly = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    ).getTime();
     const diff = (dOnly - tOnly) / 86400000;
 
     if (diff === 0) return "Hoy";
     if (diff === -1) return "Ayer";
 
-    const days = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+    const days = [
+      "Domingo",
+      "Lunes",
+      "Martes",
+      "Miércoles",
+      "Jueves",
+      "Viernes",
+      "Sábado",
+    ];
     return days[d.getDay()];
   }
 
@@ -278,8 +575,6 @@ export class OrdersManagementComponent implements OnInit {
     await modal.present();
 
     const { data } = await modal.onDidDismiss();
-    if (data?.completed) {
-      await this.loadAll();
-    }
+    if (data?.completed) await this.loadAll();
   }
 }

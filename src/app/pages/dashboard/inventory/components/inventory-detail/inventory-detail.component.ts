@@ -6,7 +6,6 @@ import { Subscription } from 'rxjs';
 import { ProductService, ProductApi } from 'src/app/core/services/bussiness/product.service';
 import { FormsModule } from '@angular/forms';
 
-
 type Status = 'Activo' | 'Inactivo';
 
 interface UIInventoryDetail {
@@ -18,13 +17,11 @@ interface UIInventoryDetail {
   images: string[];
 
   // inventario
-  stockAvailable: number;     // Disponible
-  stockReserved: number;      // Reservado
-  stockOnHand: number;        // Existencias (disponible + reservado o stock_actual)
-  stockMin: number;           // Stock mínimo
-  minAlertEnabled: boolean;   // Alerta de stock mínimo
+  stockAvailable: number;
+  stockReserved: number;
+  stockOnHand: number;
 
-  // opcional (si quieres mostrar)
+  // opcional
   salePrice?: number | null;
   costPrice?: number | null;
   providerName?: string | null;
@@ -51,14 +48,34 @@ export class InventoryDetailComponent implements OnInit, OnDestroy {
 
   loading = true;
   error?: string;
-  item?: UIInventoryDetail;
+
+  /** Copia cruda para acceder a idunico si existe */
+  private apiProduct?: ProductApi;
+
+  /** UI data (null mientras carga) */
+  item: UIInventoryDetail | null = null;
 
   selectedIndex = 0;
-  get heroImage(): string | null {
-    return this.item?.images?.[this.selectedIndex] ?? null;
+  get heroImage(): string {
+    return this.item?.images?.[this.selectedIndex] ?? '';
   }
 
   private sub?: Subscription;
+
+  // ===== Modal de ajuste de stock =====
+  editStockOpen = false;
+  currentStock = 0;                 // leído del backend al abrir el modal
+  adjustQty: number | string = 0;   // delta (positivo suma, negativo resta)
+
+  /** Tomamos id preferente para endpoints de stock (idunico si existe) */
+  private get stockTargetId(): string {
+    return (this.apiProduct?.idunico as any) || this.item?.id || '';
+  }
+
+  get previewStock(): number {
+    const next = this.currentStock + this.toNum(this.adjustQty, 0);
+    return Math.max(0, Math.floor(next));
+  }
 
   ngOnInit(): void {
     this.sub = this.route.paramMap.subscribe((pm) => {
@@ -72,7 +89,9 @@ export class InventoryDetailComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy(): void { this.sub?.unsubscribe(); }
+  ngOnDestroy(): void {
+    this.sub?.unsubscribe();
+  }
 
   // ===== Helpers =====
   private toNum(v: any, fallback = 0): number {
@@ -124,7 +143,7 @@ export class InventoryDetailComponent implements OnInit, OnDestroy {
         anyP.categoria_nombre, anyP.category_name,
         anyP.categoria?.nombre, anyP.categoria?.name,
         anyP.category?.nombre, anyP.category?.name
-      ),
+      ) as any,
 
       salePrice: this.toNum(this.first(anyP.precio_venta, anyP.precio, anyP.price), 0),
       costPrice: this.toNum(this.first(anyP.precio_costo, anyP.costo, anyP.cost), 0),
@@ -136,8 +155,6 @@ export class InventoryDetailComponent implements OnInit, OnDestroy {
       stockAvailable: Math.max(0, stockDisponible),
       stockReserved: Math.max(0, stockReservado),
       stockOnHand:   Math.max(0, stockOnHand),
-      stockMin: this.toNum(this.first(anyP.stock_minimo, anyP.stockMin), 0),
-      minAlertEnabled: this.truthy(this.first(anyP.alerta_minimo, anyP.min_alert_enabled, anyP.minAlert)),
 
       images: this.collectImages(anyP),
     };
@@ -156,17 +173,29 @@ export class InventoryDetailComponent implements OnInit, OnDestroy {
       }
       if (!api) throw new Error('No encontrado');
 
+      this.apiProduct = api;
       this.item = this.mapToUI(api);
       this.selectedIndex = 0;
+
+      // Hidrata galería desde endpoint /imagenes si está disponible
+      const imgs = await this.productsSrv.getImages({ id: api.id, idunico: api.idunico });
+      if (imgs?.length) this.item.images = imgs;
+      else {
+        const cover = await this.productsSrv.getCoverUrl({ id: api.id, idunico: api.idunico });
+        if (cover) this.item.images = [cover];
+      }
+
     } catch (e: any) {
       this.error = e?.message || 'No se pudo cargar el detalle';
-      this.item = undefined;
+      this.item = null;
     } finally {
       this.loading = false;
     }
   }
 
-  reload() { if (this.item?.id) this.loadItem(this.item.id); }
+  reload() {
+    if (this.item?.id) this.loadItem(this.item.id);
+  }
 
   // ===== Acciones UI =====
   selectImage(i: number) { this.selectedIndex = i; }
@@ -176,12 +205,14 @@ export class InventoryDetailComponent implements OnInit, OnDestroy {
     const file = (ev.target as HTMLInputElement).files?.[0];
     if (!file || !this.item) return;
     try {
+      const target = (this.apiProduct as any)?.idunico || this.item.id;
       const srv: any = this.productsSrv as any;
-      if (typeof srv.uploadImage === 'function') {
-        await srv.uploadImage(this.item.id, file);
-      } else if (typeof srv.update === 'function') {
+      if (typeof srv.uploadImages === 'function') {
+        await srv.uploadImages(target, [file]);
+      } else {
+        // último recurso: “simular” guardado
         const blobUrl = URL.createObjectURL(file);
-        await srv.update(this.item.id, { image: blobUrl });
+        await this.productsSrv.update(this.item.id, { imagen: blobUrl } as any);
       }
       await this.presentToast('Imagen subida');
       await this.loadItem(this.item.id);
@@ -193,39 +224,48 @@ export class InventoryDetailComponent implements OnInit, OnDestroy {
   }
 
   async viewHistory() {
-    if (!this.item) return;
-    // this.router.navigate(['/inventory', this.item.id, 'movements']);
     await this.presentToast('Historial (demo)');
   }
 
-  async toggleMinAlert(ev: CustomEvent) {
+  // ===== Modal de ajuste de stock =====
+  openStockAdjust() {
     if (!this.item) return;
-    const enabled = (ev as any).detail?.checked === true;
-    try {
-      const srv: any = this.productsSrv as any;
-      if (typeof srv.updateInventory === 'function') {
-        await srv.updateInventory(this.item.id, { alerta_minimo: enabled });
-      } else if (typeof srv.update === 'function') {
-        await srv.update(this.item.id, { alerta_minimo: enabled });
-      }
-      this.item.minAlertEnabled = enabled;
-    } catch {
-      await this.presentToast('No se pudo actualizar la alerta');
-    }
+    this.editStockOpen = true;
+    this.adjustQty = 0;
+
+    // Leemos el stock real preferentemente con idunico si existe
+    this.productsSrv.getStock(this.stockTargetId)
+      .then(n => this.currentStock = this.toNum(n, 0))
+      .catch(() => this.currentStock = this.item!.stockOnHand);
   }
 
-  async saveStockMin() {
+  incAdjust(n: number) { this.adjustQty = this.toNum(this.adjustQty, 0) + Math.abs(n); }
+  decAdjust(n: number) { this.adjustQty = this.toNum(this.adjustQty, 0) - Math.abs(n); }
+  setAdjustSign(sign: 1 | -1) { this.adjustQty = Math.abs(this.toNum(this.adjustQty, 0)) * sign; }
+
+  async applyStockAdjust() {
     if (!this.item) return;
+    const next = this.previewStock;
+    const idForStock = this.stockTargetId; // puede ser idunico
     try {
-      const srv: any = this.productsSrv as any;
-      if (typeof srv.updateInventory === 'function') {
-        await srv.updateInventory(this.item.id, { stock_minimo: this.item.stockMin });
-      } else if (typeof srv.update === 'function') {
-        await srv.update(this.item.id, { stock_minimo: this.item.stockMin });
+      // 1) Intento robusto: setStock (prueba varias rutas y formatos)
+      await this.productsSrv.setStock(idForStock, next);
+    } catch (e1) {
+      try {
+        // 2) Fallback: PUT /productos/:id { stock_actual }
+        await this.productsSrv.update(this.item.id, { stock_actual: next } as any);
+      } catch (e2) {
+        // 3) Último intento: PUT /productos/:id { stock }
+        await this.productsSrv.update(this.item.id, { stock: next } as any);
       }
-      await this.presentToast('Stock mínimo actualizado');
+    }
+
+    try {
+      await this.presentToast('Stock actualizado');
+      this.editStockOpen = false;
+      await this.loadItem(this.item.id);
     } catch {
-      await this.presentToast('No se pudo actualizar');
+      await this.presentToast('No se pudo refrescar la vista, pero el guardado se intentó.');
     }
   }
 
@@ -243,11 +283,15 @@ export class InventoryDetailComponent implements OnInit, OnDestroy {
             if (n <= 0) return;
             try {
               const srv: any = this.productsSrv as any;
+
               if (typeof srv.addMovement === 'function') {
-                await srv.addMovement(this.item!.id, { tipo: 'entrada', cantidad: n });
-              } else if (typeof srv.update === 'function') {
-                await srv.update(this.item!.id, { stock_actual: (this.item!.stockAvailable + n) });
+                await srv.addMovement(this.stockTargetId, { tipo: 'entrada', cantidad: n });
+              } else {
+                const current = await this.productsSrv.getStock(this.stockTargetId);
+                const next = current + n;
+                await this.productsSrv.setStock(this.stockTargetId, next);
               }
+
               await this.presentToast('Entrada registrada');
               await this.loadItem(this.item!.id);
             } catch {
@@ -274,11 +318,15 @@ export class InventoryDetailComponent implements OnInit, OnDestroy {
             if (n <= 0) return;
             try {
               const srv: any = this.productsSrv as any;
+
               if (typeof srv.addMovement === 'function') {
-                await srv.addMovement(this.item!.id, { tipo: 'salida', cantidad: n });
-              } else if (typeof srv.update === 'function') {
-                await srv.update(this.item!.id, { stock_actual: (this.item!.stockAvailable - n) });
+                await srv.addMovement(this.stockTargetId, { tipo: 'salida', cantidad: n });
+              } else {
+                const current = await this.productsSrv.getStock(this.stockTargetId);
+                const next = Math.max(0, current - n);
+                await this.productsSrv.setStock(this.stockTargetId, next);
               }
+
               await this.presentToast('Salida registrada');
               await this.loadItem(this.item!.id);
             } catch {

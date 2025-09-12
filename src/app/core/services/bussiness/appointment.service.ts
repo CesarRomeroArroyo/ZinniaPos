@@ -1,4 +1,4 @@
-// src/app/core/services/bussiness/appointments.service.ts
+// src/app/core/services/bussiness/appointment.service.ts
 import { Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ApiService } from 'src/app/data/api.service';
@@ -10,8 +10,8 @@ export interface AppointmentApi {
   cliente_id: string;
   servicio_id: string;
   fecha: string;        // 'YYYY-MM-DD'
-  hora_inicio: string;  // 'HH:mm:ss'
-  hora_fin: string;     // 'HH:mm:ss'
+  hora_inicio: string;  // 'HH:mm:ss' | 'HH:mm'
+  hora_fin: string;     // 'HH:mm:ss' | 'HH:mm'
   estado: CitaEstado;
   origen?: string;
   telefono?: string;
@@ -34,6 +34,7 @@ export type UpdateAppointmentDto = Partial<
 export interface CreateAppointmentResult { ok: boolean; id?: string; raw?: any; }
 
 type BackendErrors = Record<string, string | string[]>;
+
 function unwrapArray(raw: any): any[] {
   if (Array.isArray(raw)) return raw;
   if (raw && typeof raw === 'object' && Array.isArray(raw.data)) return raw.data;
@@ -42,21 +43,21 @@ function unwrapArray(raw: any): any[] {
 
 @Injectable({ providedIn: 'root' })
 export class AppointmentsService {
-  // probamos varios prefijos por si el backend varía
+  /** Intentamos en este orden para cubrir diferencias del backend */
   private static readonly BASES = ['/citas', '/citas/', '/appointments', '/appointments/'];
   private static readonly BY_CLIENTE_PATHS = ['cliente', 'by-cliente', 'client'];
 
   constructor(private api: ApiService) {}
 
-  // ----- Normalización -----
+  /* ===== Normalización / errores ===== */
   private normalize = (raw: any): AppointmentApi => ({
     id: String(raw?.id ?? ''),
     cliente_id: String(raw?.cliente_id ?? raw?.ClienteId ?? raw?.clienteId ?? ''),
     servicio_id: String(raw?.servicio_id ?? raw?.servicioId ?? ''),
-    fecha: String(raw?.fecha ?? ''),
-    hora_inicio: String(raw?.hora_inicio ?? raw?.horaInicio ?? ''),
-    hora_fin: String(raw?.hora_fin ?? raw?.horaFin ?? ''),
-    estado: String(raw?.estado ?? 'Agendada'),
+    fecha: String(raw?.fecha ?? raw?.FechaCita ?? ''), // algunos backends exponen FechaCita
+    hora_inicio: String(raw?.hora_inicio ?? raw?.horaInicio ?? raw?.HoraInicio ?? ''),
+    hora_fin: String(raw?.hora_fin ?? raw?.horaFin ?? raw?.HoraFin ?? ''),
+    estado: String(raw?.estado ?? raw?.Estado ?? 'Agendada'),
     origen: raw?.origen ?? raw?.source ?? undefined,
     telefono: raw?.telefono ?? raw?.numero_celular ?? undefined,
     updated_at: raw?.updated_at ?? raw?.updatedAt ?? undefined,
@@ -76,39 +77,53 @@ export class AppointmentsService {
     return undefined;
   }
 
-  // ----- Helpers -----
+  /* ===== Helpers HTTP con fallback de rutas ===== */
   private async tryGetMany(paths: string[]): Promise<any[]> {
     let lastErr: any;
     for (const p of paths) {
       try {
         const raw = await firstValueFrom(this.api.get<any>(p));
         return unwrapArray(raw);
-      } catch (e) { lastErr = e; }
+      } catch (e) {
+        lastErr = e;
+      }
     }
     throw lastErr;
   }
+
   private async tryGetOne(paths: string[]): Promise<any> {
     let lastErr: any;
     for (const p of paths) {
       try {
         return await firstValueFrom(this.api.get<any>(p));
-      } catch (e) { lastErr = e; }
+      } catch (e) {
+        lastErr = e;
+      }
     }
     throw lastErr;
   }
 
-  // ----- Endpoints -----
+  /* =======================
+   *         GET
+   * ======================= */
 
-  /** GET lista completa (preferir para armar resumen por cliente) */
+  /** GET lista completa (prueba /citas y /appointments) */
   async getAll(): Promise<AppointmentApi[]> {
-    const arr = await this.tryGetMany(AppointmentsService.BASES);
-    return arr.map(this.normalize);
+    try {
+      const arr = await this.tryGetMany(AppointmentsService.BASES);
+      return arr.map(this.normalize);
+    } catch (e: any) {
+      throw new Error(this.errMsg(e) ?? 'No se pudieron obtener las citas');
+    }
   }
 
-  /** Igual que getAll pero si falla, devuelve [] sin lanzar error (evita popups globales) */
+  /** ✅ Helper silencioso: nunca lanza error */
   async getAllSafe(): Promise<AppointmentApi[]> {
-    try { return await this.getAll(); }
-    catch { return []; }
+    try {
+      return await this.getAll();
+    } catch {
+      return [];
+    }
   }
 
   /** GET /{base}/{id} */
@@ -131,11 +146,33 @@ export class AppointmentsService {
         paths.push(`${base}/${seg}/${encodeURIComponent(clienteId)}`);
       }
     }
-    const arr = await this.tryGetMany(paths);
-    return arr.map(this.normalize);
+    try {
+      const arr = await this.tryGetMany(paths);
+      return arr.map(this.normalize);
+    } catch (e: any) {
+      throw new Error(this.errMsg(e) ?? 'No se pudieron obtener las citas del cliente');
+    }
   }
 
-  /** POST create */
+  /** ✅ Helper silencioso para pantallas que no quieren romperse */
+  async getByClienteSilent(clienteId: string): Promise<AppointmentApi[]> {
+    try {
+      return await this.getByCliente(clienteId);
+    } catch {
+      return [];
+    }
+  }
+
+  /** (opcional) mismo que getByCliente, solo alias para conveniencia */
+  async getByClienteFlat(clienteId: string): Promise<AppointmentApi[]> {
+    return this.getByCliente(clienteId);
+  }
+
+  /* =======================
+   *       CREATE/UPDATE
+   * ======================= */
+
+  /** POST create con DTO (forma genérica) */
   async create(input: CreateAppointmentDto): Promise<CreateAppointmentResult> {
     const payload = {
       ClienteId: input.clienteId,
@@ -153,7 +190,40 @@ export class AppointmentsService {
         const rawId = resp?.id ?? resp?.data?.id;
         const id = rawId != null && rawId !== true ? String(rawId) : undefined;
         return { ok, id, raw: resp };
-      } catch (e) { lastErr = e; }
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    throw new Error(this.errMsg(lastErr) ?? 'No se pudo crear la cita');
+  }
+
+  /**
+   * POST create con payload EXACTO del backend:
+   * {
+   *   ClienteId: 22, TipoConsulta: 1, FechaCita: 'YYYY-MM-DD',
+   *   HoraInicio: 'HH:mm', HoraFin: 'HH:mm', Estado: 'Agendada', Observaciones: '...'
+   * }
+   */
+  async createRaw(body: {
+    ClienteId: number;
+    TipoConsulta: number | string;
+    FechaCita: string;
+    HoraInicio: string;
+    HoraFin: string;
+    Estado?: string;
+    Observaciones?: string;
+  }): Promise<CreateAppointmentResult> {
+    let lastErr: any;
+    for (const b of AppointmentsService.BASES) {
+      try {
+        const resp = await firstValueFrom(this.api.post<any>(b, body));
+        const ok = resp?.success === true || resp?.ok === true || true;
+        const rawId = resp?.id ?? resp?.data?.id;
+        const id = rawId != null && rawId !== true ? String(rawId) : undefined;
+        return { ok, id, raw: resp };
+      } catch (e) {
+        lastErr = e;
+      }
     }
     throw new Error(this.errMsg(lastErr) ?? 'No se pudo crear la cita');
   }
@@ -170,8 +240,12 @@ export class AppointmentsService {
     let lastErr: any;
     for (const b of AppointmentsService.BASES) {
       const url = `${b}${b.endsWith('/') ? '' : '/'}${encodeURIComponent(id)}`;
-      try { await firstValueFrom(this.api.put<any>(url, payload)); return true; }
-      catch (e) { lastErr = e; }
+      try {
+        await firstValueFrom(this.api.put<any>(url, payload));
+        return true;
+      } catch (e) {
+        lastErr = e;
+      }
     }
     throw new Error(this.errMsg(lastErr) ?? 'No se pudo actualizar la cita');
   }
@@ -182,8 +256,12 @@ export class AppointmentsService {
     for (const b of AppointmentsService.BASES) {
       const base = b.endsWith('/') ? b.slice(0, -1) : b;
       const url = `${base}/${encodeURIComponent(id)}/cancelar`;
-      try { await firstValueFrom(this.api.put<any>(url, {})); return true; }
-      catch (e) { lastErr = e; }
+      try {
+        await firstValueFrom(this.api.put<any>(url, {}));
+        return true;
+      } catch (e) {
+        lastErr = e;
+      }
     }
     throw new Error(this.errMsg(lastErr) ?? 'No se pudo cancelar la cita');
   }

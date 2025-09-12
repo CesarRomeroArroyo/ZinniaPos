@@ -30,35 +30,41 @@
       </ion-button>
 
       <!-- Popover de filtros -->
-      <ion-popover trigger="filters-trigger" triggerAction="click" #filtersPopover>
+      <ion-popover trigger="filters-trigger" triggerAction="click"
+        #filtersPopover>
         <ng-template>
           <ion-content class="filters-popover">
             <ion-list lines="full">
               <ion-list-header>Estados</ion-list-header>
 
               <ion-item button (click)="toggleEstado('confirmado')">
-                <ion-checkbox slot="start" [checked]="filters.estados.has('confirmado')"></ion-checkbox>
+                <ion-checkbox slot="start"
+                  [checked]="filters.estados.has('confirmado')"></ion-checkbox>
                 <ion-label>Confirmado</ion-label>
               </ion-item>
 
               <ion-item button (click)="toggleEstado('entregado')">
-                <ion-checkbox slot="start" [checked]="filters.estados.has('entregado')"></ion-checkbox>
+                <ion-checkbox slot="start"
+                  [checked]="filters.estados.has('entregado')"></ion-checkbox>
                 <ion-label>Entregado</ion-label>
               </ion-item>
 
               <ion-item button (click)="toggleEstado('pendiente')">
-                <ion-checkbox slot="start" [checked]="filters.estados.has('pendiente')"></ion-checkbox>
+                <ion-checkbox slot="start"
+                  [checked]="filters.estados.has('pendiente')"></ion-checkbox>
                 <ion-label>Pendiente</ion-label>
               </ion-item>
 
               <ion-item button (click)="toggleEstado('cancelado')">
-                <ion-checkbox slot="start" [checked]="filters.estados.has('cancelado')"></ion-checkbox>
+                <ion-checkbox slot="start"
+                  [checked]="filters.estados.has('cancelado')"></ion-checkbox>
                 <ion-label>Cancelado</ion-label>
               </ion-item>
 
               <ion-list-header>Canal</ion-list-header>
               <ion-item>
-                <ion-checkbox slot="start" [(ngModel)]="filters.canalWhatsapp"></ion-checkbox>
+                <ion-checkbox slot="start"
+                  [(ngModel)]="filters.canalWhatsapp"></ion-checkbox>
                 <ion-label>Whatsapp</ion-label>
               </ion-item>
 
@@ -72,7 +78,8 @@
             </ion-list>
 
             <div class="filters-actions">
-              <ion-button fill="clear" (click)="clearAllFilters()">Limpiar</ion-button>
+              <ion-button fill="clear"
+                (click)="clearAllFilters()">Limpiar</ion-button>
               <ion-button (click)="applyFilters()">Aplicar</ion-button>
             </div>
           </ion-content>
@@ -84,17 +91,20 @@
     <div class="chips" *ngIf="activeFiltersCount">
       <ion-chip *ngFor="let e of estadosArray" outline="true">
         <ion-label>{{ e | titlecase }}</ion-label>
-        <ion-icon name="close-outline" (click)="removeFilterChip('estado', e)"></ion-icon>
+        <ion-icon name="close-outline"
+          (click)="removeFilterChip('estado', e)"></ion-icon>
       </ion-chip>
 
       <ion-chip *ngIf="filters.canalWhatsapp" outline="true">
         <ion-label>Whatsapp</ion-label>
-        <ion-icon name="close-outline" (click)="removeFilterChip('whatsapp')"></ion-icon>
+        <ion-icon name="close-outline"
+          (click)="removeFilterChip('whatsapp')"></ion-icon>
       </ion-chip>
 
       <ion-chip *ngIf="filters.fecha === 'hoy'" outline="true">
         <ion-label>Hoy</ion-label>
-        <ion-icon name="close-outline" (click)="removeFilterChip('fecha')"></ion-icon>
+        <ion-icon name="close-outline"
+          (click)="removeFilterChip('fecha')"></ion-icon>
       </ion-chip>
     </div>
   </div>
@@ -104,8 +114,10 @@
     <ion-list>
       <ion-item *ngFor="let i of [1,2,3,4,5,6]">
         <ion-label>
-          <h3><ion-skeleton-text animated style="width: 60%"></ion-skeleton-text></h3>
-          <p><ion-skeleton-text animated style="width: 40%"></ion-skeleton-text></p>
+          <h3><ion-skeleton-text animated
+              style="width: 60%"></ion-skeleton-text></h3>
+          <p><ion-skeleton-text animated
+              style="width: 40%"></ion-skeleton-text></p>
         </ion-label>
       </ion-item>
     </ion-list>
@@ -118,7 +130,8 @@
       </ion-card-header>
       <ion-card-content>
         {{ error }}
-        <ion-button expand="block" fill="outline" (click)="loadAll()">Reintentar</ion-button>
+        <ion-button expand="block" fill="outline"
+          (click)="loadAll()">Reintentar</ion-button>
       </ion-card-content>
     </ion-card>
 
@@ -127,20 +140,26 @@
       <ng-container *ngIf="grouped.length; else empty">
         <ng-container *ngFor="let g of grouped">
           <ion-list>
-            <ion-list-header class="group-header">{{ g.label }}</ion-list-header>
+            <ion-list-header class="group-header">{{ g.label
+              }}</ion-list-header>
 
             <ion-item *ngFor="let o of g.items; trackBy: trackById" button>
               <ion-label>
                 <h3 class="row-title">#{{ o.id }}</h3>
 
+                <!-- nombre + fecha -->
                 <p class="row-sub">
-                  • {{ asDate(o.fecha) | date:"d 'de' MMM, y 'a las' h:mm a" }}
+                  <ng-container *ngIf="getClienteNombre(o) as n">
+                    {{ n }} •
+                  </ng-container>
+                  {{ asDate(o.fecha) | date:"d 'de' MMM, y 'a las' h:mm a" }}
                 </p>
 
                 <p class="row-meta">
                   <span class="meta-label">Artículos:</span>
-                  <span class="meta-value">{{ o.items?.length || 0 }}</span>
-                  <ng-container *ngIf="o.total != null"> • ${{ o.total | number:'1.0-0' }}</ng-container>
+                  <span class="meta-value">{{ getItemsCount(o) }}</span>
+                  <ng-container *ngIf="o.total != null"> • ${{ o.total |
+                    number:'1.0-0' }}</ng-container>
                 </p>
 
                 <p class="row-meta" *ngIf="o.numero_celular">
@@ -150,11 +169,15 @@
               </ion-label>
 
               <div slot="end" class="end-actions">
-                <ion-badge [ngClass]="statusClass(o.estado)">{{ (o.estado || 'Sin estado') | titlecase }}</ion-badge>
-                <ion-button fill="clear" size="small" (click)="openWhatsApp(o, $event)" [disabled]="!o.numero_celular">
+                <ion-badge [ngClass]="statusClass(o.estado)">{{ (o.estado ||
+                  'Sin estado') | titlecase }}</ion-badge>
+                <ion-button fill="clear" size="small"
+                  (click)="openWhatsApp(o, $event)"
+                  [disabled]="!o.numero_celular">
                   <ion-icon name="logo-whatsapp"></ion-icon>
                 </ion-button>
-                <ion-icon class="chev" name="chevron-forward-outline"></ion-icon>
+                <ion-icon class="chev"
+                  name="chevron-forward-outline"></ion-icon>
               </div>
             </ion-item>
           </ion-list>
@@ -163,7 +186,8 @@
 
       <ng-template #empty>
         <div class="empty">
-          <img class="hero-img" src="assets/images/customers-patients.png" alt="Pedidos" />
+          <img class="hero-img" src="assets/images/customers-patients.png"
+            alt="Pedidos" />
           <h2>Sin pedidos</h2>
           <p>No hay resultados.</p>
         </div>
