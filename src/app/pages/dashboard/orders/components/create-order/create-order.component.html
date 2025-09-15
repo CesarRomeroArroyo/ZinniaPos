@@ -3,12 +3,13 @@
 
 <ion-content>
   <div class="container">
+    <!-- Sección cliente SIN buscador en la página; el filtro va dentro del modal -->
     <div class="section" *ngIf="!selectedCustomer">
       <ion-label for="customer" class="title bold">Informacion de cliente</ion-label>
       <form class="form" [formGroup]="customerForm" *ngIf="customerForm">
-        <ion-searchbar mode="md" placeholder="Buscar cliente" animated="true" show-clear-button="focus"
-          (click)="openCustomerSelection()">
-        </ion-searchbar>
+        <ion-button mode="md" expand="block" fill="outline" (click)="customerModalOpen = true">
+          Agregar cliente
+        </ion-button>
       </form>
     </div>
 
@@ -31,7 +32,10 @@
   <div class="container">
     <form class="form" [formGroup]="productsForm" *ngIf="productsForm">
       <ion-label for="products" class="title bold">Lista de productos</ion-label>
-      <ion-button mode="md" expand="block" fill="outline" (click)="openProductsSelection()">Agregar productos</ion-button>
+
+      <ion-button mode="md" expand="block" fill="outline" (click)="openProductsModal()">
+        Agregar productos
+      </ion-button>
     </form>
 
     <ng-container *ngIf="orderItems.length > 0">
@@ -103,3 +107,133 @@
     Confirmar pedido
   </ion-button>
 </ion-footer>
+
+<!-- ============================= -->
+<!-- MODAL DE CLIENTES CON BUSCADOR -->
+<!-- ============================= -->
+<ion-modal
+  [isOpen]="customerModalOpen"
+  (didDismiss)="customerModalOpen = false">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-buttons slot="start">
+          <ion-button (click)="customerModalOpen = false">
+            <ion-icon name="chevron-down-outline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+        <ion-title>Cliente</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="customerModalOpen = false">
+            <ion-icon name="checkmark-outline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+
+      <!-- 🔎 Searchbar dentro del modal -->
+      <ion-toolbar>
+        <ion-searchbar
+          placeholder="Buscar cliente"
+          animated="true"
+          show-clear-button="focus"
+          (ionInput)="onCustomerSearch($event)">
+        </ion-searchbar>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content>
+      <ion-radio-group
+        [value]="selectedCustomer?.id"
+        (ionChange)="onCustomerRadioChange($event)">
+
+        <ion-list>
+          <ion-item
+            button
+            *ngFor="let c of filteredCustomers">
+            <ion-label>
+              <h2>{{ c.fullname }}</h2>
+              <p *ngIf="c.email">{{ c.email }}</p>
+            </ion-label>
+            <ion-radio slot="end" [value]="c.id"></ion-radio>
+          </ion-item>
+        </ion-list>
+      </ion-radio-group>
+
+      <!-- FAB (+) inferior derecho por si quieres crear cliente -->
+      <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+        <ion-fab-button (click)="onCreateCustomer()">
+          <ion-icon name="add"></ion-icon>
+        </ion-fab-button>
+      </ion-fab>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- ============================= -->
+<!-- MODAL DE PRODUCTOS CON BUSCADOR -->
+<!-- ============================= -->
+<ion-modal
+  [isOpen]="productModalOpen"
+  (didDismiss)="productModalOpen = false">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-buttons slot="start">
+          <ion-button (click)="productModalOpen = false">
+            <ion-icon name="chevron-down-outline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+        <ion-title>Productos</ion-title>
+        <ion-buttons slot="end">
+          <!-- Confirmar selección -->
+          <ion-button (click)="confirmProducts()">
+            <ion-icon name="checkmark-outline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+
+      <!-- 🔎 Searchbar dentro del modal -->
+      <ion-toolbar>
+        <ion-searchbar
+          placeholder="Buscar producto"
+          animated="true"
+          show-clear-button="focus"
+          (ionInput)="onProductSearch($event)">
+        </ion-searchbar>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content>
+      <ion-list>
+        <ion-item
+          button
+          *ngFor="let p of filteredProducts"
+          (click)="toggleProductSelection(p)">
+          <!-- thumbnail -->
+          <ion-avatar slot="start">
+            <img [src]="getImageSrc(p)" alt="thumb" />
+          </ion-avatar>
+
+          <ion-label>
+            <h2>{{ p.name }}</h2>
+            <p>{{ p.salePrice | currency }}</p>
+          </ion-label>
+
+          <!-- checkbox a la derecha -->
+          <ion-checkbox
+            slot="end"
+            [checked]="isProductSelected(p.id)"
+            (ionChange)="$event.stopPropagation(); toggleProductSelection(p)">
+          </ion-checkbox>
+        </ion-item>
+      </ion-list>
+
+      <!-- FAB (+) inferior derecho por si quieres crear producto -->
+      <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+        <ion-fab-button (click)="onCreateProduct()">
+          <ion-icon name="add"></ion-icon>
+        </ion-fab-button>
+      </ion-fab>
+    </ion-content>
+  </ng-template>
+</ion-modal>

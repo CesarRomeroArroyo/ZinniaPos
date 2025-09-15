@@ -1,0 +1,129 @@
+<ion-header translucent="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button fill="clear" aria-label="Atrás" (click)="goBack()">
+        <ion-icon slot="icon-only" name="chevron-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title class="title">Detalle Pedido</ion-title>
+    <ion-buttons slot="end">
+      <ion-menu-button autoHide="true"></ion-menu-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content fullscreen="true">
+  <ion-refresher slot="fixed" (ionRefresh)="load($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <ng-container *ngIf="loading; else loaded">
+    <div class="box"><ion-skeleton-text animated
+        style="width: 60%; height: 18px"></ion-skeleton-text></div>
+    <div class="box"><ion-skeleton-text animated
+        style="width: 80%; height: 18px"></ion-skeleton-text></div>
+  </ng-container>
+
+  <ng-template #loaded>
+    <ion-card *ngIf="error">
+      <ion-card-header><ion-card-title>Error</ion-card-title></ion-card-header>
+      <ion-card-content>
+        {{ error }}
+        <ion-button expand="block" fill="outline"
+          (click)="load()">Reintentar</ion-button>
+      </ion-card-content>
+    </ion-card>
+
+    <ng-container *ngIf="!error && order">
+      <!-- Encabezado: ID + estado + fecha -->
+      <div class="box">
+        <div class="order-head">
+          <div class="left">
+            <h2 class="section-title">Pedido #{{ order.id }}</h2>
+            <p class="muted" *ngIf="order.fecha">
+              {{ order.fecha | date:"d 'de' MMM, y 'a las' h:mm a" }}
+            </p>
+          </div>
+          <span [ngClass]="pillClass()">{{ order.estado }}</span>
+        </div>
+      </div>
+
+      <!-- Cliente -->
+      <div class="box">
+        <h2 class="section-title">Cliente</h2>
+        <div class="contact">
+          <div class="row" *ngIf="order.cliente_nombre">
+            <div class="label">Nombre</div>
+            <div class="value">{{ order.cliente_nombre }}</div>
+          </div>
+
+          <div class="row" *ngIf="order.cliente_correo">
+            <div class="label">Correo</div>
+            <div class="value">{{ order.cliente_correo }}</div>
+          </div>
+
+          <div class="row" *ngIf="order.numero_celular">
+            <div class="label">Celular</div>
+            <div class="value">
+              {{ order.numero_celular }}
+              <ion-button fill="clear" size="small" (click)="openWhatsApp()">
+                <ion-icon name="logo-whatsapp"></ion-icon>
+              </ion-button>
+            </div>
+          </div>
+
+          <div class="row" *ngIf="order.cliente_direccion">
+            <div class="label">Dirección</div>
+            <div class="value">{{ order.cliente_direccion }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Items -->
+      <div class="box">
+        <h2 class="section-title">Artículos ({{ order.itemsCount }})</h2>
+
+        <ion-list *ngIf="order.items?.length; else noItems">
+          <ion-item *ngFor="let it of order.items; trackBy: trackItem">
+            <!-- miniatura a la izquierda -->
+            <ion-avatar slot="start" class="item-thumb"
+              *ngIf="it.imageUrl; else noImg">
+              <img [src]="it.imageUrl" alt="{{ it.nombre || 'Producto' }}" />
+            </ion-avatar>
+            <ng-template #noImg>
+              <ion-avatar slot="start" class="item-thumb placeholder">
+                <ion-icon name="image-outline"></ion-icon>
+              </ion-avatar>
+            </ng-template>
+
+            <ion-label>
+              <h3 class="row-title">{{ it.nombre || 'Artículo' }}</h3>
+              <p class="row-meta">
+                <span class="meta-label">Cant:</span>
+                <span class="meta-value">{{ it.cantidad }}</span>
+                <ng-container *ngIf="it.precio != null">
+                  • $ {{ it.precio | number:'1.2-2' }}
+                </ng-container>
+                <ng-container *ngIf="it.subtotal != null">
+                  • Subtotal: $ {{ it.subtotal | number:'1.2-2' }}
+                </ng-container>
+              </p>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+
+        <ng-template #noItems>
+          <p class="muted">Sin artículos registrados.</p>
+        </ng-template>
+      </div>
+
+      <!-- Totales -->
+      <div class="box totals" *ngIf="order.total != null">
+        <div class="row">
+          <div class="label">Total</div>
+          <div class="value strong">$ {{ order.total | number:'1.2-2' }}</div>
+        </div>
+      </div>
+    </ng-container>
+  </ng-template>
+</ion-content>

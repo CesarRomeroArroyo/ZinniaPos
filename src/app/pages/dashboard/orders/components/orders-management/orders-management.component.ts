@@ -158,9 +158,9 @@ export class OrdersManagementComponent implements OnInit {
     this.clientesById.clear();
     this.clientesByPhone.clear();
     for (const c of clientes) {
-      const id = String(c.id ?? "");
-      const nombre = c.nombre || "";
-      const tel = String(c.telefono ?? "").replace(/\D/g, "");
+      const id = String((c as any).id ?? "");
+      const nombre = String((c as any).nombre ?? (c as any).name ?? "");
+      const tel = String((c as any).telefono ?? (c as any).celular ?? "").replace(/\D/g, "");
       if (id && nombre) this.clientesById.set(id, nombre);
       if (tel && nombre) this.clientesByPhone.set(tel, nombre);
     }
@@ -172,8 +172,7 @@ export class OrdersManagementComponent implements OnInit {
 
     // Usa mapas si existen en el componente (no falla si no están)
     const byId: Map<string, string> | undefined = (this as any).clientesById;
-    const byTel: Map<string, string> | undefined = (this as any)
-      .clientesByPhone;
+    const byTel: Map<string, string> | undefined = (this as any).clientesByPhone;
 
     if (id && byId?.has?.(id)) return byId.get(id)!;
     if (tel && byTel?.has?.(tel)) return byTel.get(tel)!;
@@ -576,5 +575,52 @@ export class OrdersManagementComponent implements OnInit {
 
     const { data } = await modal.onDidDismiss();
     if (data?.completed) await this.loadAll();
+  }
+
+  // ---------- NUEVO: prefetch para enviar al detalle ----------
+  /** Empaqueta datos clave del pedido y sus items para history.state */
+  toPref(o: any) {
+    const rawItems =
+      (Array.isArray(o?.items) && o.items) ||
+      (Array.isArray(o?.detalle) && o.detalle) ||
+      (Array.isArray(o?.productos) && o.productos) ||
+      (Array.isArray(o?.order_items) && o.order_items) ||
+      [];
+
+    const items = rawItems.map((it: any) => ({
+      productId:
+        it?.producto_id ?? it?.product_id ?? it?.id ?? it?.producto?.id ?? it?.product?.id,
+      productUniqueId:
+        it?.idunico_producto ?? it?.producto?.idunico ?? it?.product?.idunico ?? null,
+      nombre:
+        it?.nombre ?? it?.producto_nombre ?? it?.product_name ?? it?.producto?.nombre ?? it?.product?.name,
+      cantidad: Number(it?.cantidad ?? it?.qty ?? 1) || 1,
+      precio: it?.precio_venta ?? it?.precio ?? undefined,
+      subtotal: it?.subtotal ?? it?.total_linea ?? undefined,
+      imageUrl:
+        it?.imagen ?? it?.url_imagen ?? it?.image_url ?? it?.producto?.imagen ?? it?.product?.image ?? null,
+    }));
+
+    let itemsCount = 0;
+    for (const it of items) itemsCount += Number(it.cantidad || 1);
+
+    return {
+      id: String(o?.id ?? ""),
+      estado: o?.estado ?? "",
+      fecha: o?.fecha ?? o?.created_at ?? null,
+      total: o?.total ?? null,
+      cliente_id: String(o?.cliente_id ?? o?.cliente?.id ?? ""),
+      numero_celular: String(o?.numero_celular ?? o?.cliente?.telefono ?? ""),
+      // usa el índice local por si no viene embebido
+      cliente_nombre:
+        this.getClienteNombre(o) ||
+        o?.cliente_nombre ||
+        o?.nombre_cliente ||
+        o?.cliente?.nombre ||
+        o?.cliente?.name ||
+        "",
+      items,
+      itemsCount,
+    };
   }
 }

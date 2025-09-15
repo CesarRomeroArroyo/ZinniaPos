@@ -1,4 +1,3 @@
-// imports originales...
 import { CommonModule } from "@angular/common";
 import { Component, OnInit, OnDestroy, inject } from "@angular/core";
 import {
@@ -17,14 +16,10 @@ import { CustomInputComponent } from "src/app/shared/components/custom-input/cus
 import { HeaderComponent } from "src/app/shared/components/header/header.component";
 
 import {
-  customerOptionsModalConfig,
   invalidFormMessage,
-  mapObjectToSelectOptions,
   mapProductToOrderItem,
-  mapProductToSelectOptions,
-  orderCreationMessages,
-  productOptionsModalConfig,
   settingHeader,
+  orderCreationMessages,
   waitingMessageCreatingOrder,
 } from "./create-order.consts";
 
@@ -34,7 +29,6 @@ import {
   IOrderItem,
   IOrderPayload,
 } from "src/app/core/interfaces/bussiness/order.interface";
-import { ISelectOption } from "src/app/core/interfaces/select-options-modal.interface";
 import { IDiscount } from "src/app/core/interfaces/bussiness/discount.interface";
 
 import { AddDiscountToOrderComponent } from "../add-discount-to-order/add-discount-to-order.component";
@@ -44,9 +38,6 @@ import {
   OrderStatusValue,
 } from "src/app/core/consts/enums/business/order.enum";
 
-import { OpenSelectOptionsService } from "src/app/core/services/utils/open-select-options.service";
-
-// Servicios reales
 import {
   ClientesService,
   ClienteApi,
@@ -54,7 +45,6 @@ import {
 import { ProductService } from "src/app/core/services/bussiness/product.service";
 import {
   OrderService,
-  // 👇 usa el DTO real exportado por order.service.ts
   CreatePedidoDto,
 } from "src/app/core/services/bussiness/order.service";
 import { AuthSessionService } from "src/app/core/services/utils/auth-session.service";
@@ -67,6 +57,8 @@ import {
   closeOutline,
   removeOutline,
   trashOutline,
+  chevronDownOutline,
+  checkmarkOutline,
 } from "ionicons/icons";
 import { IUser } from "src/app/core/interfaces/bussiness/user.interface";
 
@@ -95,10 +87,8 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
   private _productService = inject(ProductService);
   private _clientesService = inject(ClientesService);
   private _authSessionService = inject(AuthSessionService);
-  private _openSelectOptionsService = inject(OpenSelectOptionsService);
 
   // ===== Estado =====
-  public clientQuery = "";
   public selectedCustomer: ICustomer | undefined;
 
   public subtotal = 0;
@@ -112,18 +102,28 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
 
   public customers: ICustomer[] = [];
   public products: IProduct[] = [];
+  public filteredCustomers: ICustomer[] = [];
+  public filteredProducts: IProduct[] = [];
   public orderItems: IOrderItem[] = [];
   public order!: IOrderPayload;
+
+  // Modales embebidos
+  public customerModalOpen = false;
+  public productModalOpen = false;
+  private selectedProductIds = new Set<string | number>();
 
   private _loggedUser: IUser | null = null;
   private _destroy$ = new Subject<void>();
 
-  // Clonar configs para mutar optionsList sin tocar el objeto importado
-  private customerOptionsModalCfg = { ...customerOptionsModalConfig };
-  private productOptionsModalCfg = { ...productOptionsModalConfig };
-
   ngOnInit() {
-    addIcons({ trashOutline, removeOutline, addOutline, closeOutline });
+    addIcons({
+      trashOutline,
+      removeOutline,
+      addOutline,
+      closeOutline,
+      chevronDownOutline,
+      checkmarkOutline,
+    });
 
     this.buildFormArray();
     this.buildCustomerForm();
@@ -192,55 +192,6 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
     this._modalCtrl.dismiss(data);
   }
 
-  public async openCustomerSelection() {
-    const data = await this._openSelectOptionsService.open({
-      ...this.customerOptionsModalCfg,
-    });
-    if (data) {
-      this.selectedCustomer = this.customers.find(
-        (customer) => customer.id === data.value
-      );
-    }
-  }
-
-  public async openProductsSelection() {
-    const data = await this._openSelectOptionsService.open({
-      ...this.productOptionsModalCfg,
-    });
-    if (!data) return;
-
-    const selectedIds = data.map((option: ISelectOption) => option.value);
-    const filteredProducts = this.products.filter((product) =>
-      selectedIds.includes(product.id)
-    );
-
-    // Mapea y asegura salePrice numérico por si llega como string
-    this.orderItems = filteredProducts.map((product) => {
-      const item = mapProductToOrderItem(product);
-      item.product.salePrice = this.toNumberPrice(
-        (item.product as any).salePrice ??
-          (product as any).precio ??
-          (product as any).price
-      );
-      return item;
-    });
-
-    this.updateTotals();
-  }
-
-  public async addDiscount() {
-    const modal = await this._modalCtrl.create({
-      component: AddDiscountToOrderComponent,
-    });
-    await modal.present();
-    const { data } = await modal.onDidDismiss();
-
-    if (data) {
-      this.discount = data;
-      this.updateTotals();
-    }
-  }
-
   public removeSelectedCustomer() {
     this.selectedCustomer = undefined;
   }
@@ -262,14 +213,124 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
     }
   }
 
-  /** Utilidad local */
+  // ===== Helpers =====
   private onlyDigits(t: string) {
     return (t || "").toString().replace(/\D/g, "");
   }
 
+  private normalizeText(v: string = ""): string {
+    return v
+      .toString()
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
+
+  private filterList<T>(
+    items: T[],
+    term: string,
+    pickers: Array<(x: T) => string>
+  ): T[] {
+    const t = this.normalizeText(term || "");
+    if (!t) return [...items];
+    return items.filter((it) =>
+      pickers.some((p) => this.normalizeText(p(it) || "").includes(t))
+    );
+  }
+
+  // === Cliente (modal embebido) ===
+  public onCustomerSearch(ev: any) {
+    const term = ev?.detail?.value ?? "";
+    this.filteredCustomers = this.filterList(this.customers, term, [
+      (c) => c.fullname,
+      (c) => c.email || "",
+      (c) => c.mobile || "",
+    ]);
+  }
+
+  public onCustomerRadioChange(ev: CustomEvent) {
+    const selectedId = (ev as any).detail?.value;
+    const found = this.customers.find(
+      (c) => String(c.id) === String(selectedId)
+    );
+    if (found) {
+      this.selectedCustomer = found;
+      this.customerModalOpen = false; // cierra el modal al elegir
+    }
+  }
+
+  public onCreateCustomer() {
+    // TODO: abrir flujo de creación si aplica
+  }
+
+  // === Productos (modal embebido) ===
+  public openProductsModal() {
+    // Marcar como seleccionados los que ya están en orderItems
+    this.selectedProductIds = new Set(
+      this.orderItems.map((it) => (it.product as any).id ?? it.product.id)
+    );
+    // Reset de filtro y lista filtrada
+    this.filteredProducts = [...this.products];
+    this.productModalOpen = true;
+  }
+
+  public onProductSearch(ev: any) {
+    const term = ev?.detail?.value ?? "";
+    this.filteredProducts = this.filterList(this.products, term, [
+      (p) => p.name,
+      (p: any) => p.sku || p.codigo || "", // opcionales si existen
+    ]);
+  }
+
+  public isProductSelected(id: string | number): boolean {
+    return this.selectedProductIds.has(id);
+  }
+
+  public toggleProductSelection(p: IProduct) {
+    const id = (p as any).id ?? p.id;
+    if (this.selectedProductIds.has(id)) {
+      this.selectedProductIds.delete(id);
+    } else {
+      this.selectedProductIds.add(id);
+    }
+  }
+
+  public confirmProducts() {
+    const ids = Array.from(this.selectedProductIds);
+    const selectedProducts = this.products.filter((p: any) =>
+      ids.includes(p.id)
+    );
+
+    // Construir orderItems a partir de la selección (cantidad por defecto = 1)
+    this.orderItems = selectedProducts.map((product) => {
+      const existing = this.orderItems.find(
+        (it) =>
+          ((it.product as any).id ?? it.product.id) === (product as any).id
+      );
+      if (existing) return existing;
+
+      const item = mapProductToOrderItem(product);
+      item.product.salePrice = this.toNumberPrice(
+        (item.product as any).salePrice ??
+          (product as any).precio ??
+          (product as any).price
+      );
+      item.quantity = 1;
+      return item;
+    });
+
+    this.productModalOpen = false;
+    this.updateTotals();
+  }
+
+  public onCreateProduct() {
+    // TODO: abrir flujo de creación si aplica
+  }
+
   /** 🧱 Construye el payload exacto que requiere el backend */
   private buildCreatePayload(): CreatePedidoDto {
-    const clienteId = this.selectedCustomer?.id as any; // puede venir string/number
+    const clienteId = this.selectedCustomer?.id as any;
     const phone = this.onlyDigits(this.selectedCustomer?.mobile || "");
 
     const items = this.orderItems.map((it) => ({
@@ -281,7 +342,7 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
       cliente_id: clienteId,
       numero_celular: phone,
       items,
-      // estado: 'pendiente' // descomenta si tu API lo necesita
+      // estado: 'pendiente'
     };
   }
 
@@ -291,7 +352,7 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // (opcional) rellena tu payload local
+    // payload local (opcional)
     this.order.userId = this._loggedUser?.idunico ?? "";
     this.order.customerId = this.selectedCustomer!.id;
     this.order.items = this.orderItems;
@@ -300,7 +361,7 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
     this.order.subtotal = this.subtotal;
     this.order.total = this.total;
 
-    // ✅ payload exacto para el backend (urlencoded en OrderService)
+    // ✅ payload exacto para el backend
     const payload = this.buildCreatePayload();
 
     await this._loadingService.showLoading(waitingMessageCreatingOrder);
@@ -421,18 +482,11 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
 
       const clientesApi = await this._clientesService.getClientes();
       this.customers = (clientesApi ?? []).map(this.mapClienteApiToICustomer);
+      this.filteredCustomers = [...this.customers];
 
       this.products = await this.fetchProducts(companyId);
       this.normalizeProductsPrices();
-
-      this.customerOptionsModalCfg = {
-        ...this.customerOptionsModalCfg,
-        optionsList: mapObjectToSelectOptions(this.customers),
-      };
-      this.productOptionsModalCfg = {
-        ...this.productOptionsModalCfg,
-        optionsList: mapProductToSelectOptions(this.products),
-      };
+      this.filteredProducts = [...this.products];
     } catch (err) {
       console.error(err);
       this._toastService.showToast({
@@ -441,6 +495,22 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
       });
     } finally {
       await this._loadingService.hideLoading();
+    }
+  }
+
+  public async addDiscount() {
+    const modal = await this._modalCtrl.create({
+      component: AddDiscountToOrderComponent,
+    });
+
+    await modal.present();
+
+    const { data } = await modal.onDidDismiss();
+
+    if (data) {
+      // data debe cumplir con IDiscount (type + value)
+      this.discount = data;
+      this.updateTotals();
     }
   }
 
