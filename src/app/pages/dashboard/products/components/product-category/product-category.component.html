@@ -1,0 +1,63 @@
+<app-header
+  [settingHeader]="settingHeader"
+  [customActionCompleted]="onSubmit.bind(this)">
+</app-header>
+
+<ion-content>
+  <div class="container">
+    <form class="form" [formGroup]="categoryForm" *ngIf="categoryForm">
+      <div class="row">
+        <div class="group">
+          <ion-input
+            placeholder="Título de la categoría"
+            fill="outline"
+            mode="md"
+            formControlName="name">
+          </ion-input>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="group">
+          <ion-textarea
+            placeholder="Descripción"
+            fill="outline"
+            mode="md"
+            [autoGrow]="true"
+            formControlName="description">
+          </ion-textarea>
+        </div>
+      </div>
+
+      <!-- Impuesto (%) -->
+      <div class="row">
+        <div class="group">
+          <ion-input
+            placeholder="Impuesto (%)"
+            fill="outline"
+            mode="md"
+            type="number"
+            inputmode="decimal"
+            step="0.01"
+            min="0"
+            max="100"
+            pattern="^\d+([.,]\d{1,2})?$"
+            formControlName="tax">
+          </ion-input>
+        </div>
+      </div>
+    </form>
+  </div>
+</ion-content>
+
+<ion-footer class="ion-no-border footer">
+  <ion-button
+    mode="md"
+    expand="block"
+    fill="solid"
+    *ngIf="categoryForm"
+    [disabled]="categoryForm.invalid || saving"
+    (click)="onSubmit()">
+    Guardar
+  </ion-button>
+</ion-footer>

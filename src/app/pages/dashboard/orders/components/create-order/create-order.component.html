@@ -1,150 +1,105 @@
-<app-header [settingHeader]="settingHeader" [customActionCompleted]="actionCompleted.bind(this)"></app-header>
+<app-header [settingHeader]="settingHeader"
+  [customActionCompleted]="actionCompleted.bind(this)"></app-header>
+
 <ion-content>
   <div class="container">
     <div class="section" *ngIf="!selectedCustomer">
-      <ion-label for="customer" class="title bold">
-        Informacion de cliente
-      </ion-label>
+      <ion-label for="customer" class="title bold">Informacion de cliente</ion-label>
       <form class="form" [formGroup]="customerForm" *ngIf="customerForm">
-        <ion-searchbar
-          mode="md"
-          placeholder="Buscar cliente"
-          animated="true"
-          show-clear-button="focus"
+        <ion-searchbar mode="md" placeholder="Buscar cliente" animated="true" show-clear-button="focus"
           (click)="openCustomerSelection()">
         </ion-searchbar>
       </form>
     </div>
+
     <div class="section" *ngIf="selectedCustomer">
       <div class="section-header">
-        <ion-label class="title bold">
-          Informacion de cliente
-        </ion-label>
-        <button class="remove-btn" (click)="removeSelectedCustomer()">
+        <ion-label class="title bold">Informacion de cliente</ion-label>
+        <button class="remove-btn" type="button" (click)="removeSelectedCustomer()">
           <ion-icon name="close-outline"></ion-icon>
         </button>
       </div>
       <div class="customer-info">
-        <div class="customer-field">
-          <label>Cliente</label>
-          <span>{{ selectedCustomer.fullname }}</span>
-        </div>
-        <div class="customer-field">
-          <label>Correo electrónico</label>
-          <span>{{ selectedCustomer.email }}</span>
-        </div>
-        <div class="customer-field">
-          <label>Teléfono / Celular</label>
-          <span>{{ selectedCustomer.mobile }}</span>
-        </div>
-        <div class="customer-field">
-          <label>Dirección</label>
-          <span>{{ selectedCustomer.address }}</span>
-        </div>
+        <div class="customer-field"><label>Cliente</label><span>{{ selectedCustomer.fullname }}</span></div>
+        <div class="customer-field"><label>Correo electrónico</label><span>{{ selectedCustomer.email }}</span></div>
+        <div class="customer-field"><label>Teléfono / Celular</label><span>{{ selectedCustomer.mobile }}</span></div>
+        <div class="customer-field"><label>Dirección</label><span>{{ selectedCustomer.address }}</span></div>
       </div>
     </div>
-  </div> 
+  </div>
 
   <div class="container">
     <form class="form" [formGroup]="productsForm" *ngIf="productsForm">
-      <ion-label for="products" class="title bold">
-        Lista de productos
-      </ion-label>
-      <ion-button mode="md" expand="block" fill="outline" (click)="openProductsSelection()">
-        Agregar productos
-      </ion-button>
+      <ion-label for="products" class="title bold">Lista de productos</ion-label>
+      <ion-button mode="md" expand="block" fill="outline" (click)="openProductsSelection()">Agregar productos</ion-button>
     </form>
+
     <ng-container *ngIf="orderItems.length > 0">
       <div class="section">
         <div class="products-list">
-          <div class="product-item" *ngFor="let item of orderItems">
+          <div class="product-item" *ngFor="let item of orderItems; trackBy: trackByItemId">
             <div class="product-icon">
               <ion-thumbnail>
-                <img [src]="getImageSrc(item.product)" alt="Silhouette of mountains"/>
+                <img [src]="getImageSrc(item.product)" [alt]="item.product.name || 'Producto'" />
               </ion-thumbnail>
             </div>
-            
+
             <div class="product-content">
               <div class="product-header">
                 <div class="product-info">
                   <h3>{{ item.product.name }}</h3>
-                  <div class="product-price">${{ item.product.salePrice.toFixed(2) }}</div>
+                  <div class="product-price">{{ item.product.salePrice | currency }}</div>
                 </div>
-                
-                <button class="delete-btn" (click)="removeItemFromOrder(item.id)">
-                  <span class="delete-icon">
-                    <ion-icon name="trash-outline"></ion-icon>
-                  </span>
+                <button class="delete-btn" type="button" (click)="removeItemFromOrder(item.id)">
+                  <span class="delete-icon"><ion-icon name="trash-outline"></ion-icon></span>
                 </button>
               </div>
-              
+
               <div class="product-tax-info">
                 <span class="tax-label">Impuesto</span>
-                <span class="tax-rate">{{ item.product.tax.name }}</span>
               </div>
-              
+
               <div class="product-footer">
                 <div class="quantity-controls">
                   <div class="quantity-input">
                     <div class="input">
                       <label>Cantidad</label>
-                      <ion-label class="quantity">
-                        {{ item.quantity }}
-                      </ion-label>
+                      <ion-label class="quantity">{{ item.quantity }}</ion-label>
                     </div>
-                    <div class="controls"> 
-                      <button class="quantity-btn" (click)="decreaseQuantity(item)">
+                    <div class="controls">
+                      <button class="quantity-btn" type="button" (click)="decreaseQuantity(item)">
                         <ion-icon slot="icon-only" name="remove-outline"></ion-icon>
                       </button>
-                      <button class="quantity-btn" (click)="increaseQuantity(item)">
+                      <button class="quantity-btn" type="button" (click)="increaseQuantity(item)">
                         <ion-icon slot="icon-only" name="add-outline"></ion-icon>
                       </button>
                     </div>
                   </div>
                 </div>
-                
+
                 <div class="product-total">
                   <div class="total-label">Total</div>
-                  <div class="total-amount">${{ (item.product.salePrice * item.quantity).toFixed(2) }}</div>
+                  <div class="total-amount">{{ (item.product.salePrice * item.quantity) | currency }}</div>
                 </div>
               </div>
             </div>
-          </div>
+          </div> <!-- product-item -->
         </div>
       </div>
     </ng-container>
   </div>
 
   <div class="container">
-    <ion-item lines="none">
-      <ion-label class="title bold">Pago</ion-label>
-    </ion-item>
-    <ion-item lines="none">
-      <ion-label class="text">Subtotal</ion-label>
-      <ion-note slot="end">{{ subtotal | currency }}</ion-note>
-    </ion-item>
-    <ion-item lines="none">
-      <ion-label class="title" (click)="addDiscount()">Agregar descuento</ion-label>
-      <ion-note slot="end">{{ discountValue  | currency }}</ion-note>
-    </ion-item>
-    <ion-item lines="none">
-      <ion-label class="title">Impuesto estimado</ion-label>
-      <ion-note slot="end">{{ estimatedTax | currency }}</ion-note>
-    </ion-item>
-    <ion-item lines="none">
-      <ion-label class="title bold">Total</ion-label>
-      <ion-note slot="end"><strong>{{ total | currency }}</strong></ion-note>
-    </ion-item>
-  </div>  
+    <ion-item lines="none"><ion-label class="title bold">Pago</ion-label></ion-item>
+    <ion-item lines="none"><ion-label class="text">Subtotal</ion-label><ion-note slot="end">{{ subtotal | currency }}</ion-note></ion-item>
+    <ion-item lines="none"><ion-label class="title" (click)="addDiscount()">Agregar descuento</ion-label><ion-note slot="end">{{ discountValue | currency }}</ion-note></ion-item>
+    <ion-item lines="none"><ion-label class="title">Impuesto estimado</ion-label><ion-note slot="end">{{ estimatedTax | currency }}</ion-note></ion-item>
+    <ion-item lines="none"><ion-label class="title bold">Total</ion-label><ion-note slot="end"><strong>{{ total | currency }}</strong></ion-note></ion-item>
+  </div>
 </ion-content>
 
 <ion-footer class="ion-no-border footer">
-  <ion-button
-    mode="md"
-    expand="block"
-    fill="solid"
-    [disabled]="isOrderInvalid()"
-    (click)="confirmOrder()">
+  <ion-button mode="md" expand="block" fill="solid" [disabled]="isOrderInvalid()" (click)="confirmOrder()">
     Confirmar pedido
   </ion-button>
 </ion-footer>

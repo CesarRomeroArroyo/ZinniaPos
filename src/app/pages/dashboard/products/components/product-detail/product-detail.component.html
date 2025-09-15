@@ -1,0 +1,162 @@
+<ion-header translucent="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/products"></ion-back-button>
+    </ion-buttons>
+
+    <ion-title class="title">Detalle Producto</ion-title>
+
+    <ion-buttons slot="end">
+      <ion-button fill="clear" aria-label="Más" (click)="openMore()">
+        <ion-icon slot="icon-only" name="ellipsis-vertical"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <!-- ===== Skeleton ===== -->
+  <ng-container *ngIf="loading; else loaded">
+    <div class="gallery">
+      <ion-skeleton-text animated
+        style="width: 100%; height: 220px; border-radius: 14px;"></ion-skeleton-text>
+      <div class="thumbs">
+        <ion-skeleton-text animated style="width:48px;height:48px;border-radius:10px;"></ion-skeleton-text>
+        <ion-skeleton-text animated style="width:48px;height:48px;border-radius:10px;"></ion-skeleton-text>
+        <ion-skeleton-text animated style="width:48px;height:48px;border-radius:10px;"></ion-skeleton-text>
+        <ion-skeleton-text animated style="width:48px;height:48px;border-radius:10px;"></ion-skeleton-text>
+      </div>
+    </div>
+    <div class="section">
+      <div class="title-row">
+        <h1 class="name"><ion-skeleton-text animated style="width: 60%"></ion-skeleton-text></h1>
+        <span class="status-pill"><ion-skeleton-text animated style="width: 56px"></ion-skeleton-text></span>
+      </div>
+      <ion-chip class="chip"><ion-label><ion-skeleton-text animated style="width: 80px"></ion-skeleton-text></ion-label></ion-chip>
+
+      <div class="block">
+        <h3 class="label">Descripción</h3>
+        <p class="value"><ion-skeleton-text animated style="width: 90%"></ion-skeleton-text></p>
+      </div>
+      <div class="block">
+        <h3 class="label">Precio de venta ($)</h3>
+        <p class="value"><ion-skeleton-text animated style="width: 30%"></ion-skeleton-text></p>
+      </div>
+      <div class="block">
+        <h3 class="label">Precio de costo ($)</h3>
+        <p class="value"><ion-skeleton-text animated style="width: 30%"></ion-skeleton-text></p>
+      </div>
+      <div class="block">
+        <h3 class="label">Proveedor</h3>
+        <p class="value"><ion-skeleton-text animated style="width: 50%"></ion-skeleton-text></p>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ===== Content ===== -->
+  <ng-template #loaded>
+    <ng-container *ngIf="product; else errorTpl">
+      <!-- Galería -->
+      <div class="gallery">
+        <div class="hero-img">
+          <img *ngIf="heroImage; else noImage" [src]="heroImage" alt="Imagen de producto" />
+          <ng-template #noImage><div class="noimg"></div></ng-template>
+        </div>
+
+        <div class="thumbs">
+          <div
+            class="thumb-wrap"
+            *ngFor="let img of product.images; index as i">
+            <button
+              class="thumb"
+              (click)="selectImage(i)"
+              [class.thumb--active]="i === selectedIndex">
+              <img [src]="img" alt="Miniatura" />
+            </button>
+
+            <!-- Botón borrar imagen -->
+            <button class="thumb-delete" (click)="confirmDeleteImage(img); $event.stopPropagation()"
+              aria-label="Eliminar imagen">
+              <ion-icon name="trash-outline"></ion-icon>
+            </button>
+          </div>
+
+          <!-- Añadir imagen -->
+          <button class="thumb thumb--add" (click)="triggerUpload()" aria-label="Añadir imagen">
+            <ion-icon name="add-outline"></ion-icon>
+          </button>
+          <input #fileInput type="file" accept="image/*" hidden (change)="handleUpload($event)" />
+        </div>
+      </div>
+
+      <!-- Datos -->
+      <div class="section">
+        <div class="title-row">
+          <h1 class="name">{{ product.name }}</h1>
+          <span class="status" [ngClass]="product.status === 'Activo' ? 'status--activo' : 'status--inactivo'">
+            {{ product.status }}
+          </span>
+        </div>
+
+        <ion-chip class="chip" *ngIf="product.categoryName">
+          <ion-label>{{ product.categoryName }}</ion-label>
+        </ion-chip>
+
+        <div class="block" *ngIf="product.description">
+          <h3 class="label">Descripción</h3>
+          <p class="value">{{ product.description }}</p>
+        </div>
+
+        <div class="block">
+          <h3 class="label">Precio de venta ($)</h3>
+          <p class="value">{{ product.salePrice | number:'1.2-2' }}</p>
+        </div>
+
+        <div class="block">
+          <h3 class="label">Precio de costo ($)</h3>
+          <p class="value">{{ product.costPrice | number:'1.2-2' }}</p>
+        </div>
+
+        <div class="block" *ngIf="product.providerName">
+          <h3 class="label">Proveedor</h3>
+          <p class="value">{{ product.providerName }}</p>
+        </div>
+      </div>
+
+      <!-- Inventario -->
+      <div class="inventory">
+        <div class="inventory__head">
+          <h3>Inventario</h3>
+          <ion-button fill="clear" size="small" (click)="editInventory()">Editar stock</ion-button>
+        </div>
+
+        <div class="inventory__row">
+          <div class="item">
+            <div class="item__label">Stock actual</div>
+            <div class="item__value">{{ product.stockActual }}</div>
+          </div>
+          <div class="item" *ngIf="product.stockMin !== undefined">
+            <div class="item__label">Stock mínimo</div>
+            <div class="item__value">{{ product.stockMin }}</div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-template #errorTpl>
+      <div class="error-state">
+        <p>{{ error || 'No se pudo cargar el producto.' }}</p>
+        <ion-button fill="outline" (click)="reload()">Reintentar</ion-button>
+      </div>
+    </ng-template>
+  </ng-template>
+</ion-content>
+
+<!-- CTA inferior -->
+<ion-footer *ngIf="product">
+  <ion-toolbar class="footer">
+    <ion-button expand="block" size="large" shape="round" (click)="editProduct()">
+      Editar
+    </ion-button>
+  </ion-toolbar>
+</ion-footer>

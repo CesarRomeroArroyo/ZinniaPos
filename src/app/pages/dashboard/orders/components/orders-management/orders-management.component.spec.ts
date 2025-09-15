@@ -1,19 +1,19 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { IonicModule } from '@ionic/angular';
 
-import { CustomerUpsertComponent } from './customer-upsert.component';
+import { OrdersManagementComponent } from './orders-management.component';
 
-describe('CustomerUpsertComponent', () => {
-  let component: CustomerUpsertComponent;
-  let fixture: ComponentFixture<CustomerUpsertComponent>;
+describe('OrdersManagementComponent', () => {
+  let component: OrdersManagementComponent;
+  let fixture: ComponentFixture<OrdersManagementComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ CustomerUpsertComponent ],
+      declarations: [ OrdersManagementComponent ],
       imports: [IonicModule.forRoot()]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(CustomerUpsertComponent);
+    fixture = TestBed.createComponent(OrdersManagementComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   }));

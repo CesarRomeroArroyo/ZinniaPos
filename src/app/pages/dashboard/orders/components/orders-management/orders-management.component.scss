@@ -1,0 +1,109 @@
+/* Tarjeta de búsqueda y filtros */
+.search-card {
+  margin: 10px 12px 4px;
+  padding: 10px 12px 6px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.08) inset,
+    0 2px 6px rgba(0,0,0,0.04);
+}
+
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+ion-searchbar.search {
+  flex: 1 1 auto;
+  --icon-color: #6b7280;
+  --placeholder-color: #6b7280;
+}
+ion-searchbar.search::part(container) {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.12) inset,
+    0 1px 3px rgba(0,0,0,0.04);
+}
+ion-searchbar.search::part(input) {
+  min-height: 44px;
+  font-size: 14px;
+  padding-right: 16px;
+}
+
+#filters-trigger {
+  --border-radius: 10px;
+  height: 44px;
+}
+.btn-text { margin-right: 6px; }
+.filter-badge { margin-left: 6px; }
+
+/* Chips */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+ion-chip[outline="true"] {
+  --background: #fff;
+  --color: #111827;
+  border: 1px dashed #d1d5db;
+  border-radius: 10px;
+  padding: 0 6px;
+}
+
+/* Encabezados de grupo (Hoy, Viernes, …) */
+.group-header {
+  font-weight: 700;
+  color: #111827;
+  background: #f3f4f6;   /* ⬅️ fondo gris */
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+/* Filas */
+.row-title { margin: 0 0 2px; font-weight: 700; }
+.row-sub   { margin: 0; color: #6b7280; }
+.row-meta  { margin: 6px 0 0; color: #6b7280; font-size: 13px; }
+.meta-label { font-weight: 600; margin-right: 4px; }
+.meta-value { margin-right: 8px; }
+
+.end-actions {
+  display: flex; align-items: center; gap: 6px;
+}
+.chev { color: #9ca3af; font-size: 20px; }
+
+/* Pills de estado */
+.status {
+  border-radius: 9999px;
+  padding: 4px 10px;
+  font-weight: 700;
+  font-size: 12px;
+}
+.status.pending   { background: #fff7ed; color: #9a3412; }   /* naranja claro */
+.status.confirmed { background: #eff6ff; color: #1d4ed8; }   /* azul */
+.status.delivered { background: #ecfdf5; color: #047857; }   /* verde */
+.status.canceled  { background: #fef2f2; color: #b91c1c; }   /* rojo */
+
+/* Popover de filtros */
+.filters-popover {
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 10px;
+}
+.filters-actions {
+  display: flex; justify-content: space-between; padding: 10px 12px 6px;
+}
+
+/* Empty state */
+.empty { text-align: center; padding: 24px; }
+.hero-img {
+  width: 72%;
+  max-width: 280px;
+  margin: 16px auto;
+  display: block;
+}

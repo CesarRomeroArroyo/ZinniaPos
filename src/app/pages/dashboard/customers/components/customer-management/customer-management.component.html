@@ -1,0 +1,101 @@
+<ion-header translucent="true">
+  <ion-toolbar>
+    <ion-title class="title">Clientes</ion-title>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" aria-label="Añadir" (click)="onAdd()">
+        <ion-icon slot="icon-only" name="add-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content fullscreen="true">
+  <ion-refresher slot="fixed" (ionRefresh)="load($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- Buscador -->
+  <div class="search-wrap">
+    <ion-searchbar
+      class="search"
+      [(ngModel)]="query"
+      placeholder="Buscar cliente"
+      show-clear-button="never"
+      (ionInput)="applyFilter()">
+    </ion-searchbar>
+  </div>
+
+  <!-- Cargando -->
+  <ng-container *ngIf="loading; else loaded">
+    <ion-list>
+      <ion-item *ngFor="let i of [1,2,3,4,5,6]">
+        <ion-label>
+          <h3><ion-skeleton-text animated
+              style="width: 60%"></ion-skeleton-text></h3>
+          <p><ion-skeleton-text animated
+              style="width: 40%"></ion-skeleton-text></p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </ng-container>
+
+  <ng-template #loaded>
+    <!-- Error -->
+    <ion-card *ngIf="error">
+      <ion-card-header>
+        <ion-card-title>Error</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        {{ error }}
+        <ion-button expand="block" fill="outline"
+          (click)="load()">Reintentar</ion-button>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Lista -->
+    <ng-container *ngIf="!error">
+      <ion-list *ngIf="filtered.length; else empty">
+        <ion-item
+          *ngFor="let c of filtered; trackBy: trackById"
+          button
+          detail
+          [routerLink]="[getId(c)]"
+          routerDirection="forward">
+
+          <ion-label>
+            <h3 class="row-title">{{ c.nombre }}</h3>
+
+            <p class="row-sub" *ngIf="displaySub(c)">
+              {{ displaySub(c) }}
+            </p>
+
+            <p class="row-meta">
+              <span class="meta-strong">{{ getPedidosLabel(c) }}</span>
+              <ng-container *ngIf="c.ultimoPedidoDate; else noOrders">
+                <span class="dot">•</span>
+                <span>Último pedido: {{ c.ultimoPedidoDate |
+                  date:"d 'de' MMM, y" }}</span>
+              </ng-container>
+              <ng-template #noOrders>
+                <span class="dot">•</span>
+                <span>Sin pedidos registrados</span>
+              </ng-template>
+            </p>
+
+          </ion-label>
+        </ion-item>
+      </ion-list>
+
+      <!-- Vacío -->
+      <ng-template #empty>
+        <div class="empty">
+          <img class="hero-img" src="assets/images/customers-patients.png"
+            alt="Clientes" />
+          <h2>Sin clientes</h2>
+          <p>No se recibieron datos del servidor.</p>
+          <ion-button expand="block" (click)="load()">Actualizar</ion-button>
+        </div>
+      </ng-template>
+    </ng-container>
+  </ng-template>
+</ion-content>

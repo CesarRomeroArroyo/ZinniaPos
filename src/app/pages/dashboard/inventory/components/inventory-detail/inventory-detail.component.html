@@ -1,0 +1,185 @@
+<ion-header translucent="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/inventory"></ion-back-button>
+    </ion-buttons>
+
+    <ion-title class="title">Detalle de inventario</ion-title>
+
+    <ion-buttons slot="end">
+      <ion-button fill="clear" aria-label="Más" (click)="openMore()">
+        <ion-icon slot="icon-only" name="ellipsis-vertical"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <!-- ===== Skeleton ===== -->
+  <ng-container *ngIf="loading; else loaded">
+    <div class="card product-card">
+      <div class="row">
+        <div class="thumb big"></div>
+        <div class="meta">
+          <div class="line"></div>
+          <div class="pill"></div>
+          <div class="line small"></div>
+        </div>
+        <div class="dots"></div>
+      </div>
+    </div>
+
+    <ion-list>
+      <ion-item-divider>Cantidad</ion-item-divider>
+      <ion-item><ion-label>Disponible</ion-label><ion-badge slot="end">—</ion-badge></ion-item>
+      <ion-item><ion-label>Reservado</ion-label><ion-badge slot="end">—</ion-badge></ion-item>
+      <ion-item><ion-label>Existencias</ion-label><ion-badge slot="end">—</ion-badge></ion-item>
+    </ion-list>
+  </ng-container>
+
+  <!-- ===== Content ===== -->
+  <ng-template #loaded>
+    <ng-container *ngIf="item as it; else errorTpl">
+      <!-- Tarjeta resumen -->
+      <div class="card product-card">
+        <div class="row">
+          <div class="thumb big">
+            <img *ngIf="heroImage; else noImage" [src]="heroImage" alt="Producto" />
+            <ng-template #noImage><div class="noimg"></div></ng-template>
+          </div>
+          <div class="meta">
+            <div class="name">{{ it.name }}</div>
+            <ion-chip class="chip" *ngIf="it.categoryName">
+              <ion-label>{{ it.categoryName }}</ion-label>
+            </ion-chip>
+            <div class="desc" *ngIf="it.description">{{ it.description }}</div>
+          </div>
+          <ion-button fill="clear" class="more" (click)="openMore()">
+            <ion-icon name="ellipsis-vertical"></ion-icon>
+          </ion-button>
+        </div>
+
+        <!-- Mini-galería -->
+        <div *ngIf="$any(it).images?.length > 1" style="margin-top:10px; display:flex; gap:8px; overflow:auto;">
+          <button
+            *ngFor="let img of $any(it).images; let i = index"
+            (click)="selectImage(i)"
+            style="border:none; background:transparent; padding:0; cursor:pointer;">
+            <img
+              [src]="img || ''"
+              [alt]="'img '+i"
+              [style]="{width:'48px',height:'48px',objectFit:'cover',borderRadius:'8px',opacity:(i===selectedIndex?'1':'0.6'),outline:(i===selectedIndex?'2px solid #111':'none')}" />
+          </button>
+        </div>
+      </div>
+
+      <!-- Ver historial -->
+      <ion-item class="btn-outline" lines="full" button (click)="viewHistory()">
+        <ion-label>Ver historial de movimientos</ion-label>
+      </ion-item>
+
+      <!-- Botón para abrir modal de ajuste de stock -->
+      <ion-item class="btn-outline" lines="full" button (click)="openStockAdjust()">
+        <ion-label>Ajustar stock</ion-label>
+      </ion-item>
+
+      <!-- Cantidad -->
+      <ion-list class="qty">
+        <ion-item-divider>Cantidad</ion-item-divider>
+        <ion-item>
+          <ion-label>Disponible</ion-label>
+          <ion-badge slot="end" mode="ios">{{ it.stockAvailable }}</ion-badge>
+        </ion-item>
+        <ion-item>
+          <ion-label>Reservado</ion-label>
+          <ion-badge slot="end" mode="ios">{{ it.stockReserved }}</ion-badge>
+        </ion-item>
+        <ion-item>
+          <ion-label>Existencias</ion-label>
+          <ion-badge slot="end" mode="ios">{{ it.stockOnHand }}</ion-badge>
+        </ion-item>
+      </ion-list>
+    </ng-container>
+
+    <ng-template #errorTpl>
+      <div class="error-state">
+        <p>{{ error || 'No se pudo cargar el inventario.' }}</p>
+        <ion-button fill="outline" (click)="reload()">Reintentar</ion-button>
+      </div>
+    </ng-template>
+  </ng-template>
+</ion-content>
+
+<!-- CTAs inferiores -->
+<ion-footer *ngIf="item as itFooter">
+  <ion-toolbar class="footer">
+    <div class="cta-grid">
+      <ion-button expand="block" size="large" shape="round" class="btn-in" (click)="addEntry()">
+        Agregar Entrada
+      </ion-button>
+      <ion-button expand="block" size="large" shape="round" class="btn-out" (click)="addExit()">
+        Agregar Salida
+      </ion-button>
+    </div>
+  </ion-toolbar>
+</ion-footer>
+
+<!-- Input oculto para subir imágenes -->
+<input #fileInput type="file" accept="image/*" (change)="handleUpload($event)" hidden />
+
+<!-- ===== Modal de ajuste de stock ===== -->
+<ion-modal [isOpen]="editStockOpen" (didDismiss)="editStockOpen = false">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>Ajustar stock</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="editStockOpen = false">Cerrar</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content>
+      <ion-list>
+        <ion-item>
+          <ion-label>Stock actual</ion-label>
+          <ion-badge slot="end" mode="ios">{{ currentStock }}</ion-badge>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="stacked">Cantidad a ajustar</ion-label>
+          <div style="display:flex; gap:8px; align-items:center; width:100%;">
+            <ion-button fill="outline" size="small" (click)="decAdjust(1)">-1</ion-button>
+            <ion-button fill="outline" size="small" (click)="decAdjust(5)">-5</ion-button>
+            <ion-input
+              type="number"
+              inputmode="numeric"
+              [(ngModel)]="adjustQty"
+              style="flex:1; text-align:center;"
+              placeholder="Ej. 10 (positivo agrega, negativo quita)">
+            </ion-input>
+            <ion-button fill="outline" size="small" (click)="incAdjust(1)">+1</ion-button>
+            <ion-button fill="outline" size="small" (click)="incAdjust(5)">+5</ion-button>
+          </div>
+          <ion-note slot="helper">
+            Positivo = entrada; Negativo = salida
+          </ion-note>
+        </ion-item>
+
+        <ion-item>
+          <ion-label>Nuevo stock</ion-label>
+          <ion-badge slot="end" mode="ios">{{ previewStock }}</ion-badge>
+        </ion-item>
+      </ion-list>
+
+      <div style="padding:16px; display:flex; gap:10px;">
+        <ion-button expand="block" class="btn-in" (click)="setAdjustSign(1)">Agregar</ion-button>
+        <ion-button expand="block" class="btn-out" (click)="setAdjustSign(-1)">Quitar</ion-button>
+      </div>
+
+      <div style="padding:16px;">
+        <ion-button expand="block" size="large" shape="round" (click)="applyStockAdjust()">Guardar</ion-button>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>

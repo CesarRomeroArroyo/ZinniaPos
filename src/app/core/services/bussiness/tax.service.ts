@@ -1,43 +1,28 @@
-import { delay, lastValueFrom, Observable, of } from 'rxjs';
+import { delay, Observable, of } from 'rxjs';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
 import { ITax, ITaxPayload } from '../../interfaces/bussiness/tax.interface';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class TaxService {
 
-    private taxesMock: ITax[]  = [
-        {
-            id: '1',
-            name: 'IVA 19%',
-            percentage: 19,
-            type: 'added',
-        }
-    ];
+  // Mock temporal
+  private taxesMock: ITax[]  = [
+    { id: '1', name: 'IVA 19%', percentage: 19, type: 'added' },
+  ];
 
-    constructor(
-        private _httpClient: HttpClient,
-    ) { }
+  constructor(private _httpClient: HttpClient) {}
 
-    public getAllSuppliers(userId: string): Observable<ITax[]> {
-        /*
-        return await lastValueFrom(
-            this._httpClient.get<any>(`${environment.API}/getByIdUnico/firmas/${userId}`
-        ));
-        */
-        return of(this.taxesMock).pipe(delay(3000));
-    }
+  /** Obtener impuestos del usuario */
+  public getAllTaxes(userId: string): Observable<ITax[]> {
+    // return this._httpClient.get<ITax[]>(`${environment.API}/taxes/${userId}`);
+    return of(this.taxesMock).pipe(delay(800));
+  }
 
-    public saveSupplier(newTax: ITaxPayload): Observable<boolean> {
-        /*
-        return await lastValueFrom(
-            this._httpClient.post<any>(`${environment.API}/save/firmas/`, payload
-        ));
-        */
-        return of(true).pipe(delay(3000));
-    }
-
+  /** Guardar/crear impuesto */
+  public saveTax(newTax: ITaxPayload): Observable<boolean> {
+    // return this._httpClient.post(`${environment.API}/taxes`, newTax).pipe(map(() => true));
+    return of(true).pipe(delay(800));
+  }
 }

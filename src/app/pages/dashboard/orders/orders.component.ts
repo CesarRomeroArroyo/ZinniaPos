@@ -11,12 +11,10 @@ import { IUser } from 'src/app/core/interfaces/bussiness/user.interface';
 import { AuthSessionService } from 'src/app/core/services/utils/auth-session.service';
 import { LoadingService } from 'src/app/core/services/utils/loading.service';
 import { ToastService } from 'src/app/core/services/utils/toast.service';
-import { OrderListComponent } from './components/order-list/order-list.component';
 import { firstValueFrom } from 'rxjs';
-import { QuickAccessPanelComponent } from 'src/app/shared/components/quick-access-panel/quick-access-panel.component';
-import { ProgressListComponent } from 'src/app/shared/components/progress-list/progress-list.component';
 import { IListTask } from 'src/app/core/consts/types/progress-list.type';
 import { InitialBusinessSettingService } from 'src/app/core/services/utils/initial-setting.service';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-orders',
@@ -26,12 +24,8 @@ import { InitialBusinessSettingService } from 'src/app/core/services/utils/initi
   imports: [
     CommonModule,
     IonicModule,
-    HeaderComponent,
-    NoOrdersBannerComponent,
-    OrderListComponent,
-    QuickAccessPanelComponent,
-    ProgressListComponent,
-  ]
+    RouterModule
+]
 })
 export class OrdersComponent implements OnInit {
 

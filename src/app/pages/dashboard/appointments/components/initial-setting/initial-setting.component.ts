@@ -14,6 +14,8 @@ import { quickAccessAddMessages, quickAccessEditConfig } from './initial-setting
 import { InitialBusinessSettingService } from 'src/app/core/services/utils/initial-setting.service';
 import { QuickAccessPanelComponent } from 'src/app/shared/components/quick-access-panel/quick-access-panel.component';
 import { Subscription } from 'rxjs';
+import { HeaderComponent } from 'src/app/shared/components/header/header.component';
+import { MenuHeaderComponent } from 'src/app/shared/components/menu-header/menu-header.component';
 
 @Component({
   selector: 'app-initial-setting',
@@ -26,6 +28,7 @@ import { Subscription } from 'rxjs';
     RouterModule,
     ProgressListComponent,
     QuickAccessPanelComponent,
+    MenuHeaderComponent
   ]
 })
 export class InitialSettingComponent implements OnInit, OnDestroy  {

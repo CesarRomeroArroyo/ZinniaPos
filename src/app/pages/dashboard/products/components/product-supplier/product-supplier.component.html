@@ -1,0 +1,69 @@
+<app-header
+  [settingHeader]="settingHeader"
+  [customActionCompleted]="onSubmit.bind(this)">
+</app-header>
+
+<ion-content>
+  <div class="container">
+    <form class="form" [formGroup]="supplierForm" *ngIf="supplierForm">
+      <div class="row">
+        <div class="group">
+          <ion-input
+            placeholder="Nombre"
+            fill="outline"
+            mode="md"
+            formControlName="name">
+          </ion-input>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="group">
+          <ion-input
+            placeholder="Teléfono / Celular"
+            type="tel"
+            fill="outline"
+            mode="md"
+            formControlName="phone">
+          </ion-input>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="group">
+          <ion-input
+            placeholder="Correo electrónico"
+            type="email"
+            fill="outline"
+            mode="md"
+            formControlName="email">
+          </ion-input>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="group">
+          <ion-input
+            placeholder="Dirección"
+            type="text"
+            fill="outline"
+            mode="md"
+            formControlName="address">
+          </ion-input>
+        </div>
+      </div>
+    </form>
+  </div>
+</ion-content>
+
+<ion-footer class="ion-no-border footer">
+  <ion-button
+    mode="md"
+    expand="block"
+    fill="solid"
+    *ngIf="supplierForm"
+    [disabled]="supplierForm.invalid || saving"
+    (click)="onSubmit()">
+    Guardar
+  </ion-button>
+</ion-footer>

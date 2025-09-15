@@ -1,0 +1,10 @@
+.container {
+  gap: 16px;
+  display: flex;
+  height: auto;
+  flex-direction: column;
+  padding: 16px 24px;
+  justify-content: start;
+  background-color: var(--ion-color-primary-contrast);
+  margin-top: 8px;
+}

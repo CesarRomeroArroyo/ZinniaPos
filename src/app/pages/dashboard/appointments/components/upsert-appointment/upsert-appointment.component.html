@@ -1,12 +1,31 @@
-<app-header [settingHeader]="settingHeader" [customActionCompleted]="actionCompleted.bind(this)"></app-header>
+<app-header
+  [settingHeader]="settingHeader"
+  [customActionCompleted]="actionCompleted">
+</app-header>
+
 <ion-content>
+  <!-- ================= Cliente ================= -->
   <div class="container">
-    <ion-label for="appointmentType" class="title bold">Informacion de cliente</ion-label>
+    <ion-label class="title bold">Información de cliente</ion-label>
+
+    <ion-item lines="none" class="bordered-item" (click)="selectCustomer()">
+      <ion-input
+        mode="md"
+        label="Cliente"
+        labelPlacement="stacked"
+        placeholder="Selecciona un cliente"
+        [value]="selectedCustomerLabel"
+        readonly>
+      </ion-input>
+      <ion-icon name="chevron-forward-outline" slot="end"></ion-icon>
+    </ion-item>
   </div>
-  
+
+  <!-- ============== Tipo de consulta ============== -->
   <div class="container">
     <form class="form" [formGroup]="typeAppointmentsForm" *ngIf="typeAppointmentsForm">
-      <ion-label for="appointmentType" class="title bold">Tipo de consulta</ion-label>
+      <ion-label class="title bold">Tipo de consulta</ion-label>
+
       <ion-item *ngIf="!loading" lines="none" class="bordered-item" (click)="selectAppointmentType()">
         <ion-input
           mode="md"
@@ -22,19 +41,21 @@
 
       <ion-item *ngIf="loading" lines="none" class="bordered-item skeleton">
         <ion-label>
-          <ion-skeleton-text style="width: 87.53px;" [animated]="true"></ion-skeleton-text>
-          <ion-skeleton-text style="width: 115.53px; height: 18px;" [animated]="true"></ion-skeleton-text>
+          <ion-skeleton-text style="width: 88px" [animated]="true"></ion-skeleton-text>
+          <ion-skeleton-text style="width: 120px; height: 18px" [animated]="true"></ion-skeleton-text>
         </ion-label>
-        <ion-thumbnail style="width: 25.6px; height: 25.6px;" slot="end">
+        <ion-thumbnail style="width: 26px; height: 26px" slot="end">
           <ion-skeleton-text [animated]="true"></ion-skeleton-text>
         </ion-thumbnail>
       </ion-item>
     </form>
-  </div> 
+  </div>
 
+  <!-- ============== Fecha y Hora ============== -->
   <div class="container">
     <form class="form" [formGroup]="dateForm" *ngIf="dateForm">
-      <ion-label for="" class="title bold">Fecha y Hora</ion-label>
+      <ion-label class="title bold">Fecha y Hora</ion-label>
+
       <ion-item lines="none" class="bordered-item" (click)="selectDate()">
         <ion-input
           mode="md"
@@ -46,23 +67,36 @@
         </ion-input>
         <ion-icon name="chevron-forward-outline" slot="end"></ion-icon>
       </ion-item>
-      <ion-item lines="none" class="bordered-item" (click)="selectTime()">
+
+      <ion-item lines="none" class="bordered-item" (click)="selectTimeRange()">
         <ion-input
           mode="md"
           label="Hora"
           labelPlacement="stacked"
           placeholder="Selecciona una hora"
-          readonly
-          formControlName="time">
+          [value]="timeRangeLabel"
+          readonly>
         </ion-input>
         <ion-icon name="chevron-forward-outline" slot="end"></ion-icon>
       </ion-item>
     </form>
-  </div> 
+  </div>
+
+  <!-- ============== Observaciones ============== -->
+  <div class="container">
+    <ion-label class="title bold">Observaciones</ion-label>
+    <ion-textarea
+      autoGrow="true"
+      rows="3"
+      maxlength="500"
+      placeholder="Notas de la cita"
+      [(ngModel)]="observaciones">
+    </ion-textarea>
+  </div>
 </ion-content>
 
 <ion-footer class="ion-no-border footer">
-  <ion-button mode="md" expand="block" fill="solid">
+  <ion-button mode="md" expand="block" fill="solid" (click)="confirmAppointment()">
     Confirmar cita
   </ion-button>
 </ion-footer>
