@@ -1,6 +1,6 @@
 // src/app/pages/dashboard/products/components/product-management/product-management.component.ts
 import { CommonModule } from "@angular/common";
-import { Component, OnInit } from "@angular/core";
+import { Component, OnDestroy, OnInit } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { IonicModule, MenuController, ModalController } from "@ionic/angular";
 import { RouterModule } from "@angular/router";
@@ -9,6 +9,10 @@ import {
   ProductApi,
 } from "src/app/core/services/bussiness/product.service";
 import { ProductAddComponent } from "../product-add/product-add.component";
+
+// 👇 Nuevos imports para detectar regreso a esta ruta
+import { Router, NavigationEnd } from "@angular/router";
+import { Subscription, filter } from "rxjs";
 
 type Status = "Activo" | "Inactivo";
 
@@ -29,11 +33,12 @@ interface UIProduct {
   styleUrls: ["./product-management.component.scss"],
   imports: [IonicModule, CommonModule, FormsModule, RouterModule],
 })
-export class ProductManagementComponent implements OnInit {
+export class ProductManagementComponent implements OnInit, OnDestroy {
   constructor(
     private menuCtrl: MenuController,
     private productsSrv: ProductService,
-    private modalCtrl: ModalController
+    private modalCtrl: ModalController,
+    private router: Router // 👈 inyectamos Router
   ) {}
 
   // UI state
@@ -63,6 +68,12 @@ export class ProductManagementComponent implements OnInit {
 
   skeletons = Array.from({ length: 6 });
 
+  // 👇 suscripciones compuestas
+  private subs = new Subscription();
+
+  // ⚠️ Ajusta según tu ruta real. Puedes dejarlo amplio con includes.
+  private readonly LIST_URL_FRAGMENT = "/product-management";
+
   get activeFilterCount(): number {
     let n = 0;
     if (this.selectedStatuses.size) n++;
@@ -72,6 +83,36 @@ export class ProductManagementComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // 1) Carga inicial
+    this.loadProducts();
+
+    // 2) Si cualquier producto cambia en otra pantalla, recarga
+    this.subs.add(
+      this.productsSrv.productChanged$.subscribe(() => this.loadProducts())
+    );
+
+    // 3) Si regresamos a esta ruta (back/forward o navegación), recarga
+    this.subs.add(
+      this.router.events
+        .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
+        .subscribe((e) => {
+          const url = e.urlAfterRedirects || e.url || "";
+          if (this.isListUrl(url)) {
+            this.loadProducts();
+          }
+        })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subs.unsubscribe();
+  }
+
+  /**
+   * Ionic lifecycle (si estás dentro de ion-router-outlet),
+   * se dispara al entrar/volver a la vista.
+   */
+  ionViewWillEnter() {
     this.loadProducts();
   }
 
@@ -240,5 +281,12 @@ export class ProductManagementComponent implements OnInit {
       this.coverCache.clear();
       await this.loadProducts();
     }
+  }
+
+  // ====== Util ======
+  /** Determina si la URL actual corresponde a esta vista de listado. */
+  private isListUrl(url: string): boolean {
+    // Lo hacemos tolerante por si hay prefijos (/dashboard, query params, etc.)
+    return url.includes(this.LIST_URL_FRAGMENT);
   }
 }

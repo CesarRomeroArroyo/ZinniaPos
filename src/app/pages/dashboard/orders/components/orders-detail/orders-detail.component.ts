@@ -2,8 +2,9 @@
 import { CommonModule } from "@angular/common";
 import { Component, OnInit, ChangeDetectorRef } from "@angular/core";
 import { IonicModule, NavController } from "@ionic/angular";
-import { HttpClientModule } from "@angular/common/http";
+import { HttpClientModule, HttpClient } from "@angular/common/http";
 import { ActivatedRoute } from "@angular/router";
+import { firstValueFrom } from "rxjs";
 
 import {
   OrderService,
@@ -47,6 +48,9 @@ interface UIOrderDetail {
   cliente_direccion?: string;
 }
 
+// Prefijo para rutas relativas (si tus URLs vienen como /uploads/..)
+const API_FILES_BASE: string = ""; // ej: "https://tu-api.com"
+
 @Component({
   standalone: true,
   selector: "app-order-detail",
@@ -67,12 +71,16 @@ export class OrderDetailComponent implements OnInit {
   private prodByName = new Map<string, ProductApi>();
   private imgCache = new Map<string, string | null>();
 
+  // para revocar blobs y evitar fugas
+  private blobUrls: string[] = [];
+
   constructor(
     private route: ActivatedRoute,
     private nav: NavController,
     private ordersSrv: OrderService,
     private clientesSrv: ClientesService,
     private productsSrv: ProductService,
+    private http: HttpClient,
     private cd: ChangeDetectorRef
   ) {}
 
@@ -88,7 +96,7 @@ export class OrderDetailComponent implements OnInit {
             productId: it.productId ? String(it.productId) : undefined,
             productUniqueId:
               it.productUniqueId != null ? String(it.productUniqueId) : null,
-            imageUrl: it.imageUrl ?? null,
+            imageUrl: this.toStringUrl(it.imageUrl ?? null),
             nombre: it.nombre,
             cantidad: Number(it.cantidad ?? 1) || 1,
             precio:
@@ -124,20 +132,22 @@ export class OrderDetailComponent implements OnInit {
     this.load();
   }
 
+  ngOnDestroy(): void {
+    // limpia blobs
+    for (const u of this.blobUrls) URL.revokeObjectURL(u);
+    this.blobUrls = [];
+  }
+
   // ================= CARGA PRINCIPAL =================
   async load(ev?: CustomEvent) {
     this.loading = true;
     this.error = undefined;
     try {
-      // pedido fresco de la API
       const fresh = await this.fetchOrder();
-      // fusiona con cualquier prefijo (lo visible no parpadea)
       this.order = this.mergeOrders(this.order ?? null, fresh);
 
-      // completa data de cliente (nombre, correo, dirección, teléfono)
       await this.inflateCustomerFields();
 
-      // catálogo para nombres/portadas de ítems
       await this.ensureProductIndexes();
       await this.inflateItemNamesIfMissing();
       await this.hydrateItemImages();
@@ -156,10 +166,12 @@ export class OrderDetailComponent implements OnInit {
     const anySrv: any = this.ordersSrv as any;
 
     if (typeof anySrv.getById === "function") {
-      raw = await anySrv.getById(this.id);
+      raw = await this.resolveMaybe<any>(anySrv.getById(this.id));
     } else {
       try {
-        const list: PedidoApi[] = await this.ordersSrv.getPedidos();
+        const list = await this.resolveMaybe<PedidoApi[]>(
+          this.ordersSrv.getPedidos() as any
+        );
         raw = (list || []).find((x) => String((x as any).id) === this.id) ?? null;
       } catch {
         raw = null;
@@ -209,7 +221,9 @@ export class OrderDetailComponent implements OnInit {
     const tel = String(this.order.numero_celular || "").replace(/\D/g, "");
 
     try {
-      const list: ClienteApi[] = await this.clientesSrv.getClientes();
+      const list = await this.resolveMaybe<ClienteApi[]>(
+        this.clientesSrv.getClientes() as any
+      );
 
       if (id) {
         found = list.find(
@@ -219,8 +233,7 @@ export class OrderDetailComponent implements OnInit {
       if (!found && tel) {
         found = list.find(
           (c: any) =>
-            String(c?.telefono ?? c?.celular ?? "")
-              .replace(/\D/g, "") === tel
+            String(c?.telefono ?? c?.celular ?? "").replace(/\D/g, "") === tel
         );
       }
 
@@ -255,18 +268,19 @@ export class OrderDetailComponent implements OnInit {
     return String(s ?? "")
       .toLowerCase()
       .normalize("NFD")
-      .replace(/\p{Diacritic}/gu, "")
+      .replace(/[\u0300-\u036f]/g, "")
       .trim();
   }
 
   private async ensureProductIndexes() {
     if (this.prodById.size) return;
     try {
-      const list = await this.productsSrv.getAll();
+      const list = await this.resolveMaybe<ProductApi[]>(
+        this.productsSrv.getAll() as any
+      );
       for (const p of list) {
         const id = String((p as any).id ?? "");
-        const uid =
-          String((p as any).idunico ?? (p as any).id_unico ?? "") || null;
+        const uid = String((p as any).idunico ?? (p as any).id_unico ?? "") || null;
         const nombre =
           (p as any).nombre ?? (p as any).name ?? (p as any).titulo ?? "";
 
@@ -303,7 +317,41 @@ export class OrderDetailComponent implements OnInit {
     }
   }
 
-  /** Imágenes inline dentro de ProductApi (primer fallback local, sin red) */
+  private toStringUrl(u: any): string | null {
+    const s =
+      typeof u === "string"
+        ? u
+        : u?.url ?? u?.src ?? u?.imageUrl ?? u?.image ?? null;
+    if (!s) return null;
+    if (/^(https?:|data:|blob:)/i.test(s)) return s;
+    if (!API_FILES_BASE) return s;
+    return `${API_FILES_BASE.replace(/\/$/, "")}/${String(s).replace(/^\//, "")}`;
+  }
+
+  /** Si la URL requiere auth/CORS, la bajo como blob y devuelvo blob: */
+  private async ensureDisplayable(url: string | null): Promise<string | null> {
+    if (!url) return null;
+    const resolved = this.toStringUrl(url);
+    if (!resolved) return null;
+
+    // Si ya es data: o blob:, úsala tal cual
+    if (/^(data:|blob:)/i.test(resolved)) return resolved;
+
+    try {
+      // Intenta traerla con HttpClient (aplica tu interceptor/token)
+      const blob = await firstValueFrom(
+        this.http.get(resolved, { responseType: "blob" as const })
+      );
+      const objUrl = URL.createObjectURL(blob);
+      this.blobUrls.push(objUrl);
+      return objUrl;
+    } catch {
+      // Si falla (CORS 4xx), al menos devuelve la URL directa por si el server sí permite <img> sin XHR
+      return resolved;
+    }
+  }
+
+  /** Imágenes inline dentro de ProductApi */
   private collectImagesFromApi(p: any): string[] {
     const arr =
       (Array.isArray(p?.imagenes) && p.imagenes) ||
@@ -321,19 +369,33 @@ export class OrderDetailComponent implements OnInit {
       null;
 
     const out: string[] = [];
-    if (arr?.length) out.push(...arr.filter(Boolean));
-    if (single) out.push(single);
+    for (const x of arr) {
+      const url = this.toStringUrl(x);
+      if (url) out.push(url);
+    }
+    const uno = this.toStringUrl(single);
+    if (uno) out.push(uno);
     return out;
   }
 
-  /** Llama al service replicando EXACTAMENTE el patrón de product-detail */
+  /** Convierte Observable o Promise a Promise con tipo */
+  private async resolveMaybe<T>(v: any): Promise<T> {
+    if (v && typeof v.then === "function") return await v; // Promise
+    if (v && typeof v.subscribe === "function") return await firstValueFrom(v); // Observable
+    return v as T;
+  }
+
   private async fetchCoverFor(id: string, unique?: string | null): Promise<string | null> {
     try {
+      let res: any;
       if (unique) {
-        return await this.productsSrv.getCoverUrl({ id, idunico: unique } as any);
+        res = await this.resolveMaybe<any>(
+          this.productsSrv.getCoverUrl({ id, idunico: unique } as any)
+        );
+      } else {
+        res = await this.resolveMaybe<any>((this.productsSrv.getCoverUrl as any)(id));
       }
-      // cuando no hay idunico, pasar SOLO el id (string)
-      return await (this.productsSrv.getCoverUrl as any)(id);
+      return this.toStringUrl(res);
     } catch {
       return null;
     }
@@ -341,18 +403,24 @@ export class OrderDetailComponent implements OnInit {
 
   private async fetchFirstImageFor(id: string, unique?: string | null): Promise<string | null> {
     try {
-      if (unique) {
-        const imgs = await this.productsSrv.getImages({ id, idunico: unique } as any);
-        return imgs?.[0] ?? null;
+      let imgs: any = unique
+        ? await this.resolveMaybe<any>(this.productsSrv.getImages({ id, idunico: unique } as any))
+        : await this.resolveMaybe<any>(this.productsSrv.getImages({ id } as any));
+
+      if (Array.isArray(imgs)) {
+        for (const it of imgs) {
+          const url = this.toStringUrl(it);
+          if (url) return url;
+        }
+        return null;
       }
-      const imgs = await this.productsSrv.getImages({ id } as any);
-      return imgs?.[0] ?? null;
+      return this.toStringUrl(imgs);
     } catch {
       return null;
     }
   }
 
-  /** Hidrata la miniatura de cada ítem con varios fallbacks robustos y sin pasar idunico=null */
+  /** Hidrata miniaturas con fallbacks + blob */
   private async hydrateItemImages() {
     if (!this.order?.items?.length) return;
 
@@ -360,7 +428,14 @@ export class OrderDetailComponent implements OnInit {
     const tasks: Promise<void>[] = [];
 
     for (const it of this.order.items) {
-      if (it.imageUrl) continue;
+      if (it.imageUrl) {
+        tasks.push(
+          (async () => {
+            it.imageUrl = await this.ensureDisplayable(it.imageUrl!);
+          })()
+        );
+        continue;
+      }
 
       // resolver producto por id / idunico / nombre
       let pid = it.productId;
@@ -389,14 +464,23 @@ export class OrderDetailComponent implements OnInit {
       // sin id: usa imágenes inline del ProductApi si lo tenemos
       if (!pid && p) {
         const inline = this.collectImagesFromApi(p);
-        if (inline.length) it.imageUrl = inline[0];
+        if (inline.length) {
+          tasks.push(
+            (async () => {
+              const url = await this.ensureDisplayable(inline[0]);
+              this.imgCache.set(`inline:${it.nombre || ""}`, url);
+              it.imageUrl = url ?? undefined;
+            })()
+          );
+        }
         continue;
       }
       if (!pid) continue;
 
       // cache
       if (this.imgCache.has(pid)) {
-        it.imageUrl = this.imgCache.get(pid) || undefined;
+        const cached = this.imgCache.get(pid);
+        it.imageUrl = cached || undefined;
         continue;
       }
 
@@ -404,17 +488,23 @@ export class OrderDetailComponent implements OnInit {
       if (p) {
         const inline = this.collectImagesFromApi(p);
         if (inline.length) {
-          this.imgCache.set(pid, inline[0]);
-          it.imageUrl = inline[0];
+          tasks.push(
+            (async () => {
+              let url = await this.ensureDisplayable(inline[0]);
+              this.imgCache.set(pid!, url ?? null);
+              if (url) it.imageUrl = url;
+            })()
+          );
           continue;
         }
       }
 
-      // endpoints (portada y luego galería)
+      // endpoints (portada y luego galería) + blob fallback
       tasks.push(
         (async () => {
           let url = await this.fetchCoverFor(pid!, puid);
           if (!url) url = await this.fetchFirstImageFor(pid!, puid);
+          if (url) url = await this.ensureDisplayable(url);
           this.imgCache.set(pid!, url ?? null);
           if (url) it.imageUrl = url;
         })()
@@ -530,7 +620,7 @@ export class OrderDetailComponent implements OnInit {
       return {
         productId: productId ? String(productId) : undefined,
         productUniqueId: productUniqueId ? String(productUniqueId) : null,
-        imageUrl: inlineImg ?? null,
+        imageUrl: this.toStringUrl(inlineImg),
         nombre,
         cantidad,
         precio,
@@ -619,6 +709,11 @@ export class OrderDetailComponent implements OnInit {
       "pill--entregado": s.includes("entre") || s.includes("entreg"),
       "pill--cancelado": s.includes("canc"),
     };
+  }
+
+  onImgError(it: UIItem) {
+    it.imageUrl = undefined; // vuelve al placeholder
+    this.cd.markForCheck();
   }
 
   openWhatsApp() {

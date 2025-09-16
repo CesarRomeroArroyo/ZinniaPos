@@ -1,5 +1,5 @@
 import { Injectable } from "@angular/core";
-import { Observable, firstValueFrom, map } from "rxjs";
+import { Observable, Subject, firstValueFrom, map } from "rxjs";
 import { ApiService } from "src/app/data/api.service";
 import { IProduct } from "src/app/core/interfaces/bussiness/product.interface";
 import { ITax } from "src/app/core/interfaces/bussiness/tax.interface";
@@ -74,6 +74,36 @@ export class ProductService {
     `/inventario/stock/${encodeURIComponent(productoId)}`;
 
   constructor(private api: ApiService) {}
+
+  /** 🔔 Se emite cada vez que un producto cambia (crear/actualizar/eliminar/stock/imagenes). */
+  public readonly productChanged$ = new Subject<{
+    id: string;
+    type:
+      | "created"
+      | "updated"
+      | "deleted"
+      | "stock_updated"
+      | "image_uploaded"
+      | "image_deleted"
+      | "generic";
+    payload?: any;
+  }>();
+
+  /** Permite notificar manualmente un cambio de producto */
+  public notifyProductChanged(
+    id: string,
+    type:
+      | "created"
+      | "updated"
+      | "deleted"
+      | "stock_updated"
+      | "image_uploaded"
+      | "image_deleted"
+      | "generic" = "generic",
+    payload?: any
+  ) {
+    this.productChanged$.next({ id, type, payload });
+  }
 
   // ===== Helpers
   private toNumber(v: any): number {
@@ -234,6 +264,9 @@ export class ProductService {
       const ok = resp?.success === true || resp?.ok === true || true;
       const rawId = resp?.id;
       const id = rawId != null && rawId !== true ? String(rawId) : undefined;
+
+      if (id) this.notifyProductChanged(id, "created", { input, resp });
+
       return { ok, id, raw: resp };
     } catch (e: any) {
       throw new Error(this.firstError(e) ?? "No se pudo crear el producto");
@@ -264,6 +297,9 @@ export class ProductService {
       const id = resp?.id ?? resp?.data?.id;
       const idunico =
         resp?.idunico ?? resp?.data?.idunico ?? resp?.producto?.idunico;
+
+      if (id != null) this.notifyProductChanged(String(id), "created", { form, resp });
+
       return { ok, id, idunico, raw: resp };
     } catch (e: any) {
       throw new Error(this.firstError(e) ?? "No se pudo crear el producto");
@@ -277,6 +313,8 @@ export class ProductService {
     try {
       await firstValueFrom(this.api.put<any>(url, { ...changes }));
       console.log("[ProductService.update] OK");
+      // 🔔 notificar actualización
+      this.notifyProductChanged(String(id), "updated", { changes });
       return true;
     } catch (e: any) {
       console.error("[ProductService.update] ERROR", e);
@@ -288,6 +326,8 @@ export class ProductService {
   async remove(id: string): Promise<boolean> {
     try {
       await firstValueFrom(this.api.delete<any>(ProductService.BY_ID(id)));
+      // 🔔 notificar eliminación
+      this.notifyProductChanged(String(id), "deleted");
       return true;
     } catch (e: any) {
       throw new Error(this.firstError(e) ?? "No se pudo eliminar el producto");
@@ -392,6 +432,10 @@ export class ProductService {
 
     try {
       await firstValueFrom(this.api.delete<any>(url));
+      // 🔔 notificar imagen eliminada
+      this.notifyProductChanged(String(id ?? idunico ?? ""), "image_deleted", {
+        filename,
+      });
       return true;
     } catch (e: any) {
       // Propaga el error “real” del backend
@@ -453,23 +497,37 @@ export class ProductService {
     // intentos SOLO con PUT (nunca POST)
     try {
       await firstValueFrom(this.api.put<any>(urlById, { stock: n }));
+      // 🔔 notificar stock actualizado
+      this.notifyProductChanged(id, "stock_updated", { stock: n });
       return true;
     } catch (e1: any) {
-      if (okDespiteParse(e1)) return true;
+      if (okDespiteParse(e1)) {
+        this.notifyProductChanged(id, "stock_updated", { stock: n });
+        return true;
+      }
       try {
         await firstValueFrom(this.api.put<any>(urlById, { stock_actual: n }));
+        this.notifyProductChanged(id, "stock_updated", { stock: n });
         return true;
       } catch (e2: any) {
-        if (okDespiteParse(e2)) return true;
+        if (okDespiteParse(e2)) {
+          this.notifyProductChanged(id, "stock_updated", { stock: n });
+          return true;
+        }
         try {
           await firstValueFrom(this.api.put<any>(urlLegacy, { stock: n }));
+          this.notifyProductChanged(id, "stock_updated", { stock: n });
           return true;
         } catch (e3: any) {
-          if (okDespiteParse(e3)) return true;
+          if (okDespiteParse(e3)) {
+            this.notifyProductChanged(id, "stock_updated", { stock: n });
+            return true;
+          }
           try {
             await firstValueFrom(
               this.api.put<any>(urlLegacy, { stock_actual: n })
             );
+            this.notifyProductChanged(id, "stock_updated", { stock: n });
             return true;
           } catch (e4: any) {
             const msg =
@@ -526,7 +584,12 @@ export class ProductService {
     if (files.length === 1) fd.append("file", files[0], files[0].name);
     files.forEach((f) => fd.append("files[]", f, f.name));
     try {
-      return await firstValueFrom(this.api.post<any>(url, fd));
+      const resp = await firstValueFrom(this.api.post<any>(url, fd));
+      // 🔔 notificar imagen subida
+      this.notifyProductChanged(String(idunico), "image_uploaded", {
+        files: files.map((f) => f.name),
+      });
+      return resp;
     } catch (e: any) {
       throw new Error(
         this.firstError(e) ?? "No se pudieron subir las imágenes"
