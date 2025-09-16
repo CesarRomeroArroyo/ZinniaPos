@@ -66,22 +66,25 @@ ion-header {
 }
 .title-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
 }
+.title-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 .name {
-  margin: 8px 0;
+  margin: 8px 0 2px;
   font-weight: 700;
   font-size: 20px;
 }
-.chip {
-  --background: #f0f2f5;
-  --color: #111;
-  border-radius: 8px;
-  margin-top: 2px;
+.subtitle {
+  font-size: 0.95rem;
+  color: #6b7280;
+  line-height: 1.2;
 }
-
 .block {
   padding: 10px 0 2px;
 }
@@ -174,6 +177,7 @@ ion-header {
   color: #6b7280;
 }
 
+/* Thumbs con botón eliminar */
 .thumb-wrap {
   position: relative;
   display: inline-block;
@@ -194,6 +198,99 @@ ion-header {
   cursor: pointer;
 }
 
-:host ::ng-deep .alert-inputs-stacked .alert-input-group {
-  margin-bottom: 8px;
+/* Modal edición */
+ion-modal ion-item {
+  --inner-padding-top: 8px;
+  --inner-padding-bottom: 8px;
 }
+/* ===== Modal de edición (estilo mock) ===== */
+.edit-modal ion-header.edit-header ion-toolbar {
+  border: 2px dotted rgba(0, 0, 0, 0.18); /* quita si no quieres el punteado */
+  border-left: 0;
+  border-right: 0;
+}
+.edit-header ion-title {
+  font-weight: 700;
+}
+.edit-header ion-button ion-icon {
+  font-size: 22px;
+}
+
+/* Contenido del modal */
+.edit-content {
+  --padding-top: 12px;
+}
+
+/* Form con labels apilados y controles redondeados */
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field__label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 600;
+}
+.field__control {
+  --padding-start: 12px;
+  --padding-end: 12px;
+  --padding-top: 10px;
+  --padding-bottom: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  background: #fff;
+}
+
+/* Celda tipo picker (Categoría / Proveedor) */
+.picker {
+  width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #fff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.picker__text {
+  display: flex;
+  flex-direction: column;
+}
+.picker__label {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+.picker__value {
+  font-weight: 600;
+  color: #111;
+}
+
+/* Botón guardar inferior */
+.btn-save {
+  --border-radius: 12px;
+  --background: #111;
+  --background-activated: #000;
+  font-weight: 600;
+}
+
+.chip {
+  --background: #f0f2f5;
+  --color: #111;
+  border-radius: 8px;
+  margin-top: 6px;
+}
+
+
+/* Galería dentro del modal (un poco más compacta) */
+.edit-modal .gallery {
+  padding: 0 0 8px;
+}
+
+

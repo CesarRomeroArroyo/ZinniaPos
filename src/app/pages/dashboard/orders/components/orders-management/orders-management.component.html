@@ -143,7 +143,13 @@
             <ion-list-header class="group-header">{{ g.label
               }}</ion-list-header>
 
-            <ion-item *ngFor="let o of g.items; trackBy: trackById" button>
+            <!-- 👇 aquí agregué el routerLink -->
+            <ion-item
+              *ngFor="let o of g.items; trackBy: trackById"
+              button
+              [routerLink]="['../order', o.id]"
+              [state]="{ pref: toPref(o) }"
+              routerDirection="forward">
               <ion-label>
                 <h3 class="row-title">#{{ o.id }}</h3>
 
@@ -171,13 +177,6 @@
               <div slot="end" class="end-actions">
                 <ion-badge [ngClass]="statusClass(o.estado)">{{ (o.estado ||
                   'Sin estado') | titlecase }}</ion-badge>
-                <ion-button fill="clear" size="small"
-                  (click)="openWhatsApp(o, $event)"
-                  [disabled]="!o.numero_celular">
-                  <ion-icon name="logo-whatsapp"></ion-icon>
-                </ion-button>
-                <ion-icon class="chev"
-                  name="chevron-forward-outline"></ion-icon>
               </div>
             </ion-item>
           </ion-list>
