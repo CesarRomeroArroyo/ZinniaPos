@@ -1,13 +1,16 @@
-<app-header [settingHeader]="settingHeader"
+<app-header
+  [settingHeader]="settingHeader"
   [customActionCompleted]="actionCompleted.bind(this)"></app-header>
 
 <ion-content>
   <div class="container">
     <!-- Sección cliente SIN buscador en la página; el filtro va dentro del modal -->
     <div class="section" *ngIf="!selectedCustomer">
-      <ion-label for="customer" class="title bold">Informacion de cliente</ion-label>
+      <ion-label for="customer" class="title bold">Informacion de
+        cliente</ion-label>
       <form class="form" [formGroup]="customerForm" *ngIf="customerForm">
-        <ion-button mode="md" expand="block" fill="outline" (click)="customerModalOpen = true">
+        <ion-button mode="md" expand="block" fill="outline"
+          (click)="customerModalOpen = true">
           Agregar cliente
         </ion-button>
       </form>
@@ -16,24 +19,31 @@
     <div class="section" *ngIf="selectedCustomer">
       <div class="section-header">
         <ion-label class="title bold">Informacion de cliente</ion-label>
-        <button class="remove-btn" type="button" (click)="removeSelectedCustomer()">
+        <button class="remove-btn" type="button"
+          (click)="removeSelectedCustomer()">
           <ion-icon name="close-outline"></ion-icon>
         </button>
       </div>
       <div class="customer-info">
-        <div class="customer-field"><label>Cliente</label><span>{{ selectedCustomer.fullname }}</span></div>
-        <div class="customer-field"><label>Correo electrónico</label><span>{{ selectedCustomer.email }}</span></div>
-        <div class="customer-field"><label>Teléfono / Celular</label><span>{{ selectedCustomer.mobile }}</span></div>
-        <div class="customer-field"><label>Dirección</label><span>{{ selectedCustomer.address }}</span></div>
+        <div class="customer-field"><label>Cliente</label><span>{{
+            selectedCustomer.fullname }}</span></div>
+        <div class="customer-field"><label>Correo electrónico</label><span>{{
+            selectedCustomer.email }}</span></div>
+        <div class="customer-field"><label>Teléfono / Celular</label><span>{{
+            selectedCustomer.mobile }}</span></div>
+        <div class="customer-field"><label>Dirección</label><span>{{
+            selectedCustomer.address }}</span></div>
       </div>
     </div>
   </div>
 
   <div class="container">
     <form class="form" [formGroup]="productsForm" *ngIf="productsForm">
-      <ion-label for="products" class="title bold">Lista de productos</ion-label>
+      <ion-label for="products" class="title bold">Lista de
+        productos</ion-label>
 
-      <ion-button mode="md" expand="block" fill="outline" (click)="openProductsModal()">
+      <ion-button mode="md" expand="block" fill="outline"
+        (click)="openProductsModal()">
         Agregar productos
       </ion-button>
     </form>
@@ -41,10 +51,12 @@
     <ng-container *ngIf="orderItems.length > 0">
       <div class="section">
         <div class="products-list">
-          <div class="product-item" *ngFor="let item of orderItems; trackBy: trackByItemId">
+          <div class="product-item"
+            *ngFor="let item of orderItems; trackBy: trackByItemId">
             <div class="product-icon">
               <ion-thumbnail>
-                <img [src]="getImageSrc(item.product)" [alt]="item.product.name || 'Producto'" />
+                <img [src]="getImageSrc(item.product)"
+                  [alt]="item.product.name || 'Producto'" />
               </ion-thumbnail>
             </div>
 
@@ -52,10 +64,13 @@
               <div class="product-header">
                 <div class="product-info">
                   <h3>{{ item.product.name }}</h3>
-                  <div class="product-price">{{ item.product.salePrice | currency }}</div>
+                  <div class="product-price">{{ item.product.salePrice |
+                    currency }}</div>
                 </div>
-                <button class="delete-btn" type="button" (click)="removeItemFromOrder(item.id)">
-                  <span class="delete-icon"><ion-icon name="trash-outline"></ion-icon></span>
+                <button class="delete-btn" type="button"
+                  (click)="removeItemFromOrder(item.id)">
+                  <span class="delete-icon"><ion-icon
+                      name="trash-outline"></ion-icon></span>
                 </button>
               </div>
 
@@ -68,22 +83,36 @@
                   <div class="quantity-input">
                     <div class="input">
                       <label>Cantidad</label>
-                      <ion-label class="quantity">{{ item.quantity }}</ion-label>
+                      <ion-label class="quantity">{{ item.quantity
+                        }}</ion-label>
                     </div>
                     <div class="controls">
-                      <button class="quantity-btn" type="button" (click)="decreaseQuantity(item)">
-                        <ion-icon slot="icon-only" name="remove-outline"></ion-icon>
+                      <button class="quantity-btn" type="button"
+                        (click)="decreaseQuantity(item)">
+                        <ion-icon slot="icon-only"
+                          name="remove-outline"></ion-icon>
                       </button>
-                      <button class="quantity-btn" type="button" (click)="increaseQuantity(item)">
-                        <ion-icon slot="icon-only" name="add-outline"></ion-icon>
+                      <button
+                        class="quantity-btn"
+                        type="button"
+                        (click)="increaseQuantity(item)"
+                        [disabled]="item.quantity >= getStock(item.product)">
+                        <ion-icon slot="icon-only"
+                          name="add-outline"></ion-icon>
                       </button>
                     </div>
+
+                    <!-- mueve el stock aquí abajo -->
+                    <div class="stock-hint under-controls">Stock: {{
+                      getStock(item.product) }}</div>
                   </div>
+
                 </div>
 
                 <div class="product-total">
                   <div class="total-label">Total</div>
-                  <div class="total-amount">{{ (item.product.salePrice * item.quantity) | currency }}</div>
+                  <div class="total-amount">{{ (item.product.salePrice *
+                    item.quantity) | currency }}</div>
                 </div>
               </div>
             </div>
@@ -94,16 +123,25 @@
   </div>
 
   <div class="container">
-    <ion-item lines="none"><ion-label class="title bold">Pago</ion-label></ion-item>
-    <ion-item lines="none"><ion-label class="text">Subtotal</ion-label><ion-note slot="end">{{ subtotal | currency }}</ion-note></ion-item>
-    <ion-item lines="none"><ion-label class="title" (click)="addDiscount()">Agregar descuento</ion-label><ion-note slot="end">{{ discountValue | currency }}</ion-note></ion-item>
-    <ion-item lines="none"><ion-label class="title">Impuesto estimado</ion-label><ion-note slot="end">{{ estimatedTax | currency }}</ion-note></ion-item>
-    <ion-item lines="none"><ion-label class="title bold">Total</ion-label><ion-note slot="end"><strong>{{ total | currency }}</strong></ion-note></ion-item>
+    <ion-item lines="none"><ion-label
+        class="title bold">Pago</ion-label></ion-item>
+    <ion-item lines="none"><ion-label class="text">Subtotal</ion-label><ion-note
+        slot="end">{{ subtotal | currency }}</ion-note></ion-item>
+    <ion-item lines="none"><ion-label class="title"
+        (click)="addDiscount()">Agregar descuento</ion-label><ion-note
+        slot="end">{{ discountValue | currency }}</ion-note></ion-item>
+    <ion-item lines="none"><ion-label class="title">Impuesto
+        estimado</ion-label><ion-note slot="end">{{ estimatedTax | currency
+        }}</ion-note></ion-item>
+    <ion-item lines="none"><ion-label
+        class="title bold">Total</ion-label><ion-note slot="end"><strong>{{
+          total | currency }}</strong></ion-note></ion-item>
   </div>
 </ion-content>
 
 <ion-footer class="ion-no-border footer">
-  <ion-button mode="md" expand="block" fill="solid" [disabled]="isOrderInvalid()" (click)="confirmOrder()">
+  <ion-button mode="md" expand="block" fill="solid"
+    [disabled]="isOrderInvalid()" (click)="confirmOrder()">
     Confirmar pedido
   </ion-button>
 </ion-footer>
@@ -207,8 +245,10 @@
       <ion-list>
         <ion-item
           button
+          detail="false"
           *ngFor="let p of filteredProducts"
-          (click)="toggleProductSelection(p)">
+          (click)="!isOutOfStock(p) && toggleProductSelection(p)"
+          [class.disabled]="isOutOfStock(p)">
           <!-- thumbnail -->
           <ion-avatar slot="start">
             <img [src]="getImageSrc(p)" alt="thumb" />
@@ -217,14 +257,19 @@
           <ion-label>
             <h2>{{ p.name }}</h2>
             <p>{{ p.salePrice | currency }}</p>
+            <p *ngIf="!isOutOfStock(p)">Stock: {{ getStock(p) }}</p>
+            <ion-badge color="medium" *ngIf="isOutOfStock(p)">Sin
+              stock</ion-badge>
           </ion-label>
 
           <!-- checkbox a la derecha -->
           <ion-checkbox
             slot="end"
-            [checked]="isProductSelected(p.id)"
+            [checked]="isProductSelected(p['id'])"
+            [disabled]="isOutOfStock(p)"
             (ionChange)="$event.stopPropagation(); toggleProductSelection(p)">
           </ion-checkbox>
+
         </ion-item>
       </ion-list>
 

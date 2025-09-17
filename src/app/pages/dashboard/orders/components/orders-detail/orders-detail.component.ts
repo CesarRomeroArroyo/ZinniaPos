@@ -1,6 +1,6 @@
 // src/app/pages/dashboard/orders/components/orders-detail/orders-detail.component.ts
 import { CommonModule } from "@angular/common";
-import { Component, OnInit, ChangeDetectorRef } from "@angular/core";
+import { Component, OnInit, ChangeDetectorRef, OnDestroy } from "@angular/core";
 import { IonicModule, NavController } from "@ionic/angular";
 import { HttpClientModule, HttpClient } from "@angular/common/http";
 import { ActivatedRoute } from "@angular/router";
@@ -58,7 +58,7 @@ const API_FILES_BASE: string = ""; // ej: "https://tu-api.com"
   styleUrls: ["./orders-detail.component.scss"],
   imports: [CommonModule, IonicModule, HttpClientModule],
 })
-export class OrderDetailComponent implements OnInit {
+export class OrderDetailComponent implements OnInit, OnDestroy {
   loading = false;
   error?: string;
   order?: UIOrderDetail | null;
@@ -150,7 +150,7 @@ export class OrderDetailComponent implements OnInit {
 
       await this.ensureProductIndexes();
       await this.inflateItemNamesIfMissing();
-      await this.hydrateItemImages();
+      await this.hydrateItemImages(); // 👈 hidrata imágenes como product-management
 
       this.cd.detectChanges();
     } catch (e: any) {
@@ -172,7 +172,8 @@ export class OrderDetailComponent implements OnInit {
         const list = await this.resolveMaybe<PedidoApi[]>(
           this.ordersSrv.getPedidos() as any
         );
-        raw = (list || []).find((x) => String((x as any).id) === this.id) ?? null;
+        raw =
+          (list || []).find((x) => String((x as any).id) === this.id) ?? null;
       } catch {
         raw = null;
       }
@@ -186,7 +187,10 @@ export class OrderDetailComponent implements OnInit {
     return this.toUIOrder(raw as PedidoApi);
   }
 
-  private mergeOrders(pref: UIOrderDetail | null, fresh: UIOrderDetail): UIOrderDetail {
+  private mergeOrders(
+    pref: UIOrderDetail | null,
+    fresh: UIOrderDetail
+  ): UIOrderDetail {
     if (!pref) return fresh;
     return {
       id: pref.id || fresh.id,
@@ -280,7 +284,8 @@ export class OrderDetailComponent implements OnInit {
       );
       for (const p of list) {
         const id = String((p as any).id ?? "");
-        const uid = String((p as any).idunico ?? (p as any).id_unico ?? "") || null;
+        const uid =
+          String((p as any).idunico ?? (p as any).id_unico ?? "") || null;
         const nombre =
           (p as any).nombre ?? (p as any).name ?? (p as any).titulo ?? "";
 
@@ -312,7 +317,10 @@ export class OrderDetailComponent implements OnInit {
       }
       if (p) {
         it.nombre =
-          (p as any).nombre ?? (p as any).name ?? (p as any).titulo ?? "Artículo";
+          (p as any).nombre ??
+          (p as any).name ??
+          (p as any).titulo ??
+          "Artículo";
       }
     }
   }
@@ -325,7 +333,10 @@ export class OrderDetailComponent implements OnInit {
     if (!s) return null;
     if (/^(https?:|data:|blob:)/i.test(s)) return s;
     if (!API_FILES_BASE) return s;
-    return `${API_FILES_BASE.replace(/\/$/, "")}/${String(s).replace(/^\//, "")}`;
+    return `${API_FILES_BASE.replace(/\/$/, "")}/${String(s).replace(
+      /^\//,
+      ""
+    )}`;
   }
 
   /** Si la URL requiere auth/CORS, la bajo como blob y devuelvo blob: */
@@ -385,7 +396,11 @@ export class OrderDetailComponent implements OnInit {
     return v as T;
   }
 
-  private async fetchCoverFor(id: string, unique?: string | null): Promise<string | null> {
+  // ======= 👇 Igual que product-management: portada y galería con id + idunico =======
+  private async fetchCoverFor(
+    id: string,
+    unique?: string | null
+  ): Promise<string | null> {
     try {
       let res: any;
       if (unique) {
@@ -393,7 +408,9 @@ export class OrderDetailComponent implements OnInit {
           this.productsSrv.getCoverUrl({ id, idunico: unique } as any)
         );
       } else {
-        res = await this.resolveMaybe<any>((this.productsSrv.getCoverUrl as any)(id));
+        res = await this.resolveMaybe<any>(
+          (this.productsSrv.getCoverUrl as any)(id)
+        );
       }
       return this.toStringUrl(res);
     } catch {
@@ -401,11 +418,18 @@ export class OrderDetailComponent implements OnInit {
     }
   }
 
-  private async fetchFirstImageFor(id: string, unique?: string | null): Promise<string | null> {
+  private async fetchFirstImageFor(
+    id: string,
+    unique?: string | null
+  ): Promise<string | null> {
     try {
       let imgs: any = unique
-        ? await this.resolveMaybe<any>(this.productsSrv.getImages({ id, idunico: unique } as any))
-        : await this.resolveMaybe<any>(this.productsSrv.getImages({ id } as any));
+        ? await this.resolveMaybe<any>(
+            this.productsSrv.getImages({ id, idunico: unique } as any)
+          )
+        : await this.resolveMaybe<any>(
+            this.productsSrv.getImages({ id } as any)
+          );
 
       if (Array.isArray(imgs)) {
         for (const it of imgs) {
@@ -420,101 +444,60 @@ export class OrderDetailComponent implements OnInit {
     }
   }
 
-  /** Hidrata miniaturas con fallbacks + blob */
+  /** Igual que product-management: portada por id + idunico, con caché y sin blobs */
   private async hydrateItemImages() {
     if (!this.order?.items?.length) return;
 
-    const BATCH = 4;
-    const tasks: Promise<void>[] = [];
-
-    for (const it of this.order.items) {
-      if (it.imageUrl) {
-        tasks.push(
-          (async () => {
-            it.imageUrl = await this.ensureDisplayable(it.imageUrl!);
-          })()
+    // construye índice ProductApi (id → {idunico,...}) una sola vez
+    if (!this.prodById.size) {
+      try {
+        const list = await this.resolveMaybe<ProductApi[]>(
+          this.productsSrv.getAll() as any
         );
-        continue;
-      }
-
-      // resolver producto por id / idunico / nombre
-      let pid = it.productId;
-      let puid = it.productUniqueId ?? null;
-      let p: ProductApi | undefined;
-
-      if (pid && this.prodById.has(pid)) {
-        p = this.prodById.get(pid)!;
-      } else if (puid && this.prodByUnique.has(String(puid))) {
-        p = this.prodByUnique.get(String(puid))!;
-        pid = String((p as any).id ?? pid ?? "");
-        puid = String((p as any).idunico ?? (p as any).id_unico ?? puid ?? "") || null;
-        it.productId = pid;
-        it.productUniqueId = puid;
-      } else if (it.nombre) {
-        const hit = this.prodByName.get(this.normalizeName(it.nombre));
-        if (hit) {
-          p = hit;
-          pid = String((hit as any).id ?? "");
-          puid = String((hit as any).idunico ?? (hit as any).id_unico ?? "") || null;
-          it.productId = pid;
-          it.productUniqueId = puid;
+        for (const p of list) {
+          const id = String((p as any).id ?? "");
+          if (id) this.prodById.set(id, p);
         }
-      }
+      } catch {}
+    }
 
-      // sin id: usa imágenes inline del ProductApi si lo tenemos
-      if (!pid && p) {
-        const inline = this.collectImagesFromApi(p);
-        if (inline.length) {
-          tasks.push(
-            (async () => {
-              const url = await this.ensureDisplayable(inline[0]);
-              this.imgCache.set(`inline:${it.nombre || ""}`, url);
-              it.imageUrl = url ?? undefined;
-            })()
-          );
-        }
-        continue;
-      }
-      if (!pid) continue;
+    const tasks = this.order.items.map(async (it) => {
+      // si ya viene con imagen, úsala tal cual
+      if (it.imageUrl) return;
 
-      // cache
+      const pid = String(it.productId ?? "");
+      if (!pid) return;
+
+      // caché por id
       if (this.imgCache.has(pid)) {
-        const cached = this.imgCache.get(pid);
-        it.imageUrl = cached || undefined;
-        continue;
+        it.imageUrl = this.imgCache.get(pid) || undefined;
+        return;
       }
 
-      // inline primero, si existe en ProductApi
-      if (p) {
-        const inline = this.collectImagesFromApi(p);
-        if (inline.length) {
-          tasks.push(
-            (async () => {
-              let url = await this.ensureDisplayable(inline[0]);
-              this.imgCache.set(pid!, url ?? null);
-              if (url) it.imageUrl = url;
-            })()
-          );
-          continue;
-        }
+      // busca idunico para pedir portada como en product-management
+      const p = this.prodById.get(pid);
+      const idunico = p
+        ? String((p as any).idunico ?? (p as any).id_unico ?? "") || undefined
+        : undefined;
+
+      let url: string | null = null;
+      try {
+        url = idunico
+          ? await this.resolveMaybe<string>(
+              this.productsSrv.getCoverUrl({ id: pid, idunico } as any)
+            )
+          : await this.resolveMaybe<string>(
+              (this.productsSrv.getCoverUrl as any)(pid)
+            );
+      } catch {
+        url = null;
       }
 
-      // endpoints (portada y luego galería) + blob fallback
-      tasks.push(
-        (async () => {
-          let url = await this.fetchCoverFor(pid!, puid);
-          if (!url) url = await this.fetchFirstImageFor(pid!, puid);
-          if (url) url = await this.ensureDisplayable(url);
-          this.imgCache.set(pid!, url ?? null);
-          if (url) it.imageUrl = url;
-        })()
-      );
-    }
+      this.imgCache.set(pid, url ?? null);
+      if (url) it.imageUrl = url;
+    });
 
-    // procesar en lotes para no saturar
-    for (let i = 0; i < tasks.length; i += BATCH) {
-      await Promise.allSettled(tasks.slice(i, i + BATCH));
-    }
+    await Promise.allSettled(tasks);
   }
 
   // ============== Mapper pedido → UI ==============
@@ -534,12 +517,15 @@ export class OrderDetailComponent implements OnInit {
     const d = dateStr ? new Date(dateStr) : null;
 
     const s = String(o?.estado ?? o?.status ?? "").toLowerCase();
-    const estado: UIEstado =
-      s.includes("pend") ? "Pendiente" :
-      s.includes("conf") ? "Confirmado" :
-      s.includes("entreg") ? "Entregado" :
-      s.includes("cancel") ? "Cancelado" :
-      (o?.estado ?? o?.status ?? "");
+    const estado: UIEstado = s.includes("pend")
+      ? "Pendiente"
+      : s.includes("conf")
+      ? "Confirmado"
+      : s.includes("entreg")
+      ? "Entregado"
+      : s.includes("cancel")
+      ? "Cancelado"
+      : o?.estado ?? o?.status ?? "";
 
     const rawItems =
       (Array.isArray(o?.items) && o.items) ||
