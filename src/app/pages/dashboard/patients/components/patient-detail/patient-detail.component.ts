@@ -4,7 +4,7 @@ import localeEs from '@angular/common/locales/es';
 import { IonicModule } from '@ionic/angular';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ClientesService, ClienteApi } from 'src/app/core/services/bussiness/clientes.service';
-
+import { NavController } from '@ionic/angular';
 registerLocaleData(localeEs);
 
 @Component({
@@ -19,7 +19,8 @@ export class PatientDetailComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private clientesService: ClientesService
+    private clientesService: ClientesService,
+    private navCtrl: NavController
   ) {}
 
   ngOnInit(): void {
@@ -48,6 +49,12 @@ export class PatientDetailComponent implements OnInit {
     }
   }
 
-  back() { history.back(); }
+  //Se hizo la opción de volver atrás recargando la página (Se puede mejorar)
+
+  back() {console.log('Back button clicked');
+          window.location.replace('/dashboard/patients');
+   }
+   
   onMore() { console.log('Más acciones'); }
 }
+
