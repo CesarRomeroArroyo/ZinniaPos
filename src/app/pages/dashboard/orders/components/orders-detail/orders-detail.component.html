@@ -49,36 +49,22 @@
         </div>
       </div>
 
-      <!-- Cliente -->
-      <div class="box">
+      <!-- Encabezado / estado / fecha / total (déjalo como lo tengas) -->
+
+      <!-- Cliente (oculto si viene desde customer) -->
+      <div class="box" *ngIf="!hideClientBlock && order">
         <h2 class="section-title">Cliente</h2>
-        <div class="contact">
-          <div class="row" *ngIf="order.cliente_nombre">
-            <div class="label">Nombre</div>
-            <div class="value">{{ order.cliente_nombre }}</div>
-          </div>
-
-          <div class="row" *ngIf="order.cliente_correo">
-            <div class="label">Correo</div>
-            <div class="value">{{ order.cliente_correo }}</div>
-          </div>
-
-          <div class="row" *ngIf="order.numero_celular">
-            <div class="label">Celular</div>
-            <div class="value">
-              {{ order.numero_celular }}
-              <ion-button fill="clear" size="small" (click)="openWhatsApp()">
-                <ion-icon name="logo-whatsapp"></ion-icon>
-              </ion-button>
-            </div>
-          </div>
-
-          <div class="row" *ngIf="order.cliente_direccion">
-            <div class="label">Dirección</div>
-            <div class="value">{{ order.cliente_direccion }}</div>
-          </div>
-        </div>
+        <div class="row"><div class="label">Nombre</div><div class="value">{{
+            order.cliente_nombre || '—' }}</div></div>
+        <div class="row"><div class="label">Correo</div><div class="value">{{
+            order.cliente_correo || '—' }}</div></div>
+        <div class="row"><div class="label">Celular</div><div class="value">{{
+            order.numero_celular || '—' }}</div></div>
+        <div class="row"><div class="label">Dirección</div><div class="value">{{
+            order.cliente_direccion || '—' }}</div></div>
       </div>
+
+      <!-- Artículos + total (sin cambios) -->
 
       <!-- Items -->
       <div class="box">

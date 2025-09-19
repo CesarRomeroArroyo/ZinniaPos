@@ -1,15 +1,10 @@
 // src/app/pages/dashboard/orders/components/orders-management/orders-management.component.ts
-import { Component, OnInit, ViewChild } from "@angular/core";
-import { IonicModule, ModalController, IonPopover } from "@ionic/angular";
+import { Component, OnInit } from "@angular/core";
+import { IonicModule, ModalController } from "@ionic/angular";
 import { CommonModule } from "@angular/common";
 import { RouterModule } from "@angular/router";
 import { FormsModule } from "@angular/forms";
-import {
-  HttpBackend,
-  HttpClient,
-  HttpClientModule,
-} from "@angular/common/http";
-import { firstValueFrom } from "rxjs";
+import { HttpClientModule } from "@angular/common/http";
 
 import {
   OrderService,
@@ -22,18 +17,24 @@ import {
   ClienteApi,
 } from "src/app/core/services/bussiness/clientes.service";
 
-/** Filtros UI */
-type FechaFiltro = "todas" | "hoy";
+/** ===== Filtros ===== */
+type FechaFiltro = "todas" | "hoy" | "7d" | "30d";
+type OrigenFiltro = "todos" | "whatsapp" | "app";
 
 interface UiFilters {
   estados: Set<PedidoEstado>;
-  canalWhatsapp: boolean;
+  origen: OrigenFiltro;
   fecha: FechaFiltro;
 }
 
+type PedidoVm = PedidoApi & {
+  itemsCount?: number;      // total de unidades
+  cliente_nombre?: string;  // nombre resuelto
+};
+
 interface Grouped {
   label: string;
-  items: PedidoApi[];
+  items: PedidoVm[];
   epoch: number; // para ordenar grupos por fecha desc
 }
 
@@ -42,90 +43,69 @@ interface Grouped {
   templateUrl: "./orders-management.component.html",
   styleUrls: ["./orders-management.component.scss"],
   standalone: true,
-  imports: [
-    IonicModule,
-    CommonModule,
-    RouterModule,
-    FormsModule,
-    HttpClientModule,
-  ],
+  imports: [IonicModule, CommonModule, RouterModule, FormsModule, HttpClientModule],
 })
 export class OrdersManagementComponent implements OnInit {
-  @ViewChild("filtersPopover", { read: IonPopover, static: false })
-  filtersPopover?: IonPopover;
-
   loading = false;
   error?: string;
 
-  // Dataset
-  orders: PedidoApi[] = []; // todos (crudos del backend normalizados)
-  filtered: PedidoApi[] = []; // resultado de filtros
-  grouped: Grouped[] = []; // agrupado por fecha
+  orders: PedidoVm[] = [];
+  filtered: PedidoVm[] = [];
+  grouped: Grouped[] = [];
 
-  /** filtro de texto local (id/estado/total/teléfono/nombre) */
+  /** búsqueda texto */
   query = "";
 
-  /** Estado de filtros UI */
+  /** estado de filtros */
   filters: UiFilters = {
     estados: new Set<PedidoEstado>(),
-    canalWhatsapp: false,
+    origen: "todos",
     fecha: "todas",
   };
 
-  // URL ABSOLUTA (bypassa interceptores)
-  private readonly ABS_URL =
-    "https://codigofuentecorp.eastus.cloudapp.azure.com/zinnia-apis-php/public/pedidos";
+  /** Modal + navegación interna del modal */
+  isFiltersModalOpen = false;
+  filtersPage: "root" | "estado" | "origen" | "fecha" = "root";
 
-  // HttpClient sin interceptores
-  private httpNoIx: HttpClient;
-
-  /** índices locales para resolver nombre de cliente */
+  // índices de clientes
   private clientesById = new Map<string, string>();
   private clientesByPhone = new Map<string, string>();
 
   constructor(
     private ordersSrv: OrderService,
     private modalCtrl: ModalController,
-    backend: HttpBackend,
     private clientesSrv: ClientesService
-  ) {
-    this.httpNoIx = new HttpClient(backend);
-  }
+  ) {}
 
-  ngOnInit() {
-    this.loadAll();
-  }
+  ngOnInit() { this.loadAll(); }
 
-  /** ========== CARGA PRINCIPAL ========== */
+  /** ================= CARGA PRINCIPAL ================= */
   async loadAll() {
     this.loading = true;
     this.error = undefined;
 
     try {
-      const [pedidos, clientes] = await Promise.all([
-        this.getViaHttpBackend().catch(async () => [] as PedidoApi[]),
+      const [lista, clientes] = await Promise.all([
+        this.ordersSrv.getPedidos() as Promise<PedidoApi[]>,
         this.getClientesSafe(),
       ]);
 
-      this.orders = pedidos.length
-        ? pedidos
-        : await this.ordersSrv.getPedidos();
-
-      // Indexar clientes
       this.buildClienteIndices(clientes || []);
 
-      // Enriquecer cada pedido con cliente_nombre y dejar itemsCount ya calculado
-      this.orders = this.orders.map((o: any) => {
-        o.cliente_nombre = this.getClienteNombre(o);
-        // si por alguna razón no vino en normalizeOrder, intenta calcular aquí
-        if (typeof o.itemsCount !== "number")
-          o.itemsCount = this.computeItemsCount(o);
-        return o as PedidoApi;
+      // Enriquecer + conteo inicial (suma cantidades si existen)
+      this.orders = (lista || []).map((o: any) => {
+        const vm: PedidoVm = { ...(o as any) };
+        vm.cliente_nombre = this.getClienteNombre(vm);
+        vm.itemsCount = this.unitsFromAny(vm);
+        return vm;
       });
 
       this.runFiltersAndGrouping();
+
+      // ✅ hidrata unidades desde el detalle cuando la lista no trae cantidades
+      await this.hydrateCountsFromDetail(this.orders);
+      this.runFiltersAndGrouping();
     } catch (e: any) {
-      console.error("[Orders] loadAll error →", e);
       this.error = e?.message || "Error al cargar pedidos";
       this.orders = [];
       this.filtered = [];
@@ -135,23 +115,8 @@ export class OrdersManagementComponent implements OnInit {
     }
   }
 
-  /** GET /pedidos sin interceptores y con parseo robusto */
-  private async getViaHttpBackend(): Promise<PedidoApi[]> {
-    const text = await firstValueFrom(
-      this.httpNoIx.get(this.ABS_URL, { responseType: "text" })
-    );
-
-    const parsed = this.parseMaybeJson(text);
-    const arr = this.extractArrayDeep(parsed);
-    return arr.map(this.normalizeOrder);
-  }
-
   private async getClientesSafe(): Promise<ClienteApi[] | null> {
-    try {
-      return await this.clientesSrv.getClientes();
-    } catch {
-      return null;
-    }
+    try { return await this.clientesSrv.getClientes(); } catch { return null; }
   }
 
   private buildClienteIndices(clientes: ClienteApi[]) {
@@ -169,256 +134,172 @@ export class OrdersManagementComponent implements OnInit {
   getClienteNombre(o: any): string {
     const id = String(o?.cliente_id ?? "").trim();
     const tel = String(o?.numero_celular ?? "").replace(/\D/g, "");
-
-    // Usa mapas si existen en el componente (no falla si no están)
-    const byId: Map<string, string> | undefined = (this as any).clientesById;
-    const byTel: Map<string, string> | undefined = (this as any).clientesByPhone;
-
-    if (id && byId?.has?.(id)) return byId.get(id)!;
-    if (tel && byTel?.has?.(tel)) return byTel.get(tel)!;
-
-    // Campos embebidos posibles
+    if (id && this.clientesById.has(id)) return this.clientesById.get(id)!;
+    if (tel && this.clientesByPhone.has(tel)) return this.clientesByPhone.get(tel)!;
     const emb =
-      o?.cliente_nombre ||
-      o?.nombre_cliente ||
-      o?.cliente?.nombre ||
-      o?.cliente?.name ||
-      "";
+      o?.cliente_nombre || o?.nombre_cliente || o?.cliente?.nombre || o?.cliente?.name || "";
     return String(emb || "");
   }
 
-  private parseMaybeJson(text: string): any {
+  /** Quitar chips individuales y re-aplicar filtros */
+removeFilterChip(kind: "estado" | "origen" | "fecha", value?: PedidoEstado) {
+  if (kind === "estado" && value) {
+    this.filters.estados.delete(value);
+  } else if (kind === "origen") {
+    this.filters.origen = "todos";
+  } else if (kind === "fecha") {
+    this.filters.fecha = "todas";
+  }
+  this.runFiltersAndGrouping();
+}
+
+
+  /** ============== SUMA DE UNIDADES (lista/detalle) ============== */
+  private unitsFromAny(o: any): number {
+    const arr =
+      (Array.isArray(o?.items) && o.items) ||
+      (Array.isArray(o?.detalle) && o.detalle) ||
+      (Array.isArray(o?.detalles) && o.detalles) ||
+      (Array.isArray(o?.detalle_pedido) && o.detalle_pedido) ||
+      (Array.isArray(o?.detalles_pedido) && o.detalles_pedido) ||
+      (Array.isArray(o?.productos) && o.productos) ||
+      (Array.isArray(o?.order_items) && o.order_items) ||
+      (Array.isArray(o?.line_items) && o.line_items) ||
+      null;
+
+    if (arr) {
+      let sum = 0;
+      for (const it of arr) {
+        const rawQty =
+          it?.cantidad ?? it?.qty ?? it?.quantity ?? it?.cant ??
+          it?.cantidad_producto ?? it?.cantidadProducto ?? it?.units ?? it?.unidades;
+        const n = Number(rawQty);
+        sum += Number.isFinite(n) && n > 0 ? n : 1;
+      }
+      return sum;
+    }
+
+    // Totales “flat” que algunas APIs exponen
+    const fields = [
+      o?.cantidad_total, o?.total_cantidad, o?.total_unidades, o?.unidades_total,
+      o?.qty_total, o?.quantity_total, o?.sum_cantidades,
+      // 👇 añadidos
+      o?.items_count, o?.productos_count, o?.cantidad_items, o?.cantidad_articulos,
+      o?.articulos, o?.itemsLength, o?.total_items,
+    ]
+      .map(v => (v != null ? Number(v) : NaN))
+      .filter(n => Number.isFinite(n) && n >= 0) as number[];
+    if (fields.length) return Math.max(...fields);
+
+    // Caída final: “número de líneas”
+    const len =
+      (Array.isArray(o?.items) && o.items.length) ||
+      (Array.isArray(o?.detalle) && o.detalle.length) ||
+      (Array.isArray(o?.detalles) && o.detalles.length) ||
+      (Array.isArray(o?.detalle_pedido) && o.detalle_pedido.length) ||
+      (Array.isArray(o?.detalles_pedido) && o.detalles_pedido.length) ||
+      (Array.isArray(o?.productos) && o.productos.length) ||
+      (Array.isArray(o?.order_items) && o.order_items.length) ||
+      (Array.isArray(o?.line_items) && o.line_items.length) || 0;
+
+    return len;
+  }
+
+  /** Hidrata unidades pidiendo el detalle si la lista no trae cantidades */
+  private async hydrateCountsFromDetail(list: PedidoVm[]) {
+    const targets = list.filter((o) => {
+      const initial = Number(o.itemsCount ?? 0);
+      const hasArr =
+        (Array.isArray((o as any)?.items) && (o as any).items.length) ||
+        (Array.isArray((o as any)?.detalle) && (o as any).detalle.length) ||
+        (Array.isArray((o as any)?.productos) && (o as any).productos.length) ||
+        (Array.isArray((o as any)?.order_items) && (o as any).order_items.length) ||
+        (Array.isArray((o as any)?.line_items) && (o as any).line_items.length);
+      // Recalcular si NO hay arreglo o si el conteo es 0 (o muy chico)
+      return !hasArr || initial === 0;
+    });
+
+    const concurrency = 5;
+    let i = 0;
+    const run = async () => {
+      while (i < targets.length) {
+        const idx = i++;
+        const o = targets[idx];
+        try {
+          const det = await this.fetchDetailById(String(o.id));
+          if (det) {
+            const units = this.unitsFromAny(det);
+            if (units && units !== o.itemsCount) {
+              o.itemsCount = units;
+              this.runFiltersAndGrouping();
+            }
+          }
+        } catch {}
+      }
+    };
+    const workers = Array.from({ length: Math.min(concurrency, targets.length) }, () => run());
+    await Promise.all(workers);
+  }
+
+  private async fetchDetailById(id: string): Promise<any | null> {
+    const anySrv: any = this.ordersSrv as any;
+    if (typeof anySrv.getById === "function") {
+      try {
+        const res = await anySrv.getById(id);
+        const raw = (res && (res.data || res.pedido)) || res;
+        return raw || null;
+      } catch {}
+    }
     try {
-      return JSON.parse(text);
-    } catch {
-      const i = text.indexOf("[");
-      const j = text.lastIndexOf("]");
-      if (i >= 0 && j > i) {
-        try {
-          return JSON.parse(text.slice(i, j + 1));
-        } catch {
-          return {};
-        }
-      }
-      const oi = text.indexOf("{");
-      const oj = text.lastIndexOf("}");
-      if (oi >= 0 && oj > oi) {
-        try {
-          return JSON.parse(text.slice(oi, oj + 1));
-        } catch {
-          return {};
-        }
-      }
-      return {};
-    }
+      const list = await this.ordersSrv.getPedidos();
+      const found = (list || []).find((x: any) => String(x?.id) === id);
+      return found || null;
+    } catch {}
+    return null;
   }
 
+  // ---------- API p/ template ----------
   getItemsCount(o: any): number {
-    const arr =
-      (Array.isArray(o?.items) && o.items) ||
-      (Array.isArray(o?.detalle) && o.detalle) ||
-      (Array.isArray(o?.productos) && o.productos) ||
-      (Array.isArray(o?.order_items) && o.order_items) ||
-      null;
-
-    if (arr) {
-      let sum = 0;
-      for (const it of arr) {
-        const qty = Number(it?.cantidad ?? it?.qty ?? it?.quantity ?? 1);
-        sum += Number.isFinite(qty) && qty > 0 ? qty : 1;
-      }
-      return sum;
-    }
-
-    const agg = [
-      o?.items_count,
-      o?.productos_count,
-      o?.cantidad_items,
-      o?.cantidad_articulos,
-      o?.articulos,
-      o?.itemsLength,
-      o?.total_items,
-    ]
-      .map((v) => (v != null ? Number(v) : NaN))
-      .filter((n) => Number.isFinite(n) && n >= 0) as number[];
-
-    return agg.length ? Math.max(...agg) : 0;
+    const fromVm = (o as any)?.itemsCount;
+    return Number((fromVm ?? this.unitsFromAny(o)) || 0);
   }
 
-  private extractArrayDeep(raw: any): any[] {
-    if (Array.isArray(raw)) return raw;
-    const keys = [
-      "data",
-      "pedidos",
-      "orders",
-      "results",
-      "rows",
-      "items",
-      "list",
-    ];
-    const tryKeys = (o: any): any[] | null => {
-      for (const k of keys) {
-        const v = o?.[k];
-        if (Array.isArray(v)) return v;
-        if (v && typeof v === "object") {
-          const r = tryKeys(v);
-          if (r) return r;
-        }
-      }
-      return null;
-    };
-    const hit = tryKeys(raw);
-    if (hit) return hit;
-
-    let best: any[] | null = null;
-    const scan = (o: any, d = 0) => {
-      if (!o || typeof o !== "object" || d > 2) return;
-      for (const v of Object.values(o)) {
-        if (Array.isArray(v)) {
-          if (!best || v.length > best.length) best = v;
-        } else if (v && typeof v === "object") {
-          scan(v, d + 1);
-        }
-      }
-    };
-    scan(raw, 0);
-    return best ?? [];
-  }
-
-  /** Normalizador local (+ itemsCount calculado en TS) */
-  private normalizeOrder = (raw: any): PedidoApi => {
-    // Construye objeto base
-    const obj: any = {
-      id: String(raw?.id ?? ""),
-      cliente_id: String(raw?.cliente_id ?? raw?.clienteId ?? ""),
-      numero_celular:
-        raw?.numero_celular ?? raw?.telefono ?? raw?.celular ?? "",
-      estado: raw?.estado ?? "",
-      total: raw?.total != null ? Number(raw.total) : undefined,
-      fecha:
-        raw?.fecha ??
-        raw?.fecha_pedido ??
-        raw?.fecha_creacion ??
-        raw?.created_at ??
-        raw?.createdAt ??
-        raw?.updated_at ??
-        "",
-      items: Array.isArray(raw?.items)
-        ? raw.items.map((it: any) => ({
-            producto_id: Number(
-              it?.producto_id ?? it?.productoId ?? it?.id ?? 0
-            ),
-            cantidad: Number(it?.cantidad ?? it?.qty ?? 0),
-            nombre:
-              it?.nombre ??
-              it?.producto_nombre ??
-              it?.productoNombre ??
-              undefined,
-            precio_venta:
-              it?.precio_venta != null
-                ? Number(it.precio_venta)
-                : it?.precio != null
-                ? Number(it.precio)
-                : undefined,
-            subtotal: it?.subtotal != null ? Number(it.subtotal) : undefined,
-          }))
-        : undefined,
-    };
-
-    // ✅ Conteo robusto de artículos
-    obj.itemsCount = this.computeItemsCount({ ...raw, items: obj.items });
-
-    return obj as PedidoApi;
-  };
-
-  /** Cuenta el total de artículos (suma cantidades si existen) */
-  private computeItemsCount(o: any): number {
-    const arr =
-      (Array.isArray(o?.items) && o.items) ||
-      (Array.isArray(o?.detalle) && o.detalle) ||
-      (Array.isArray(o?.productos) && o.productos) ||
-      (Array.isArray(o?.order_items) && o.order_items) ||
-      null;
-
-    if (arr) {
-      let sum = 0;
-      for (const it of arr) {
-        const qty = Number(it?.cantidad ?? it?.qty ?? it?.quantity ?? 1);
-        sum += Number.isFinite(qty) && qty > 0 ? qty : 1;
-      }
-      return sum;
-    }
-
-    const agg = [
-      o?.items_count,
-      o?.productos_count,
-      o?.cantidad_items,
-      o?.cantidad_articulos,
-      o?.articulos,
-      o?.itemsLength,
-      o?.total_items,
-    ]
-      .map((v) => (v != null ? Number(v) : NaN))
-      .filter((n) => Number.isFinite(n) && n >= 0) as number[];
-
-    return agg.length ? Math.max(...agg) : 0;
-  }
-
-  // ---------- Getters útiles ----------
+  // ---------- Filtros & Agrupado ----------
   get activeFiltersCount(): number {
     let n = 0;
     if (this.filters.estados.size) n++;
-    if (this.filters.canalWhatsapp) n++;
-    if (this.filters.fecha === "hoy") n++;
+    if (this.filters.origen !== "todos") n++;
+    if (this.filters.fecha !== "todas") n++;
     return n;
   }
   get estadosArray(): PedidoEstado[] {
     return Array.from(this.filters.estados) as PedidoEstado[];
   }
 
-  // ---------- Filtros ----------
-  applyQueryFilter() {
-    this.runFiltersAndGrouping();
-  }
-  applyFilters() {
-    this.filtersPopover?.dismiss();
-    this.runFiltersAndGrouping();
-  }
-  clearSearch() {
-    this.query = "";
-    this.applyQueryFilter();
-  }
+  openFilters() { this.filtersPage = "root"; this.isFiltersModalOpen = true; }
+  closeFilters() { this.isFiltersModalOpen = false; }
+  openFiltersPage(p: "estado" | "origen" | "fecha") { this.filtersPage = p; }
 
+  onEstadoChange(estado: PedidoEstado, checked: boolean) {
+    if (checked) this.filters.estados.add(estado);
+    else this.filters.estados.delete(estado);
+    this.runFiltersAndGrouping();
+  }
+  onFechaChange(v: FechaFiltro) { this.filters.fecha = v; this.runFiltersAndGrouping(); }
+  onOrigenChange(v: OrigenFiltro) { this.filters.origen = v; this.runFiltersAndGrouping(); }
+
+  applyQueryFilter() { this.runFiltersAndGrouping(); }
+  applyFilters() { this.closeFilters(); this.runFiltersAndGrouping(); }
+  clearSearch() { this.query = ""; this.applyQueryFilter(); }
   clearAllFilters() {
-    this.filters = {
-      estados: new Set<PedidoEstado>(),
-      canalWhatsapp: false,
-      fecha: "todas",
-    };
+    this.filters = { estados: new Set<PedidoEstado>(), origen: "todos", fecha: "todas" };
     this.runFiltersAndGrouping();
   }
 
-  removeFilterChip(
-    kind: "estado" | "whatsapp" | "fecha",
-    value?: PedidoEstado
-  ) {
-    if (kind === "estado" && value) this.filters.estados.delete(value);
-    else if (kind === "whatsapp") this.filters.canalWhatsapp = false;
-    else if (kind === "fecha") this.filters.fecha = "todas";
-    this.runFiltersAndGrouping();
-  }
-
-  toggleEstado(e: PedidoEstado) {
-    if (this.filters.estados.has(e)) this.filters.estados.delete(e);
-    else this.filters.estados.add(e);
-  }
-
-  // ---------- Pipeline de filtrado + agrupado ----------
   private runFiltersAndGrouping() {
-    // 1) base
     let arr = [...this.orders] as any[];
 
-    // 2) query texto (incluye nombre)
+    // texto
     const q = (this.query || "").trim().toLowerCase();
     if (q) {
       arr = arr.filter((o) => {
@@ -426,64 +307,51 @@ export class OrdersManagementComponent implements OnInit {
         const est = (o.estado ?? "").toLowerCase();
         const tel = (o.numero_celular ?? "").toLowerCase();
         const tot = o.total != null ? String(o.total) : "";
-        const nom = (
-          o.cliente_nombre ??
-          this.getClienteNombre(o) ??
-          ""
-        ).toLowerCase();
-        return (
-          id.includes(q) ||
-          est.includes(q) ||
-          tel.includes(q) ||
-          tot.includes(q) ||
-          nom.includes(q)
-        );
+        const nom = (o.cliente_nombre ?? this.getClienteNombre(o) ?? "").toLowerCase();
+        return id.includes(q) || est.includes(q) || tel.includes(q) || tot.includes(q) || nom.includes(q);
       });
     }
 
-    // 3) filtros UI
+    // estados
     if (this.filters.estados.size) {
       arr = arr.filter((o) =>
         this.filters.estados.has((o.estado || "").toLowerCase() as PedidoEstado)
       );
     }
-    if (this.filters.canalWhatsapp) {
-      arr = arr.filter(
-        (o) =>
-          !!(
-            o.numero_celular &&
-            (o.numero_celular + "").replace(/\D/g, "").length >= 7
-          )
-      );
-    }
-    if (this.filters.fecha === "hoy") {
-      const todayStr = this.onlyDateISO(new Date());
-      arr = arr.filter(
-        (o) => this.onlyDateISO(this.asDate(o.fecha)) === todayStr
-      );
+
+    // origen
+    if (this.filters.origen !== "todos") {
+      arr = arr.filter((o) => {
+        const hasPhone = !!(o.numero_celular && (o.numero_celular + "").replace(/\D/g, "").length >= 7);
+        return this.filters.origen === "whatsapp" ? hasPhone : !hasPhone;
+      });
     }
 
-    this.filtered = arr as PedidoApi[];
+    // fecha
+    if (this.filters.fecha !== "todas") {
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      let from: Date | null = null;
+      if (this.filters.fecha === "hoy") from = start;
+      else if (this.filters.fecha === "7d") from = new Date(start.getTime() - 7 * 86400000);
+      else if (this.filters.fecha === "30d") from = new Date(start.getTime() - 30 * 86400000);
+      arr = arr.filter((o) => this.asDate((o as any).fecha) >= (from ?? new Date(0)));
+    }
 
-    // 4) AGRUPAR por fecha
-    type Bucket = { label: string; items: PedidoApi[]; epoch: number };
-    const byDate = new Map<string, Bucket>();
+    this.filtered = arr as PedidoVm[];
 
+    // agrupar por fecha
+    const byDate = new Map<string, { label: string; items: PedidoVm[]; epoch: number }>();
     for (const o of arr) {
       const d = this.asDate((o as any).fecha);
       const key = this.onlyDateISO(d);
-      const epoch = new Date(
-        d.getFullYear(),
-        d.getMonth(),
-        d.getDate()
-      ).getTime();
+      const epoch = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
       const label = this.dateLabel(d);
-
       if (!byDate.has(key)) byDate.set(key, { label, items: [], epoch });
-      byDate.get(key)!.items.push(o as PedidoApi);
+      byDate.get(key)!.items.push(o as PedidoVm);
     }
 
-    const groups: Grouped[] = Array.from(byDate.values())
+    this.grouped = Array.from(byDate.values())
       .map((g) => ({
         label: g.label,
         epoch: g.epoch,
@@ -491,14 +359,29 @@ export class OrdersManagementComponent implements OnInit {
           (a, b) =>
             this.asDate((b as any).fecha).getTime() -
             this.asDate((a as any).fecha).getTime()
-        ) as PedidoApi[],
+        ) as PedidoVm[],
       }))
       .sort((a, b) => b.epoch - a.epoch);
-
-    this.grouped = groups;
   }
 
-  // ---------- Helpers de fecha ----------
+  // ---------- Resúmenes para el “root” del modal ----------
+  estadoSummary(): string {
+    const arr = Array.from(this.filters.estados);
+    if (!arr.length) return "";
+    const title = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+    return arr.map(title).join(", ");
+  }
+  origenSummary(): string {
+    if (this.filters.origen === "whatsapp") return "Whatsapp";
+    if (this.filters.origen === "app") return "Aplicación";
+    return "";
+  }
+  fechaSummary(): string {
+    const m = { hoy: "Hoy", "7d": "Últimos 7 días", "30d": "Último mes", todas: "" } as const;
+    return (m as any)[this.filters.fecha] || "";
+  }
+
+  // ---------- Fecha helpers ----------
   asDate(dateLike?: string): Date {
     if (!dateLike) return new Date();
     const t = dateLike.includes("T") ? dateLike : dateLike.replace(" ", "T");
@@ -513,57 +396,24 @@ export class OrdersManagementComponent implements OnInit {
   }
   private dateLabel(d: Date): string {
     const today = new Date();
-    const dOnly = new Date(
-      d.getFullYear(),
-      d.getMonth(),
-      d.getDate()
-    ).getTime();
-    const tOnly = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate()
-    ).getTime();
+    const dOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    const tOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
     const diff = (dOnly - tOnly) / 86400000;
-
     if (diff === 0) return "Hoy";
     if (diff === -1) return "Ayer";
-
-    const days = [
-      "Domingo",
-      "Lunes",
-      "Martes",
-      "Miércoles",
-      "Jueves",
-      "Viernes",
-      "Sábado",
-    ];
+    const days = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
     return days[d.getDay()];
   }
 
   // ---------- UI helpers ----------
   statusClass(est?: PedidoEstado) {
     const e = (est || "").toLowerCase();
-    return {
-      status: true,
-      pending: e === "pendiente",
-      confirmed: e === "confirmado",
-      delivered: e === "entregado",
-      canceled: e === "cancelado",
-    };
+    return { status: true, pending: e === "pendiente", confirmed: e === "confirmado",
+             delivered: e === "entregado", canceled: e === "cancelado" };
   }
 
-  openWhatsApp(o: PedidoApi, ev: Event) {
-    ev.stopPropagation();
-    const tel = (o.numero_celular || "").replace(/\D/g, "");
-    if (!tel) return;
-    window.open(`https://wa.me/${tel}`, "_blank");
-  }
+  trackById(_: number, o: { id: string | number }) { return String(o?.id ?? _); }
 
-  trackById(_: number, o: PedidoApi) {
-    return o.id;
-  }
-
-  // ➕ botón para crear pedido
   async onAdd() {
     const modal = await this.modalCtrl.create({
       component: CreateOrderComponent,
@@ -572,55 +422,33 @@ export class OrdersManagementComponent implements OnInit {
       initialBreakpoint: 1,
     });
     await modal.present();
-
     const { data } = await modal.onDidDismiss();
     if (data?.completed) await this.loadAll();
   }
 
-  // ---------- NUEVO: prefetch para enviar al detalle ----------
-  /** Empaqueta datos clave del pedido y sus items para history.state */
   toPref(o: any) {
     const rawItems =
       (Array.isArray(o?.items) && o.items) ||
       (Array.isArray(o?.detalle) && o.detalle) ||
       (Array.isArray(o?.productos) && o.productos) ||
-      (Array.isArray(o?.order_items) && o.order_items) ||
-      [];
-
+      (Array.isArray(o?.order_items) && o.order_items) || [];
     const items = rawItems.map((it: any) => ({
-      productId:
-        it?.producto_id ?? it?.product_id ?? it?.id ?? it?.producto?.id ?? it?.product?.id,
-      productUniqueId:
-        it?.idunico_producto ?? it?.producto?.idunico ?? it?.product?.idunico ?? null,
-      nombre:
-        it?.nombre ?? it?.producto_nombre ?? it?.product_name ?? it?.producto?.nombre ?? it?.product?.name,
-      cantidad: Number(it?.cantidad ?? it?.qty ?? 1) || 1,
+      productId: it?.producto_id ?? it?.product_id ?? it?.id ?? it?.producto?.id ?? it?.product?.id,
+      productUniqueId: it?.idunico_producto ?? it?.producto?.idunico ?? it?.product?.idunico ?? null,
+      nombre: it?.nombre ?? it?.producto_nombre ?? it?.product_name ?? it?.producto?.nombre ?? it?.product?.name,
+      cantidad: Number(it?.cantidad ?? it?.qty ?? it?.quantity ?? it?.cant ?? it?.cantidad_producto ?? 1) || 1,
       precio: it?.precio_venta ?? it?.precio ?? undefined,
       subtotal: it?.subtotal ?? it?.total_linea ?? undefined,
-      imageUrl:
-        it?.imagen ?? it?.url_imagen ?? it?.image_url ?? it?.producto?.imagen ?? it?.product?.image ?? null,
+      imageUrl: it?.imagen ?? it?.url_imagen ?? it?.image_url ?? it?.producto?.imagen ?? it?.product?.image ?? null,
     }));
-
-    let itemsCount = 0;
-    for (const it of items) itemsCount += Number(it.cantidad || 1);
-
+    let itemsCount = 0; for (const it of items) itemsCount += Number(it.cantidad || 1);
     return {
-      id: String(o?.id ?? ""),
-      estado: o?.estado ?? "",
-      fecha: o?.fecha ?? o?.created_at ?? null,
-      total: o?.total ?? null,
-      cliente_id: String(o?.cliente_id ?? o?.cliente?.id ?? ""),
+      id: String(o?.id ?? ""), estado: o?.estado ?? "", fecha: o?.fecha ?? o?.created_at ?? null,
+      total: o?.total ?? null, cliente_id: String(o?.cliente_id ?? o?.cliente?.id ?? ""),
       numero_celular: String(o?.numero_celular ?? o?.cliente?.telefono ?? ""),
-      // usa el índice local por si no viene embebido
-      cliente_nombre:
-        this.getClienteNombre(o) ||
-        o?.cliente_nombre ||
-        o?.nombre_cliente ||
-        o?.cliente?.nombre ||
-        o?.cliente?.name ||
-        "",
-      items,
-      itemsCount,
+      cliente_nombre: this.getClienteNombre(o) || o?.cliente_nombre || o?.nombre_cliente ||
+                      o?.cliente?.nombre || o?.cliente?.name || "",
+      items, itemsCount,
     };
   }
 }

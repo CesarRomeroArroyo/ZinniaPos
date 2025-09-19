@@ -181,12 +181,11 @@
 
     <ion-content>
       <ion-radio-group
-        [value]="selectedCustomer?.id"
-        (ionChange)="onCustomerRadioChange($event)">
-
+        [value]="selectedCustomer?.id">
         <ion-list>
           <ion-item
             button
+            (click)="selectCustomer(c)" 
             *ngFor="let c of filteredCustomers">
             <ion-label>
               <h2>{{ c.fullname }}</h2>

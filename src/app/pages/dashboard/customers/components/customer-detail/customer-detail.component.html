@@ -50,7 +50,11 @@
         <h2 class="section-title">Historial de pedidos</h2>
 
         <ion-list *ngIf="orders.length; else noOrders">
-          <ion-item *ngFor="let o of orders; trackBy: trackOrderId" button detail="true">
+          <ion-item
+            *ngFor="let o of orders; trackBy: trackOrderId"
+            button
+            detail="true"
+            (click)="openOrder(o.id)">
             <ion-label>
               <div class="order-top">
                 <div class="order-id">#{{ o.id }}</div>

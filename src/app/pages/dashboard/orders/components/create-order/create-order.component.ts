@@ -234,7 +234,10 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
   public increaseQuantity(item: IOrderItem) {
     const max = this.getStock(item.product);
     if (item.quantity >= max) {
-      this._toastService.showToast({ message: "No hay más stock disponible.", color: "warning" });
+      this._toastService.showToast({
+        message: "No hay más stock disponible.",
+        color: "warning",
+      });
       return;
     }
     item.quantity++;
@@ -327,7 +330,10 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
   public toggleProductSelection(p: IProduct) {
     const id = (p as any).id ?? p.id;
     if (this.isOutOfStock(p)) {
-      this._toastService.showToast({ message: "Este producto no tiene stock.", color: "warning" });
+      this._toastService.showToast({
+        message: "Este producto no tiene stock.",
+        color: "warning",
+      });
       return;
     }
     if (this.selectedProductIds.has(id)) {
@@ -339,15 +345,16 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
 
   public confirmProducts() {
     const ids = Array.from(this.selectedProductIds);
-    const selectedProducts = this.products.filter((p: any) => ids.includes(p.id));
+    const selectedProducts = this.products.filter((p: any) =>
+      ids.includes(p.id)
+    );
 
     // Construir orderItems a partir de la selección (cantidad por defecto = 1)
     const newItems = selectedProducts
       .filter((product) => !this.isOutOfStock(product)) // por seguridad
       .map((product) => {
         const existing = this.orderItems.find(
-          (it) =>
-            String((it.product as any).id) === String((product as any).id)
+          (it) => String((it.product as any).id) === String((product as any).id)
         );
         if (existing) {
           // Asegura que la cantidad existente no exceda el stock
@@ -368,7 +375,9 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
       });
 
     // Si había ítems previos (duplicados ya filtrados arriba), mantenemos los existentes
-    const existingMap = new Map(this.orderItems.map((i) => [String((i.product as any).id), i]));
+    const existingMap = new Map(
+      this.orderItems.map((i) => [String((i.product as any).id), i])
+    );
     newItems.forEach((ni) => {
       if (!this.isOutOfStock(ni.product)) {
         existingMap.set(String((ni.product as any).id), ni);
@@ -385,6 +394,11 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
 
   public onCreateProduct() {
     // TODO: abrir flujo de creación si aplica
+  }
+
+  public selectCustomer(c: ICustomer) {
+    this.selectedCustomer = c;
+    this.customerModalOpen = false; // cerrar al elegir
   }
 
   /** 🧱 Construye el payload exacto que requiere el backend */
@@ -498,8 +512,13 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
 
   private getCompanyId(): string {
     const company = this._authSessionService.getUserCompany?.() as any;
-    return (company?.id ?? company?.idunico ?? company?.codigo ?? "")?.toString();
-    }
+    return (
+      company?.id ??
+      company?.idunico ??
+      company?.codigo ??
+      ""
+    )?.toString();
+  }
 
   private toNumberPrice(v: any): number {
     if (v == null) return 0;
@@ -564,7 +583,9 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
       if (this.coverCache.has(id)) {
         const cached = this.coverCache.get(id)!;
         if (cached) {
-          row.images = Array.isArray(row.images) ? [cached, ...row.images] : [cached];
+          row.images = Array.isArray(row.images)
+            ? [cached, ...row.images]
+            : [cached];
         }
         return;
       }
@@ -574,7 +595,10 @@ export class CreateOrderComponent implements OnInit, OnDestroy {
 
       try {
         if (api?.idunico) {
-          url = await this._productService.getCoverUrl({ id, idunico: api.idunico });
+          url = await this._productService.getCoverUrl({
+            id,
+            idunico: api.idunico,
+          });
         } else {
           url = await this._productService.getCoverUrl(id);
         }

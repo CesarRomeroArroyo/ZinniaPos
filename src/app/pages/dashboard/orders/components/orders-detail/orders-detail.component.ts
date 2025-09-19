@@ -48,8 +48,7 @@ interface UIOrderDetail {
   cliente_direccion?: string;
 }
 
-// Prefijo para rutas relativas (si tus URLs vienen como /uploads/..)
-const API_FILES_BASE: string = ""; // ej: "https://tu-api.com"
+const API_FILES_BASE: string = "";
 
 @Component({
   standalone: true,
@@ -64,14 +63,12 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   order?: UIOrderDetail | null;
 
   private id = "";
+  hideClientBlock = false; // 👈 bandera
 
-  // índices productos / cache imágenes
   private prodById = new Map<string, ProductApi>();
   private prodByUnique = new Map<string, ProductApi>();
   private prodByName = new Map<string, ProductApi>();
   private imgCache = new Map<string, string | null>();
-
-  // para revocar blobs y evitar fugas
   private blobUrls: string[] = [];
 
   constructor(
@@ -85,11 +82,11 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // 1) id desde la ruta
     this.id = String(this.route.snapshot.paramMap.get("id") || "");
 
-    // 2) PREFILL desde la lista (orders-management → state.pref)
     const st = (history.state && history.state.pref) || {};
+    this.hideClientBlock = !!history.state?.fromCustomer; // 👈 si viene de customer, ocultamos cliente
+
     if (st && (st.id || this.id)) {
       const preItems: UIItem[] = Array.isArray(st.items)
         ? st.items.map((it: any) => ({
@@ -128,29 +125,38 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
       };
     }
 
-    // 3) Carga/Enriquecimiento definitivo
     this.load();
   }
 
   ngOnDestroy(): void {
-    // limpia blobs
     for (const u of this.blobUrls) URL.revokeObjectURL(u);
     this.blobUrls = [];
   }
 
-  // ================= CARGA PRINCIPAL =================
   async load(ev?: CustomEvent) {
     this.loading = true;
     this.error = undefined;
     try {
       const fresh = await this.fetchOrder();
       this.order = this.mergeOrders(this.order ?? null, fresh);
+      if (this.order) {
+        if (!this.order.itemsCount || this.order.itemsCount < 1) {
+          this.order.itemsCount = (this.order.items || []).reduce(
+            (a, it) => a + Number(it.cantidad || 0),
+            0
+          );
+        }
+        const t = this.computeTotal(this.order);
+        if (t != null) this.order.total = t;
+      }
 
-      await this.inflateCustomerFields();
+      if (!this.hideClientBlock) {
+        await this.inflateCustomerFields();
+      }
 
       await this.ensureProductIndexes();
       await this.inflateItemNamesIfMissing();
-      await this.hydrateItemImages(); // 👈 hidrata imágenes como product-management
+      await this.hydrateItemImages();
 
       this.cd.detectChanges();
     } catch (e: any) {
@@ -160,6 +166,8 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
       (ev?.target as HTMLIonRefresherElement)?.complete?.();
     }
   }
+
+  // ... el resto del código queda igual ...
 
   private async fetchOrder(): Promise<UIOrderDetail> {
     let raw: any | null = null;
@@ -337,6 +345,31 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
       /^\//,
       ""
     )}`;
+  }
+
+  private computeTotal(o?: UIOrderDetail | null): number | null {
+    if (!o) return null;
+    // si viene total válido, úsalo
+    if (o.total != null && Number.isFinite(Number(o.total))) {
+      return Number(o.total);
+    }
+    // calcula desde items
+    const t = (o.items || []).reduce((acc, it) => {
+      if (it?.subtotal != null && Number.isFinite(Number(it.subtotal))) {
+        return acc + Number(it.subtotal);
+      }
+      const precio = Number(it?.precio ?? 0);
+      const cant = Number(it?.cantidad ?? 0);
+      return (
+        acc +
+        (Number.isFinite(precio) && Number.isFinite(cant) ? precio * cant : 0)
+      );
+    }, 0);
+    return Number.isFinite(t) ? t : null;
+  }
+
+  get totalCalculado(): number | null {
+    return this.computeTotal(this.order);
   }
 
   /** Si la URL requiere auth/CORS, la bajo como blob y devuelvo blob: */

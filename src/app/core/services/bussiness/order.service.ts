@@ -23,6 +23,7 @@ export interface PedidoApi {
   total?: number;
   fecha?: string;
   items?: PedidoItemApi[];
+   created_at?: string; 
 }
 export interface PedidosByTelefonoResp {
   success: boolean;
