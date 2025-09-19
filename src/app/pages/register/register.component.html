@@ -1,0 +1,40 @@
+<ion-header class="custom-header">
+    <ion-toolbar>
+        <ion-buttons slot="start">
+            <ion-button class="custom-back-button" (click)="prevStep()">
+                <ion-icon name="arrow-back-sharp"></ion-icon>
+            </ion-button>
+        </ion-buttons>
+    </ion-toolbar>
+    <app-stepper [totalSteps]="totalSteps" [currentStep]="currentStep"></app-stepper>
+
+</ion-header>
+<ion-content class="content">
+    <div class="form-steps">
+        <ng-container [ngSwitch]="currentStep">
+            <app-business-type
+                *ngSwitchCase="1"
+                (handleStepData)="handleStepData($event)"
+                (formValidity)="handleValidityChange($event)">
+            </app-business-type>
+            <app-business-account-info
+                *ngSwitchCase="2"
+                (handleStepData)="handleStepData($event)"
+                (formValidity)="handleValidityChange($event)">
+            </app-business-account-info>
+            <app-user-account-info
+                *ngSwitchCase="3"
+                (handleStepData)="handleStepData($event)"
+                (formValidity)="handleValidityChange($event)">
+            </app-user-account-info>
+        </ng-container>
+     </div>
+</ion-content>
+<ion-footer class="ion-no-border footer">
+    <ion-button
+        expand="block"
+        (click)="nextStep()"
+        [disabled]="!isCurrentFormValid">
+        Siguiente
+    </ion-button> 
+</ion-footer>

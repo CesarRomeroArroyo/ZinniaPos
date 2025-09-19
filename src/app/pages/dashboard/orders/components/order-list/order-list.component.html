@@ -1,0 +1,64 @@
+<div class="orders-content">
+  <div class="section">
+    <div class="section-header">
+      <ion-label class="section-title">Hoy</ion-label>
+    </div>
+    <div class="section-content">
+      <ng-container class="order-list" *ngFor="let order of ordersToday; trackBy: trackByOrderId">
+        <div class="order">
+          <div class="row">
+            <ion-label class="bold">#{{ order.id }}</ion-label>
+            <div class="align-items-center">
+              <div class="order-status" [ngClass]="getStatusClass(order.status)">
+                {{ getOrderStatusLabel(order.status) }}
+              </div>
+              <img *ngIf="showOriginIcon(order.origin)" class="whatsapp-button" src="assets/icon/whatsapp-icon.svg" alt="whatsapp-icon">
+            </div>
+          </div>
+          <div class="row">
+            <div class="gap">
+              {{ order.customer.fullname }}<span> • </span>{{ order.createAt | date:'d MMM, yyyy: h:mm a' }}
+            </div>
+          </div>
+          <div class="row">
+            <div class="gap">
+              {{ order.items.length}} Artículos<span> | </span>${{order.total.toFixed(2) }}
+            </div>
+            <ion-icon name="chevron-forward-outline"></ion-icon>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+  <div class="section" *ngFor="let group of ordersByDay; trackBy: trackByGroupKey">
+    <div class="section-header">
+      <ion-label class="section-title">{{ group.headerLabel }}</ion-label>
+    </div>
+    <div class="section-content">
+      <ng-container class="order-list" *ngFor="let order of group.orders; trackBy: trackByOrderId">
+        <div class="order">
+          <div class="row">
+            <ion-label class="bold">#{{ order.id }}</ion-label>
+            <div class="align-items-center">
+              <div class="order-status" [ngClass]="getStatusClass(order.status)">
+                {{ getOrderStatusLabel(order.status) }}
+              </div>
+              <img *ngIf="showOriginIcon(order.origin)" class="whatsapp-button" src="assets/icon/whatsapp-icon.svg" alt="whatsapp-icon">
+            </div>
+          </div>
+          <div class="row">
+            <div class="gap">
+              {{ order.customer.fullname }}<span> • </span>{{ order.createAt | date:'d MMM, yyyy: h:mm a' }}
+            </div>
+          </div>
+          <div class="row">
+            <div class="gap">
+              {{ order.items.length}} Artículos<span> | </span>${{order.total.toFixed(2) }}
+            </div>
+            <ion-icon name="chevron-forward-outline"></ion-icon>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+</div>

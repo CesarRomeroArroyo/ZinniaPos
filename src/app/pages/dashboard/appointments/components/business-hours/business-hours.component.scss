@@ -1,0 +1,57 @@
+.container {
+  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 24px;
+  height: auto;
+  margin-top: 8px;
+  background-color: var(--ion-color-primary-contrast);
+
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .weekDays {
+      ion-checkbox {
+        --size: 16px;
+        --border-radius: 4px;
+      }
+    }
+  }
+
+  .interval-container {
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    gap: 8px;
+
+    .interval {
+      gap: 8px;
+      display: flex;
+      font-size: 1rem;
+      align-items: center;
+      justify-content: space-between;
+    }
+  }
+}
+
+ion-card {
+    margin-bottom: 16px;
+  
+    ion-chip {
+      margin-right: 8px;
+      ion-icon {
+        margin-left: 8px;
+        cursor: pointer;
+      }
+    }
+  
+    ion-button {
+      margin-top: 8px;
+    }
+}
+
+ion-footer {
+  padding: 24px;
+}

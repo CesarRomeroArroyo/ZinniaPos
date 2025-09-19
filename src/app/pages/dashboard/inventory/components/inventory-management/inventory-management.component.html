@@ -1,0 +1,200 @@
+<ion-header translucent="true">
+  <ion-toolbar>
+    <ion-title class="title">Inventario</ion-title>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" aria-label="Añadir" (click)="onAdd()">
+        <ion-icon slot="icon-only" name="add-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content id="main-content" fullscreen="true">
+  <!-- refresco -->
+  <ion-refresher slot="fixed" (ionRefresh)="reload($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- buscador + botón filtro -->
+  <div class="search-wrap">
+    <ion-searchbar
+      class="search"
+      [(ngModel)]="query"
+      placeholder="Buscar producto"
+      show-clear-button="never"
+      (ionInput)="applyFilter()">
+    </ion-searchbar>
+
+    <ion-menu-toggle menu="filters" [autoHide]="false">
+      <ion-button class="filter" fill="clear" aria-label="Filtrar"
+        (click)="openFilters()">
+        <ion-icon slot="icon-only" name="funnel-outline"></ion-icon>
+        <span class="filter-badge" *ngIf="activeFilterCount">{{
+          activeFilterCount }}</span>
+      </ion-button>
+    </ion-menu-toggle>
+  </div>
+
+  <!-- Chips con texto de filtros activos -->
+  <div class="chips" *ngIf="activeFilter">
+    <ion-chip (click)="clearFilter()">
+      <ion-label>{{ activeFilter }}</ion-label>
+      <ion-icon name="close-circle"></ion-icon>
+    </ion-chip>
+  </div>
+
+  <!-- skeletons -->
+  <ng-container *ngIf="loading; else loaded">
+    <ion-list>
+      <ion-item *ngFor="let i of skeletons">
+        <ion-avatar slot="start">
+          <ion-skeleton-text animated
+            style="width: 48px; height:48px;"></ion-skeleton-text>
+        </ion-avatar>
+        <ion-label>
+          <h3><ion-skeleton-text animated
+              style="width: 60%"></ion-skeleton-text></h3>
+          <p><ion-skeleton-text animated
+              style="width: 40%"></ion-skeleton-text></p>
+        </ion-label>
+        <ion-badge slot="end"><ion-skeleton-text animated
+            style="width: 56px"></ion-skeleton-text></ion-badge>
+      </ion-item>
+    </ion-list>
+  </ng-container>
+
+  <!-- contenido -->
+  <ng-template #loaded>
+    <ng-container *ngIf="filtered.length; else emptyOrSearchEmpty">
+      <ion-list>
+        <!-- Navega al detalle -->
+        <ion-item
+          *ngFor="let p of filtered; trackBy: trackById"
+          button
+          detail
+          [routerLink]="[p.id]"
+          routerDirection="forward">
+
+          <div class="thumb" slot="start">
+            <img *ngIf="p.image; else noimg" [src]="p.image" alt="Producto" />
+            <ng-template #noimg><div class="noimg"></div></ng-template>
+          </div>
+
+          <ion-label>
+            <h3 class="row-title">{{ p.name }}</h3>
+            <p class="row-sub">Últ. mov: {{ p.lastMoveAgo || '—' }}</p>
+          </ion-label>
+
+          <!-- Badges: cantidad / stock bajo / agotado -->
+          <div class="right">
+            <ion-badge class="qty">{{ p.stock }}</ion-badge>
+            <ion-badge class="low"
+              *ngIf="p.stock === 0 ? false : p.lowStock">Stock bajo</ion-badge>
+            <ion-badge class="out" *ngIf="p.stock === 0">Agotado</ion-badge>
+          </div>
+        </ion-item>
+      </ion-list>
+
+      <!-- Resumen inferior -->
+      <div class="summary">
+        <ion-item lines="full">
+          <ion-label>Valor de inventario</ion-label>
+          <div slot="end" class="money">{{ inventoryValue |
+            currency:'USD':'symbol':'1.0-0' }}</div>
+        </ion-item>
+
+        <ion-item lines="none">
+          <ion-label>Artículos en inventario</ion-label>
+          <div slot="end">{{ totalUnits }}</div>
+        </ion-item>
+
+        <ion-item lines="none">
+          <ion-label>Stock bajo</ion-label>
+          <ion-badge slot="end" color="warning">{{ lowCount }}</ion-badge>
+        </ion-item>
+
+        <ion-item lines="none">
+          <ion-label>Agotado</ion-label>
+          <ion-badge slot="end" color="danger">{{ outCount }}</ion-badge>
+        </ion-item>
+      </div>
+    </ng-container>
+
+    <ng-template #emptyOrSearchEmpty>
+      <!-- si hay búsqueda pero no resultados -->
+      <div class="no-results" *ngIf="query?.trim(); else emptyState">
+        <p>No encontramos resultados para “{{ query }}”.</p>
+        <ion-button expand="block" fill="outline"
+          (click)="clearSearch()">Limpiar búsqueda</ion-button>
+      </div>
+
+      <!-- estado vacío -->
+      <ng-template #emptyState>
+        <div class="hero">
+          <img class="hero-img" src="assets/images/products.png"
+            alt="Inventario vacío" />
+          <h2 class="hero-title">Inventario vacío</h2>
+          <p class="hero-subtitle">
+            Actualmente no tienes productos en el inventario. Agrega productos
+            para empezar a gestionar existencias, precios y movimientos.
+          </p>
+          <div class="cta">
+            <ion-button expand="block" size="large" shape="round"
+              (click)="onAdd()">
+              Crear producto
+            </ion-button>
+          </div>
+        </div>
+      </ng-template>
+    </ng-template>
+  </ng-template>
+</ion-content>
+
+<!-- ======= Menú lateral de filtros ======= -->
+<ion-menu menuId="filters" contentId="main-content" side="end"
+  class="filters-menu">
+  <ion-header>
+    <ion-toolbar>
+      <ion-title>Filtros</ion-title>
+      <ion-buttons slot="end">
+        <ion-button fill="clear" (click)="closeFilters()">
+          <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+        </ion-button>
+      </ion-buttons>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-content>
+    <ion-list>
+      <ion-item-divider>Estado de stock</ion-item-divider>
+      <ion-item>
+        <ion-label>Con stock</ion-label>
+        <ion-checkbox slot="end" [checked]="stockStatus.has('with')"
+          (ionChange)="toggleStock('with', $event.detail.checked)"></ion-checkbox>
+      </ion-item>
+      <ion-item>
+        <ion-label>Stock bajo</ion-label>
+        <ion-checkbox slot="end" [checked]="stockStatus.has('low')"
+          (ionChange)="toggleStock('low', $event.detail.checked)"></ion-checkbox>
+      </ion-item>
+      <ion-item>
+        <ion-label>Agotado</ion-label>
+        <ion-checkbox slot="end" [checked]="stockStatus.has('out')"
+          (ionChange)="toggleStock('out', $event.detail.checked)"></ion-checkbox>
+      </ion-item>
+
+      <ion-item-divider>Categorías</ion-item-divider>
+      <ion-item *ngFor="let c of categoryOptions">
+        <ion-label>{{ c.name }}</ion-label>
+        <ion-checkbox slot="end" [checked]="selectedCategories.has(c.id)"
+          (ionChange)="toggleCategory(c.id, $event.detail.checked)"></ion-checkbox>
+      </ion-item>
+    </ion-list>
+
+    <div class="filters-actions">
+      <ion-button expand="block" fill="outline"
+        (click)="resetFilters()">Restablecer</ion-button>
+      <ion-button expand="block" (click)="applyAndClose()">Aplicar</ion-button>
+    </div>
+  </ion-content>
+</ion-menu>

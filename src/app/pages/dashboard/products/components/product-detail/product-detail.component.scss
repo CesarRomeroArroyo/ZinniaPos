@@ -1,0 +1,296 @@
+/* ===== Header ===== */
+ion-header {
+  --border-width: 0 0 0.5px 0;
+}
+.title {
+  font-weight: 600;
+}
+
+/* ===== Galería ===== */
+.gallery {
+  padding: 12px 16px 0;
+}
+.hero-img {
+  height: 220px;
+  border-radius: 14px;
+  background: #f3f4f6;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hero-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.noimg {
+  width: 90px;
+  height: 90px;
+  background: #e5e7eb;
+  border-radius: 12px;
+}
+
+.thumbs {
+  display: flex;
+  gap: 10px;
+  padding: 10px 0 0;
+}
+.thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f3f4f6;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0, 0, 0, 0.055);
+}
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.thumb--active {
+  outline: 2px solid #111;
+}
+.thumb--add ion-icon {
+  font-size: 20px;
+  opacity: 0.8;
+}
+
+/* ===== Secciones ===== */
+.section {
+  padding: 14px 16px 6px;
+}
+.title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.title-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.name {
+  margin: 8px 0 2px;
+  font-weight: 700;
+  font-size: 20px;
+}
+.subtitle {
+  font-size: 0.95rem;
+  color: #6b7280;
+  line-height: 1.2;
+}
+.block {
+  padding: 10px 0 2px;
+}
+.label {
+  margin: 0 0 4px;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 600;
+}
+.value {
+  margin: 0;
+}
+
+/* Estado */
+.status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  margin-left: 6px;
+}
+.status--activo {
+  color: #0d9488;
+  background: #d1faf5;
+  border-color: #a7f3d0;
+}
+.status--inactivo {
+  color: #6b7280;
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+}
+
+/* Inventario */
+.inventory {
+  margin: 8px 16px 16px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
+  padding: 12px;
+}
+.inventory__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.inventory__head h3 {
+  margin: 0;
+  font-weight: 700;
+  font-size: 16px;
+}
+.inventory__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.item {
+  background: #fafafa;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+.item__label {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+.item__value {
+  font-weight: 700;
+}
+
+/* Footer CTA */
+.footer ion-button {
+  --border-radius: 14px;
+  font-weight: 600;
+  --background: #111;
+  --background-activated: #000;
+}
+
+/* Error */
+.error-state {
+  padding: 16px;
+  text-align: center;
+  color: #6b7280;
+}
+
+/* Thumbs con botón eliminar */
+.thumb-wrap {
+  position: relative;
+  display: inline-block;
+}
+.thumb-delete {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 9999px;
+  border: none;
+  background: var(--ion-color-danger);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Modal edición */
+ion-modal ion-item {
+  --inner-padding-top: 8px;
+  --inner-padding-bottom: 8px;
+}
+/* ===== Modal de edición (estilo mock) ===== */
+.edit-modal ion-header.edit-header ion-toolbar {
+  border: 2px dotted rgba(0, 0, 0, 0.18); /* quita si no quieres el punteado */
+  border-left: 0;
+  border-right: 0;
+}
+.edit-header ion-title {
+  font-weight: 700;
+}
+.edit-header ion-button ion-icon {
+  font-size: 22px;
+}
+
+/* Contenido del modal */
+.edit-content {
+  --padding-top: 12px;
+}
+
+/* Form con labels apilados y controles redondeados */
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field__label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 600;
+}
+.field__control {
+  --padding-start: 12px;
+  --padding-end: 12px;
+  --padding-top: 10px;
+  --padding-bottom: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  background: #fff;
+}
+
+/* Celda tipo picker (Categoría / Proveedor) */
+.picker {
+  width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #fff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.picker__text {
+  display: flex;
+  flex-direction: column;
+}
+.picker__label {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+.picker__value {
+  font-weight: 600;
+  color: #111;
+}
+
+/* Botón guardar inferior */
+.btn-save {
+  --border-radius: 12px;
+  --background: #111;
+  --background-activated: #000;
+  font-weight: 600;
+}
+
+.chip {
+  --background: #f0f2f5;
+  --color: #111;
+  border-radius: 8px;
+  margin-top: 6px;
+}
+
+
+/* Galería dentro del modal (un poco más compacta) */
+.edit-modal .gallery {
+  padding: 0 0 8px;
+}
+
+

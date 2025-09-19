@@ -1,0 +1,29 @@
+ion-header {
+    ion-toolbar {
+    --background:: var(--ion-background);
+    --border-width: 0;
+    --box-shadow: none;
+    }
+}
+
+.container {
+    padding: 16px;
+    height: 100%;
+    background-color: var(--ion-color-primary-contrast);
+}
+
+ion-datetime {
+  --background: transparent;
+  --wheel-highlight-background: transparent;
+  --wheel-highlight-border-radius: 48px;
+  --wheel-fade-background-rgb: transparent;
+}
+
+ion-datetime::part(wheel-item) {
+    font-size: 14px;
+    color: (--ion-color-primary);
+}
+
+ion-datetime::part( active) {
+  color: rgb(31, 181, 173) !important;
+}

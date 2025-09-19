@@ -1,0 +1,35 @@
+.custom-header {
+  --background: transparent;
+  --box-shadow: none;
+  --border-width: 0;
+
+  ion-toolbar {
+    --background: transparent;
+    --box-shadow: none;
+    --border-width: 0;
+  }
+
+  .custom-back-button {
+    padding: 6px;
+    font-size: 24px;
+  }
+}
+
+.content {
+  --padding-top: 32px;
+  --padding-bottom: 32px;
+  --padding-start: 24px;
+  --padding-end: 24px;
+
+  .form-steps {
+    background-color: var(--ion-color-primary-contrast);
+  }
+}
+
+ion-content::part(background) {
+  background: var(--ion-color-primary-contrast);
+}
+
+ion-footer {
+  padding: 0px 24px 32px 24px;
+}

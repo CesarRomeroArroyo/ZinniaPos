@@ -1,0 +1,33 @@
+ion-modal.response-modal {
+    --max-width: 90%;
+    --max-height: 60%;
+    --min-height: 30%;
+
+    &::part(content) {
+        background-color: transparent;
+    }
+}
+
+ion-modal.option-select-modal {
+    --height: 95%;
+    --border-radius: 10px 10px 0 0;
+}
+
+.modal-wrapper {
+    position: fixed; /* Fija la posición del modal */
+    bottom: 0;       /* Posiciónalo en la parte inferior */
+    top: auto;       /* Asegúrate de que no se desplace hacia arriba */
+    max-height: 90vh; /* Asegura que no ocupe más del 90% del alto */
+    border-radius: 16px 16px 0 0; /* Esquinas redondeadas */
+}
+
+ion-modal.modal-default.show-modal ~ ion-modal.modal-default {
+    --backdrop-opacity: var(--ion-backdrop-opacity, 0.32) !important;
+}
+
+ion-modal.date-modal {
+  --width: 93%;
+  --height: 50%;
+  --border-radius: 16px;
+  --box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}

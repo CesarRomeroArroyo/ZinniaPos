@@ -1,0 +1,16 @@
+<div class="task-progress">
+  <div class="border inline-block border-radius-md mb-16 padding">
+    <ion-label class="text">{{ completedTasks }} de {{ totalTasks }} completados</ion-label>
+  </div>
+  <div class="border border-radius-sm">
+    <ion-list mode="md">
+      <ion-item *ngFor="let task of tasks; let last = last" [lines]="last ? 'none' : 'inset'" (click)="onTaskClick(task)">
+        <ion-img
+          [src]="task.completed ? 'assets/images/checkmark-circle.svg' : 'assets/images/ellipse-outline.svg'"
+          alt="icon">
+        </ion-img>
+        <ion-label class="text">{{ task.label }}</ion-label>
+      </ion-item>
+    </ion-list>
+  </div>
+</div>

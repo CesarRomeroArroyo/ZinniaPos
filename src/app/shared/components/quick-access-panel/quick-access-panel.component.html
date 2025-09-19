@@ -1,0 +1,7 @@
+<div class="container">
+  <div class="quick-access-header">
+    <ion-label class="title bold">{{ title }}</ion-label>
+    <ion-icon slot="end" name="create-outline" (click)="editQuickAccessItems()"></ion-icon>
+  </div>
+  <app-quick-access-list [items]="userQuickAccess"></app-quick-access-list>
+</div>

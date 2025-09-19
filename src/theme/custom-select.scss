@@ -1,0 +1,84 @@
+.ng-select {
+    font-size: 1rem;
+    .ng-select-container {
+        border-radius: 0.5rem;
+        min-height: 3rem !important;
+        border-color: var(--ion-color-step-300, #b3b3b3);
+        .ng-input {
+            margin-top: 0.5rem;
+        }
+    }
+
+    &.ng-select-focused:not(.ng-select-opened)>.ng-select-container {
+        border: 0.0625rem solid var(--ion-color-primary);
+        box-shadow: none;
+    }
+}
+
+ng-select.ng-valid.ng-touched .ng-select-container {
+    border-color: var(--ion-color-success);
+}
+
+.ng-select.ng-select-opened.ng-select-bottom>.ng-select-container {
+    border-color: var(--ion-color-tertiary);
+}
+
+ng-select.ng-valid.ng-touched .ng-select-container {
+    border-color: var(--ion-color-secondary);
+}
+
+.ng-select.ng-invalid.ng-touched .ng-select-container {
+    border-color: var(--ion-color-danger-tint);
+}
+
+.ng-select.ng-select-disabled>.ng-select-container {
+    background: #E6EBEF;
+    border-color: var(--ion-medium-gray);
+}
+
+.icon-position {
+    padding-left: 0.9375rem;
+    input {
+        margin-top: 0.0625rem;;
+        margin-left: 1.9375rem;
+    }
+}
+
+.ng-dropdown-panel .ng-dropdown-panel-items .ng-option.ng-option-selected, .ng-dropdown-panel .ng-dropdown-panel-items .ng-option.ng-option-selected.ng-option-marked {
+    background-color: #F8FFE1;
+}
+
+.ng-dropdown-panel .ng-dropdown-panel-items .ng-optgroup.ng-option-selected,
+.ng-dropdown-panel .ng-dropdown-panel-items .ng-option.ng-option-marked {
+    background-color: transparent;
+}
+
+.ng-dropdown-panel .ng-dropdown-panel-items .ng-optgroup{
+    color: black !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+}
+
+.ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-value {
+    background-color: transparent;
+}
+
+.ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-value .ng-value-icon.left {
+    display: none;
+}
+
+.ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-value .ng-value-label::after {
+    content: ',';
+}
+
+.ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-value .ng-value-label {
+    padding: 0;
+}
+
+.ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-placeholder {
+    position: initial !important;
+}
+
+.ng-select.ng-select-multiple .ng-select-container .ng-value-container {
+    padding-left: 12px;
+}

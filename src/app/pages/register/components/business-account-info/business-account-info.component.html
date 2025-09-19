@@ -1,0 +1,40 @@
+<ng-container>
+    <div class="information">
+        <h3>Cuéntanos más sobre tu empresa</h3>
+        <p>
+            Completa la información de tu empresa para que podamos configurar tu cuenta de manera personalizada.
+        </p>
+    </div>
+    <form class="custom-form" *ngIf="businessAccountForm" [formGroup]="businessAccountForm">
+        <ion-input
+            mode="md"
+            fill="outline"
+            placeholder="Nombre de la empresa"
+            formControlName="name">
+        </ion-input>
+        <ion-input
+            mode="md"
+            fill="outline"
+            placeholder="Dirección"
+            formControlName="address">
+        </ion-input>
+        <ion-input
+            mode="md"
+            fill="outline"
+            placeholder="Teléfono"
+            formControlName="mobile">
+        </ion-input>
+        <ion-input
+            mode="md"
+            fill="outline"
+            placeholder="Correo electrónico"
+            formControlName="email">
+        </ion-input>
+        <ion-input
+            mode="md"
+            fill="outline"
+            placeholder="RUC"
+            formControlName="ruc">
+        </ion-input>
+    </form>
+</ng-container>

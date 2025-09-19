@@ -1,0 +1,15 @@
+<app-menu-header></app-menu-header>
+<ion-content>
+  <app-quick-access-panel></app-quick-access-panel>
+
+  <div class="container" *ngIf="showInitalSettingPanel()">
+    <ion-label class="title bold">Configura tu empresa</ion-label>
+    <ion-label class="ion-text-wrap subtitle">Sigue estos pasos para poner en marcha tu empresa.</ion-label>
+    <app-progress-list [tasks]="initialTask"></app-progress-list>
+  </div>
+
+  <div class="container">
+    <ion-label class="title bold">Resumen General</ion-label>
+
+  </div>
+</ion-content>

@@ -1,0 +1,50 @@
+/* Para Font Segoe UI Bold */
+@font-face {
+    font-family: "SegoeUiBold";
+    src: url("../assets/fonts/Segoe-UI/Segoe-UI-Bold.ttf")
+      format("opentype");
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "SegoeUi";
+    src: url("../assets/fonts/Segoe-UI/Segoe-UI.ttf")
+      format("opentype");
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Para Font Segoe UI Bold */
+.fal {
+    font-family: "SegoeUiBold" !important;
+}
+  
+/* Para Font Segoe UI */
+.far {
+    font-family: "SegoeUi" !important;
+}
+  
+
+i {
+    font-style: normal;
+    font-weight: 900;
+    color: var(--ligth-grey);
+    font-size: 16px;
+}
+  
+i.blue {
+    color: var(--purple);
+}
+  
+i.orange {
+    color: var(--orange);
+}
+  
+i.green  {
+    color: var(--green);
+}
+  
+i.pink {
+    color: var(--pink);
+}

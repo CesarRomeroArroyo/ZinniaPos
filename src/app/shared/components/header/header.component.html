@@ -1,0 +1,15 @@
+<ion-header class="ion-no-border" mode="md">
+  <ion-toolbar>
+   <ion-buttons slot="start">
+    <ion-button (click)="onBack()">
+      <ion-icon [name]="getBackIcon()" aria-label="Back" ></ion-icon>
+    </ion-button>
+   </ion-buttons>
+   <ion-title>{{ settingHeader.title }}</ion-title>
+   <ion-buttons slot="end" *ngIf="enableCompletedButtom()">
+    <ion-button (click)="actionCompleted()">
+      <ion-icon name="checkmark-outline" aria-label="Complete" ></ion-icon>
+    </ion-button>
+   </ion-buttons>
+  </ion-toolbar>
+</ion-header>

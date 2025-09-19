@@ -1,0 +1,52 @@
+<app-header [settingHeader]="settingHeader" [customActionCompleted]="actionCompleted.bind(this)"></app-header>
+<ion-content>
+  <div class="container">
+    <form class="form" [formGroup]="discountForm" *ngIf="discountForm">
+      <ion-item lines="none" class="bordered-item" (click)="selectDiscountType()">
+        <ion-input
+          mode="md"
+          label="Tipo de descuento"
+          labelPlacement="stacked"
+          placeholder="Selecciona una opción"
+          readonly
+          [value]="getDiscountTypeLabel()"
+          formControlName="type">
+        </ion-input>
+        <ion-icon name="chevron-forward-outline" slot="end"></ion-icon>
+      </ion-item>
+
+      <ion-item lines="none" class="bordered-item">
+        <ion-input
+          mode="md"
+          readonly
+          label="Valor del descuento"
+          labelPlacement="stacked"
+          placeholder="$"
+          formControlName="value">
+        </ion-input>
+        <div class="control-input" slot="end"> 
+          <ion-button class="control-btn" size="small" (click)="decreaseInputValue()">
+            <ion-icon name="remove-outline"></ion-icon>
+          </ion-button>
+        </div>
+        <div class="control-input" slot="end"> 
+          <ion-button class="control-btn" size="small" (click)="increaseInputValue()">
+            <ion-icon name="add-outline"></ion-icon>
+          </ion-button>
+        </div>
+      </ion-item>
+
+      <ion-item lines="none" class="bordered-item">
+        <ion-textarea
+          mode="md"
+          [autoGrow]="true"
+          labelPlacement="floating"
+          label="Motivo del descuento"
+          placeholder="Motivo del descuento"
+          formControlName="resaon">
+        </ion-textarea>
+
+      </ion-item>
+    </form>
+  </div>
+</ion-content>

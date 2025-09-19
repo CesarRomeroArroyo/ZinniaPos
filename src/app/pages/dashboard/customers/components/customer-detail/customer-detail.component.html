@@ -1,0 +1,81 @@
+<ion-header translucent="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button fill="clear" aria-label="Atrás" (click)="goBack()">
+        <ion-icon slot="icon-only" name="chevron-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title class="title">Detalle Cliente</ion-title>
+    <ion-buttons slot="end">
+      <ion-menu-button autoHide="true"></ion-menu-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content fullscreen="true">
+  <ion-refresher slot="fixed" (ionRefresh)="load($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <ng-container *ngIf="loading; else loaded">
+    <!-- skeletons simples -->
+    <div class="box"><ion-skeleton-text animated style="width: 60%; height: 18px"></ion-skeleton-text></div>
+    <div class="box"><ion-skeleton-text animated style="width: 80%; height: 18px"></ion-skeleton-text></div>
+  </ng-container>
+
+  <ng-template #loaded>
+    <ion-card *ngIf="error">
+      <ion-card-header><ion-card-title>Error</ion-card-title></ion-card-header>
+      <ion-card-content>
+        {{ error }}
+        <ion-button expand="block" fill="outline" (click)="load()">Reintentar</ion-button>
+      </ion-card-content>
+    </ion-card>
+
+    <ng-container *ngIf="!error">
+      <!-- Info de contacto -->
+      <div class="box" *ngIf="customer">
+        <h2 class="section-title">Información de contacto</h2>
+
+        <div class="contact">
+          <div class="row"><div class="label">Nombre</div><div class="value">{{ customer?.nombre }}</div></div>
+          <div class="row"><div class="label">Correo electrónico</div><div class="value">{{ customer?.correo || '—' }}</div></div>
+          <div class="row"><div class="label">Teléfono / Celular</div><div class="value">{{ customer?.telefono || '—' }}</div></div>
+          <div class="row"><div class="label">Dirección</div><div class="value">{{ customer?.direccion || '—' }}</div></div>
+        </div>
+      </div>
+
+      <!-- Historial -->
+      <div class="box">
+        <h2 class="section-title">Historial de pedidos</h2>
+
+        <ion-list *ngIf="orders.length; else noOrders">
+          <ion-item
+            *ngFor="let o of orders; trackBy: trackOrderId"
+            button
+            detail="true"
+            (click)="openOrder(o.id)">
+            <ion-label>
+              <div class="order-top">
+                <div class="order-id">#{{ o.id }}</div>
+                <span [class]="pillClass(o)">{{ o.status }}</span>
+              </div>
+              <p class="order-date">
+                {{ o.date ? (o.date | date:"d 'de' MMM, y 'a las' h:mm a") : '—' }}
+              </p>
+              <div class="order-meta">
+                <span>{{ o.itemsCount }} Artículo{{ o.itemsCount === 1 ? '' : 's' }}</span>
+                <span class="dot">|</span>
+                <span>$ {{ o.total | number:'1.2-2' }}</span>
+              </div>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+
+        <ng-template #noOrders>
+          <p class="muted">Sin pedidos registrados.</p>
+        </ng-template>
+      </div>
+    </ng-container>
+  </ng-template>
+</ion-content>

@@ -1,0 +1,34 @@
+<app-header [settingHeader]="settingHeader"></app-header>
+<ion-content>
+  <div class="container">
+    <form class="form" [formGroup]="typeAppointmentForm" *ngIf="typeAppointmentForm">
+      <div class="row">
+        <div class="group">
+          <ion-input placeholder="Titulo de la categoría" fill="outline" mode="md" formControlName="title"></ion-input>
+        </div>
+      </div>
+      <div class="row">
+        <div class="group">
+          <ion-textarea
+            mode="md"
+            placeholder="Descripción"
+            fill="outline"
+            [autoGrow]="true"
+            formControlName="description">
+          </ion-textarea>
+        </div>
+      </div>
+    </form>
+  </div>
+</ion-content>
+
+<ion-footer class="ion-no-border footer">
+  <ion-button
+    mode="md"
+    expand="block"
+    fill="solid"
+    (click)="insertAppointmentType()"
+    [disabled]="typeAppointmentForm.invalid">
+    Guardar
+  </ion-button>
+</ion-footer>

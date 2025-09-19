@@ -1,0 +1,11 @@
+<ion-tabs mode="md">
+  <div class="tab-container">
+    <ion-tab-bar slot="bottom" class="bar">
+      <ion-tab-button [tab]="vista.redirectTo" *ngFor="let vista of menu" 
+        [ngClass]="{ 'selected': getIsActive(vista.redirectTo) }" (click)="setActiveTab(vista.redirectTo)" class="tab-button ">
+        <ion-icon class="icon" [name]="vista.icon"></ion-icon>
+        {{ vista.name }}
+      </ion-tab-button>
+    </ion-tab-bar>
+  </div>
+</ion-tabs>

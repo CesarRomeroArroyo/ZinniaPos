@@ -1,0 +1,69 @@
+<ion-header translucent="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button fill="clear" aria-label="Atrás" (click)="back()">
+        <ion-icon slot="icon-only" name="chevron-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+
+    <ion-title class="title">Detalle Paciente</ion-title>
+
+    <ion-buttons slot="end">
+      <ion-button fill="clear" aria-label="Más" (click)="onMore()">
+        <ion-icon slot="icon-only" name="ellipsis-vertical"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content fullscreen="true">
+  <!-- Información de contacto -->
+  <ion-item-divider class="section-divider">
+    <ion-label>Información de contacto</ion-label>
+  </ion-item-divider>
+
+  <div class="card">
+    <div class="row">
+      <div class="col col--label">Nombre</div>
+      <div class="col col--value">{{ patient.nombre }}</div>
+    </div>
+
+    <div class="row">
+      <div class="col col--label">Correo electrónico</div>
+      <div class="col col--value">{{ patient.email || '—' }}</div>
+    </div>
+
+    <div class="row">
+      <div class="col col--label">Teléfono / Celular</div>
+      <div class="col col--value">{{ patient.telefono || '—' }}</div>
+    </div>
+
+    <div class="row">
+      <div class="col col--label">Dirección</div>
+      <div class="col col--value">{{ patient.direccion || '—' }}</div>
+    </div>
+  </div>
+
+  <!-- Historial de citas -->
+  <ion-item-divider class="section-divider">
+    <ion-label>Historial de citas</ion-label>
+  </ion-item-divider>
+
+  <ion-list>
+    <ion-item *ngFor="let a of patient.appointments; trackBy: trackByAppt"
+              button detail
+              (click)="openAppointment(a)">
+      <ion-label>
+        <h3 class="row-title">{{ a.id }}</h3>
+        <p class="row-sub">
+          {{ a.date | date:"d 'de' MMM, y" }} • {{ a.start }} - {{ a.end }}
+        </p>
+        <p class="row-meta">{{ a.type }}</p>
+      </ion-label>
+
+      <span [class]="statusClassMap[a.status]">{{ a.status }}</span>
+    </ion-item>
+  </ion-list>
+
+  <div style="height: 24px"></div>
+</ion-content>

@@ -1,0 +1,58 @@
+<ion-header class="ion-no-border">
+    <ion-toolbar>
+        <ion-buttons slot="start">
+            <ion-button class="custom-back-button" (click)="goBack()">
+                <ion-icon name="arrow-back-sharp"></ion-icon>
+            </ion-button>
+        </ion-buttons>
+    </ion-toolbar>
+</ion-header>
+<ion-content class="ion-padding content-row-layout">
+    <div class="form-wrapper-container">
+        <div class="info-container">
+            <h2>¡Casi terminamos!</h2>
+            <p>
+                Solo falta un último paso. Hemos enviado un código de 4 dígitos a <span class="bold">{{email || '( email no disponible )' }}</span>
+            </p>
+            <p>Ingresa ese código para verificar tu cuenta y comenzar a usar Zinnia.</p>
+        </div>
+        <div class="form-wrapper">
+            <div class="code-container">
+                <form [formGroup]="activationForm" *ngIf="activationForm">
+                    <ion-list lines="none" class="main__fields">
+                        <ion-item class="main__item" *ngFor="let digit of characters; let i = index">
+                            <ion-input formControlName="field{{i + 1}}" class="ion-dirty main__input" type="password" maxlength="1"
+                                aria-label="values">
+                            </ion-input>
+                        </ion-item>
+                    </ion-list>
+                </form>
+            </div>
+            <h4 class="resend-code">
+                <p
+                    class="message"
+                    [ngClass]="{
+                        'bold clickeable': timer === 0,
+                        'disabled-text': timer !== 0 || isSendingCode
+                    }"
+                    (click)="resendActivationCode()">
+                    {{ feedback }}
+                    <ion-text class="bold" *ngIf="timerIntervalId && timer > 0" color="primary">{{ timer + ' s' }}</ion-text>
+                </p>
+            </h4>
+            <ng-container>
+                <app-numpad
+                    (digitClicked)="onDigitReceived($event)"
+                    (onRemove)="onDigitRemoved()"
+                ></app-numpad>
+            </ng-container>
+            <ion-button
+                expand="block"
+                *ngIf="activationForm"
+                [disabled]="activationForm.invalid"
+                (click)="verifyCode()">
+                Verificar
+            </ion-button>
+        </div>
+    </div>
+</ion-content>
