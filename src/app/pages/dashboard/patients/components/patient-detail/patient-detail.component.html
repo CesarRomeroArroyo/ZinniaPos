@@ -50,7 +50,7 @@
   </ion-item-divider>
 
   <ion-list>
-    <ion-item *ngFor="let a of patient.appointments; trackBy: trackByAppt"
+    <!-- <ion-item *ngFor="let a of patient.appointments; trackBy: trackByAppt"
               button detail
               (click)="openAppointment(a)">
       <ion-label>
@@ -62,7 +62,7 @@
       </ion-label>
 
       <span [class]="statusClassMap[a.status]">{{ a.status }}</span>
-    </ion-item>
+    </ion-item> -->
   </ion-list>
 
   <div style="height: 24px"></div>
